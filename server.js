@@ -107,8 +107,13 @@ app.post('/api/admin/login', loginLimiter, async (req, res) => {
 app.get('/api/settings', async (req, res) => {
   try {
     const settingsColl = db.getSettingsCollection();
-    const globalSettings = await settingsColl.findOne({ _id: 'global' });
-    res.json({ title: globalSettings ? globalSettings.title : '🍊COLLECTED' });
+    const s = await settingsColl.findOne({ _id: 'global' });
+    res.json({
+      title     : s ? (s.title      || '🍊COLLECTED') : '🍊COLLECTED',
+      theme     : s ? (s.theme      || 'default')     : 'default',
+      useFrames : s ? (s.useFrames  || false)         : false,
+      customBg  : s ? (s.customBg   || null)          : null,
+    });
   } catch (err) {
     res.status(500).json({ error: 'Lỗi server' });
   }
@@ -116,17 +121,48 @@ app.get('/api/settings', async (req, res) => {
 
 // PATCH /api/settings  (admin only)
 app.patch('/api/settings', requireAdmin, async (req, res) => {
-  const validTitle = validateName(req.body.title);
-  if (!validTitle) return res.status(400).json({ error: 'Tiêu đề không hợp lệ.' });
+  const update = {};
+
+  if (req.body.title !== undefined) {
+    const validTitle = validateName(req.body.title);
+    if (!validTitle) return res.status(400).json({ error: 'Tiêu đề không hợp lệ.' });
+    update.title = validTitle;
+  }
+
+  if (req.body.theme !== undefined) {
+    const allowed = ['default', 'tet', 'christmas', 'halloween'];
+    if (!allowed.includes(req.body.theme)) return res.status(400).json({ error: 'Theme không hợp lệ.' });
+    update.theme = req.body.theme;
+  }
+
+  if (req.body.useFrames !== undefined) {
+    update.useFrames = Boolean(req.body.useFrames);
+  }
+
+  if (req.body.customBg !== undefined) {
+    // null = xoá ảnh nền, string = base64 data URL
+    if (req.body.customBg !== null && typeof req.body.customBg !== 'string') {
+      return res.status(400).json({ error: 'Ảnh nền không hợp lệ.' });
+    }
+    // Giới hạn kích thước ~3MB (base64)
+    if (req.body.customBg && req.body.customBg.length > 4 * 1024 * 1024) {
+      return res.status(400).json({ error: 'Ảnh quá lớn. Vui lòng dùng ảnh nhỏ hơn 3MB.' });
+    }
+    update.customBg = req.body.customBg;
+  }
+
+  if (Object.keys(update).length === 0) {
+    return res.status(400).json({ error: 'Không có dữ liệu cần cập nhật.' });
+  }
 
   try {
     const settingsColl = db.getSettingsCollection();
     await settingsColl.updateOne(
       { _id: 'global' },
-      { $set: { title: validTitle } },
+      { $set: update },
       { upsert: true }
     );
-    res.json({ success: true, title: validTitle });
+    res.json({ success: true, ...update });
   } catch (err) {
     res.status(500).json({ error: 'Lỗi server' });
   }
