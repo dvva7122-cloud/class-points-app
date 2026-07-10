@@ -1,0 +1,38 @@
+{
+  "settings": {
+    "title": "🍊COLLECTED"
+  },
+  "classes": [
+    {
+      "id": "cmrf31j17q62uc",
+      "name": "7A",
+      "created_at": 1783696835995,
+      "students": [
+        {
+          "id": "smrf3e20iir2lj",
+          "name": "Nguyễn Nhật Hạ",
+          "points": 5,
+          "created_at": 1783697420466
+        },
+        {
+          "id": "smrf3e6kb7mfnq",
+          "name": "sa",
+          "points": 0,
+          "created_at": 1783697426364
+        }
+      ]
+    },
+    {
+      "id": "cmrf3at9urzc2j",
+      "name": "7B",
+      "created_at": 1783697269170,
+      "students": []
+    },
+    {
+      "id": "cmrf3awzhcijdw",
+      "name": "Grade 9",
+      "created_at": 1783697273981,
+      "students": []
+    }
+  ]
+}
