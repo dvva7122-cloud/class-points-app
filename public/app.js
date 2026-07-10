@@ -246,12 +246,53 @@ function renderStudentCard(student, classId, maxPts) {
 
   card.appendChild(nameRow);
 
-  // Điểm
+  // Điểm (click để nhập trực tiếp khi là admin)
   const pointsRow = createEl('div', { className: 'points-display' });
   pointsRow.id = `points-${student.id}`;
+
   const pointVal = createEl('span', { className: 'point-val', text: String(student.points) });
   pointsRow.appendChild(pointVal);
   pointsRow.appendChild(document.createTextNode(' 🍊'));
+
+  // Click vào số điểm để nhập trực tiếp (chỉ khi admin)
+  if (isAdmin) {
+    pointVal.style.cursor = 'pointer';
+    pointVal.title = 'Click để nhập điểm trực tiếp';
+    pointVal.addEventListener('click', () => {
+      const oldPoints = student.points;
+      const input = createEl('input');
+      input.type = 'number';
+      input.min = '0';
+      input.value = oldPoints;
+      input.style.cssText = `
+        width: 80px; font-size: 2rem; font-weight: 800;
+        border: 2px solid #FF9800; border-radius: 10px;
+        text-align: center; padding: 2px 6px; color: #F57C00;
+        background: #FFF4E3; outline: none;
+      `;
+      pointsRow.replaceChild(input, pointVal);
+      // Xóa emoji tạm
+      pointsRow.lastChild.textContent = '';
+      input.focus();
+      input.select();
+
+      const applyChange = () => {
+        const newVal = parseInt(input.value, 10);
+        pointsRow.replaceChild(pointVal, input);
+        pointsRow.lastChild.textContent = ' 🍊';
+        if (!isNaN(newVal) && newVal !== oldPoints && newVal >= 0) {
+          const change = newVal - oldPoints;
+          doUpdatePoints(classId, student.id, change);
+        }
+      };
+      input.addEventListener('blur', applyChange);
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+        if (e.key === 'Escape') { input.value = oldPoints; input.blur(); }
+      });
+    });
+  }
+
   card.appendChild(pointsRow);
 
   // Nút +/- (hiện khi is-admin, không cần is-editing)
@@ -268,6 +309,7 @@ function renderStudentCard(student, classId, maxPts) {
   card.appendChild(actionRow);
   document.getElementById('student-grid').appendChild(card);
 }
+
 
 // ─── Actions → gọi API (không sửa data client mà re-fetch sau khi thành công) ──
 

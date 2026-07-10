@@ -1,31 +1,31 @@
 :root {
-    --primary-color: #ff9800;
-    --primary-dark: #f57c00;
-    --primary-light: #ffb74d;
-    --primary-soft: #fff4e3;
+    --primary-color:  #FF9800;
+    --primary-dark:   #F57C00;
+    --primary-light:  #FFB84D;
+    --primary-soft:   #FFF4E3;
 
-    --success-color: #35b978;
-    --success-soft: #eaf8f1;
-    --danger-color: #ef5b5b;
-    --danger-soft: #fff0f0;
+    --success-color:  #22C55E;
+    --success-soft:   #DCFCE7;
+    --danger-color:   #EF5350;
+    --danger-soft:    #FEECEC;
 
-    --bg-color: #f6f8fb;
-    --card-bg: rgba(255, 255, 255, 0.86);
-    --card-bg-solid: #ffffff;
-    --text-main: #25272b;
-    --text-muted: #7f8792;
-    --border-color: rgba(255, 255, 255, 0.72);
+    --bg-color:       #F6F8FC;
+    --card-bg:        #FFFFFF;
+    --card-bg-solid:  #FFFFFF;
+    --text-main:      #2F3640;
+    --text-muted:     #6B7280;
+    --border-color:   #E6EAF2;
 
     --border-radius: 26px;
-    --card-radius: 22px;
+    --card-radius:   22px;
 
-    --shadow-xs: 0 4px 12px rgba(31, 41, 55, 0.05);
-    --shadow-sm: 0 8px 24px rgba(31, 41, 55, 0.08);
-    --shadow: 0 22px 60px rgba(31, 41, 55, 0.14);
-    --shadow-hover: 0 24px 50px rgba(31, 41, 55, 0.16);
+    --shadow-xs:    0 2px 8px rgba(15, 23, 42, 0.06);
+    --shadow-sm:    0 4px 16px rgba(15, 23, 42, 0.08);
+    --shadow:       0 16px 48px rgba(15, 23, 42, 0.10);
+    --shadow-hover: 0 20px 44px rgba(15, 23, 42, 0.12);
 
     --transition: all 0.28s cubic-bezier(.2, .8, .2, 1);
-    --frame-border: 1px solid rgba(220, 225, 232, 0.72);
+    --frame-border: 1px solid #E6EAF2;
 }
 
 /* Theme variables */
@@ -78,9 +78,7 @@ body {
     display: flex;
     justify-content: center;
     position: relative;
-    background:
-        linear-gradient(180deg, rgba(249, 251, 253, 0.32), rgba(247, 248, 250, 0.62)),
-        var(--bg-color);
+    background: var(--bg-color);
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
@@ -452,27 +450,23 @@ body.custom-bg-active .app-background {
     align-items: center;
     justify-content: flex-start;
     position: relative;
-    border: 2px solid rgba(52, 199, 89, 0.55);
+    border: 1.5px solid #E6EAF2;
     border-radius: var(--card-radius);
-    background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(240, 255, 244, 0.92));
-    box-shadow:
-        0 10px 28px rgba(31, 41, 55, 0.08),
-        0 0 0 0px rgba(52, 199, 89, 0),
-        inset 0 1px 0 rgba(255, 255, 255, 0.88);
+    background: #FFFFFF;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.07);
     transition: var(--transition);
     overflow: hidden;
 }
 
-/* Viền xanh lá nổi bật phía trên */
+/* Thanh cam nhấn ở đầu thẻ */
 .student-card::before {
     content: "";
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 3px;
-    background: linear-gradient(90deg, #34c759, #30d158, #4cd964);
+    background: linear-gradient(90deg, #FF9800, #FFB84D);
     border-radius: var(--card-radius) var(--card-radius) 0 0;
-    opacity: 0.85;
+    opacity: 0.7;
 }
 
 .student-card::after {
@@ -504,12 +498,20 @@ body.theme-christmas .student-card.with-frame {
 }
 
 .student-card:hover {
-    transform: translateY(-7px);
-    border-color: rgba(52, 199, 89, 0.75);
+    transform: translateY(-6px);
+    border-color: #FFB84D;
     box-shadow:
-        0 18px 40px rgba(52, 199, 89, 0.18),
-        0 0 0 3px rgba(52, 199, 89, 0.12),
-        inset 0 1px 0 rgba(255, 255, 255, 0.88);
+        0 12px 32px rgba(15, 23, 42, 0.10),
+        0 0 0 2px rgba(255, 152, 0, 0.10);
+}
+
+/* Leader card (thẻ cao điểm nhất) */
+.student-card.is-top {
+    background: #FFF6E8;
+    border-color: #FFB84D;
+    box-shadow:
+        0 4px 16px rgba(255, 152, 0, 0.15),
+        0 0 0 1.5px #FFB84D;
 }
 
 .student-card:hover::after {
@@ -602,23 +604,25 @@ body.theme-christmas .student-card.with-frame {
 }
 
 .btn-minus {
-    color: var(--danger-color);
-    background: linear-gradient(180deg, #fff7f7, var(--danger-soft));
+    color: #EF5350;
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
 }
 
 .btn-minus:hover {
-    background: linear-gradient(180deg, #fff0f0, #ffe3e3);
-    box-shadow: 0 10px 22px rgba(239, 91, 91, 0.16);
+    background: #FEE2E2;
+    box-shadow: 0 6px 16px rgba(239, 83, 80, 0.18);
 }
 
 .btn-plus {
-    color: var(--success-color);
-    background: linear-gradient(180deg, #f7fffb, var(--success-soft));
+    color: #22C55E;
+    background: #F0FDF4;
+    border: 1px solid #BBF7D0;
 }
 
 .btn-plus:hover {
-    background: linear-gradient(180deg, #effcf5, #dcf6e9);
-    box-shadow: 0 10px 22px rgba(53, 185, 120, 0.16);
+    background: #DCFCE7;
+    box-shadow: 0 6px 16px rgba(34, 197, 94, 0.18);
 }
 
 .add-student-container {
