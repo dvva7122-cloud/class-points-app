@@ -59,16 +59,16 @@ function handleSessionExpired() {
   document.getElementById('session-expired-modal').classList.add('show');
 }
 
-// ─── Theme (localStorage OK vì đây là UI preference, không phải data bảo mật) ──
-function loadThemeLocal() {
+// ─── Theme state (chỉ lưu local để tránh chớp màn hình khi tải trang, bản thật lấy từ server) ──
+let themeState = { name: 'default', useFrames: false, customBg: null };
+
+async function saveThemeToServer(patch) {
   try {
-    const s = localStorage.getItem('classPointsTheme');
-    if (s) return JSON.parse(s);
-  } catch (_) {}
-  return { name: 'default', useFrames: false, customBg: null };
-}
-function saveThemeLocal() {
-  localStorage.setItem('classPointsTheme', JSON.stringify(themeState));
+    await api('PATCH', '/api/settings', patch);
+    Object.assign(themeState, patch);
+  } catch (err) {
+    if (err.message !== 'Unauthorized') showError(err.message);
+  }
 }
 
 function applyTheme() {
@@ -591,36 +591,39 @@ function setupListeners() {
   document.getElementById('close-theme-modal').addEventListener('click', () => {
     document.getElementById('theme-modal').classList.remove('show');
   });
+  // Theme options
   document.querySelectorAll('.theme-option').forEach(opt => {
-    opt.addEventListener('click', () => {
-      themeState.name = opt.dataset.theme;
-      saveThemeLocal();
+    opt.addEventListener('click', async () => {
+      await saveThemeToServer({ theme: opt.dataset.theme });
       applyTheme();
     });
   });
-  document.getElementById('toggle-frames').addEventListener('change', e => {
-    themeState.useFrames = e.target.checked;
-    saveThemeLocal();
+  document.getElementById('toggle-frames').addEventListener('change', async e => {
+    await saveThemeToServer({ useFrames: e.target.checked });
     renderCurrentClass();
   });
   document.getElementById('custom-bg-upload').addEventListener('change', e => {
     const file = e.target.files[0];
     if (!file) return;
+    if (file.size > 3 * 1024 * 1024) {
+      alert('Ảnh quá lớn! Vui lòng chọn ảnh nhỏ hơn 3MB.');
+      e.target.value = '';
+      return;
+    }
     const reader = new FileReader();
-    reader.onload = evt => {
-      themeState.customBg = evt.target.result;
-      saveThemeLocal();
+    reader.onload = async evt => {
+      await saveThemeToServer({ customBg: evt.target.result });
       applyTheme();
     };
     reader.readAsDataURL(file);
   });
-  document.getElementById('clear-custom-bg').addEventListener('click', () => {
-    themeState.customBg = null;
+  document.getElementById('clear-custom-bg').addEventListener('click', async () => {
+    await saveThemeToServer({ customBg: null });
     document.getElementById('custom-bg-upload').value = '';
-    saveThemeLocal();
     applyTheme();
   });
 }
+
 
 // ─── Utility ──────────────────────────────────────────────────────────────
 function showError(msg) {
@@ -628,16 +631,24 @@ function showError(msg) {
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────
-async function init() {
-  // Hiển thị title đã lưu ngay lập tức (nếu có)
-  const cachedTitle = localStorage.getItem('classPointsTitle');
-  if (cachedTitle) document.getElementById('app-main-title').textContent = cachedTitle;
 
+// Tải settings từ server (title, theme, bg, frames) cho tất cả người dùng
+async function loadSettings() {
+  try {
+    const res = await api('GET', '/api/settings');
+    if (res.title)                   document.getElementById('app-main-title').textContent = res.title;
+    if (res.theme)                   themeState.name      = res.theme;
+    if (res.useFrames !== undefined) themeState.useFrames = res.useFrames;
+    if (res.customBg  !== undefined) themeState.customBg  = res.customBg;
+    applyTheme();
+  } catch (_) {}
+}
+
+async function init() {
   // Kiểm tra token còn trong session không
   const token = getToken();
   if (token) {
     try {
-      // Thử decode để kiểm tra hết hạn (không verify signature, chỉ kiểm tra exp)
       const payload = JSON.parse(atob(token.split('.')[1]));
       if (payload.exp * 1000 > Date.now() && payload.role === 'admin') {
         isAdmin = true;
@@ -654,8 +665,8 @@ async function init() {
   updateAdminUI();
 
   try {
+    await loadSettings(); // tải title + theme + bg từ server (cho tất cả người dùng)
     await loadAllData();
-    await loadTitle();
   } catch (err) {
     if (err.message !== 'Unauthorized') {
       showError('Không thể kết nối đến server. Hãy chắc chắn server đang chạy.');
@@ -668,3 +679,4 @@ async function init() {
 }
 
 init();
+
