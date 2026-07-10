@@ -271,29 +271,61 @@ function renderStudentCard(student, classId, maxPts) {
 
 // ─── Actions → gọi API (không sửa data client mà re-fetch sau khi thành công) ──
 
-async function doUpdatePoints(classId, studentId, change) {
-  try {
-    const res = await api('PATCH', `/api/classes/${classId}/students/${studentId}/points`, { change });
-    // Cập nhật local state không cần re-fetch toàn bộ
-    const cls     = appData.find(c => c.id === classId);
-    const student = cls && cls.students.find(s => s.id === studentId);
-    if (student) {
-      student.points = res.points;
-      // Cập nhật DOM trực tiếp
-      const display  = document.getElementById(`points-${studentId}`);
-      if (display) {
-        display.querySelector('.point-val').textContent = res.points;
-        display.classList.remove('pop');
-        void display.offsetWidth;
-        display.classList.add('pop');
+// ─── Optimistic points update với Debounce ────────────────────────────────
+// Lưu thay đổi điểm đang chờ gửi (chưa sync với server)
+const pendingPointsChange = {}; // { studentId: { classId, change, timer } }
+
+function doUpdatePoints(classId, studentId, change) {
+  const cls     = appData.find(c => c.id === classId);
+  const student = cls && cls.students.find(s => s.id === studentId);
+  if (!student) return;
+
+  // 1. Cập nhật state local & DOM ngay lập tức (không chờ server)
+  student.points = Math.max(0, student.points + change);
+  const display = document.getElementById(`points-${studentId}`);
+  if (display) {
+    display.querySelector('.point-val').textContent = student.points;
+    display.classList.remove('pop');
+    void display.offsetWidth;
+    display.classList.add('pop');
+  }
+
+  // 2. Gom thay đổi vào hàng chờ
+  if (!pendingPointsChange[studentId]) {
+    pendingPointsChange[studentId] = { classId, accumulated: 0, timer: null };
+  }
+  pendingPointsChange[studentId].accumulated += change;
+
+  // 3. Debounce: hủy timer cũ, đặt timer mới 800ms
+  clearTimeout(pendingPointsChange[studentId].timer);
+  pendingPointsChange[studentId].timer = setTimeout(async () => {
+    const pending = pendingPointsChange[studentId];
+    if (!pending || pending.accumulated === 0) return;
+
+    const totalChange = pending.accumulated;
+    delete pendingPointsChange[studentId]; // xóa khỏi hàng chờ
+
+    try {
+      const res = await api('PATCH', `/api/classes/${classId}/students/${studentId}/points`, { change: totalChange });
+      // Đồng bộ lại điểm chính xác từ server (phòng trường hợp lệch)
+      const s = cls && cls.students.find(s => s.id === studentId);
+      if (s && res.points !== s.points) {
+        s.points = res.points;
+        const d = document.getElementById(`points-${studentId}`);
+        if (d) d.querySelector('.point-val').textContent = res.points;
       }
-      // Cập nhật crown nếu thứ hạng thay đổi
+      // Cập nhật crown
+      renderCurrentClass();
+    } catch (err) {
+      if (err.message !== 'Unauthorized') showError(err.message);
+      // Rollback điểm về giá trị server nếu thất bại
+      await loadAllData();
       renderCurrentClass();
     }
-  } catch (err) {
-    if (err.message !== 'Unauthorized') showError(err.message);
-  }
+  }, 800);
 }
+
+
 
 async function doEditStudentName(classId, studentId, currentName) {
   const newName = prompt('Nhập tên mới cho học sinh:', currentName);
