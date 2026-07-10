@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Điểm Học Sinh</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SheetJS dùng để parse Excel, KHÔNG gọi server -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+</head>
+<body class="theme-default">
+    <div id="app-background" class="app-background"></div>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="header-top">
+                <div class="app-title-container" style="display: flex; align-items: center; gap: 0.5rem; justify-content: center;">
+                    <h1 id="app-main-title">🍊COLLECTED</h1>
+                    <button id="edit-title-btn" class="action-icon edit-icon admin-edit-only" title="Đổi tiêu đề"><i class="fa-solid fa-pen"></i></button>
+                </div>
+                <div class="header-controls">
+                    <button id="theme-btn" class="theme-btn admin-edit-only" title="Cài đặt giao diện">
+                        <i class="fa-solid fa-palette"></i>
+                    </button>
+                    <button id="edit-mode-toggle"><i class="fa-solid fa-pen-to-square"></i> Bật Chỉnh Sửa</button>
+                    <button id="admin-toggle" class="admin-toggle" title="Bật/Tắt chế độ Admin">
+                        <i class="fa-solid fa-lock"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="class-tabs-wrapper">
+                <div class="class-tabs" id="class-tabs"></div>
+                <button id="add-class-btn" class="add-class-btn admin-only" title="Thêm lớp mới">
+                    <i class="fa-solid fa-plus"></i> Thêm Lớp
+                </button>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div class="class-info">
+                <div class="class-name-container">
+                    <h2 id="current-class-name">Lớp</h2>
+                    <button id="edit-class-btn" class="action-icon edit-icon admin-edit-only" title="Đổi tên lớp"><i class="fa-solid fa-pen"></i></button>
+                    <button id="delete-class-btn" class="action-icon delete-icon admin-edit-only" title="Xóa lớp"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>
+
+            <div class="student-grid" id="student-grid"></div>
+
+            <div id="add-student-container" class="add-student-container">
+                <button id="add-student-btn" class="add-student-btn">
+                    <i class="fa-solid fa-user-plus"></i> Thêm Học Sinh
+                </button>
+                <label for="excel-upload" class="excel-import-btn">
+                    <i class="fa-solid fa-file-excel"></i> Nhập từ Excel
+                </label>
+                <input type="file" id="excel-upload" accept=".xlsx,.xls,.csv" style="display:none">
+            </div>
+        </main>
+
+        <aside class="conversion-table" id="conversion-table">
+            <div class="conversion-header" id="conversion-header" title="Thu nhỏ/Phóng to">
+                <span>Bảng Quy Đổi Điểm</span>
+                <i class="fa-solid fa-chevron-down toggle-icon"></i>
+            </div>
+            <div class="conversion-content">
+                <div class="conversion-row"><div class="score">&lt; 5 đ</div><div class="points">1 🍊 = 1 đ</div></div>
+                <div class="conversion-row"><div class="score">5 đ -- 7 đ</div><div class="points">2 🍊 = 1 đ</div></div>
+                <div class="conversion-row"><div class="score">7 đ -- 8 đ</div><div class="points">4 🍊 = 1 đ</div></div>
+                <div class="conversion-row"><div class="score">8 đ -- 9 đ</div><div class="points">8 🍊 = 1 đ</div></div>
+                <div class="conversion-row"><div class="score">9 đ --10 đ</div><div class="points">16 🍊 = 1 đ</div></div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Modal: Đăng nhập Admin -->
+    <div id="password-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" id="close-modal">&times;</span>
+            <h3>Đăng nhập Admin</h3>
+            <p>Nhập mật khẩu để bật chế độ chỉnh sửa:</p>
+            <input type="password" id="admin-password" placeholder="Mật khẩu">
+            <button id="submit-password" class="submit-btn">Xác nhận</button>
+            <p id="password-error" class="error-msg"></p>
+        </div>
+    </div>
+
+    <!-- Modal: Thông báo phiên hết hạn -->
+    <div id="session-expired-modal" class="modal">
+        <div class="modal-content" style="text-align:center">
+            <h3 style="color:#f44336">⚠️ Phiên đã hết hạn</h3>
+            <p style="margin: 1rem 0">Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.</p>
+            <button id="session-expired-ok" class="submit-btn">OK</button>
+        </div>
+    </div>
+
+    <!-- Modal: Cài đặt Giao diện -->
+    <div id="theme-modal" class="modal">
+        <div class="modal-content" style="max-width:500px">
+            <span class="close-modal" id="close-theme-modal">&times;</span>
+            <h3>🎨 Cài đặt Giao diện</h3>
+            <div class="theme-section">
+                <h4>Chọn Chủ Đề (Themes)</h4>
+                <div class="theme-options">
+                    <div class="theme-option" data-theme="default">Mặc định</div>
+                    <div class="theme-option" data-theme="tet">Tết Nguyên Đán 🧧</div>
+                    <div class="theme-option" data-theme="christmas">Giáng Sinh 🎄</div>
+                    <div class="theme-option" data-theme="halloween">Halloween 🎃</div>
+                </div>
+            </div>
+            <div class="theme-section">
+                <h4>Tải Lên Ảnh Nền</h4>
+                <input type="file" id="custom-bg-upload" accept="image/*">
+                <button id="clear-custom-bg" class="clear-btn" style="display:none;margin-top:.5rem">Xóa ảnh nền</button>
+            </div>
+            <div class="theme-section" style="border-top:1px solid #eee;padding-top:1rem;margin-top:1rem">
+                <h4>Khung ảnh học sinh</h4>
+                <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer">
+                    <input type="checkbox" id="toggle-frames" style="width:auto;margin:0">
+                    Hiển thị khung ảnh theo chủ đề
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
