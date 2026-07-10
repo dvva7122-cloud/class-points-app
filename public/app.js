@@ -14,7 +14,7 @@ let appData        = [];       // [{id, name, students:[{id, name, points}]}]
 let currentClassId = null;
 let isAdmin        = false;
 let isEditingMode  = false;
-let themeState     = loadThemeLocal();   // theme lưu localStorage vì đây là UI preference
+
 
 // ─── Token helpers ────────────────────────────────────────────────────────
 function getToken() {
