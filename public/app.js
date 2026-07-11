@@ -718,6 +718,27 @@ async function loadSettings() {
   } catch (_) {}
 }
 
+// ─── Lắng nghe sự kiện Real-time (SSE) ───────────────────────────────────
+let isRealtimeSetup = false;
+function setupRealtime() {
+  if (isRealtimeSetup) return;
+  isRealtimeSetup = true;
+  
+  const evtSource = new EventSource('/api/events');
+  evtSource.onmessage = async (e) => {
+    try {
+      const data = JSON.parse(e.data);
+      if (data.type === 'DATA_CHANGED') {
+        await loadAllData();
+        renderClassTabs();
+        renderCurrentClass();
+      } else if (data.type === 'SETTINGS_CHANGED') {
+        await loadSettings();
+      }
+    } catch (err) {}
+  };
+}
+
 async function init() {
   // Kiểm tra token còn trong session không
   const token = getToken();
@@ -762,6 +783,7 @@ async function init() {
 
   renderClassTabs();
   renderCurrentClass();
+  setupRealtime();
 }
 
 init();

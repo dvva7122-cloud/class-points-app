@@ -78,6 +78,31 @@ function generateId(prefix = '') {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+//  API: REAL-TIME SYNC (SSE)
+// ═══════════════════════════════════════════════════════════════════════════
+let clients = [];
+
+function broadcast(data) {
+  const payload = `data: ${JSON.stringify(data)}\n\n`;
+  clients.forEach(client => client.res.write(payload));
+}
+
+app.get('/api/events', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders(); // Yêu cầu với một số server để gửi header ngay lập tức
+  
+  const client = { id: Date.now(), res };
+  clients.push(client);
+  
+  // Khi kết nối bị đóng, xóa client khỏi mảng
+  req.on('close', () => {
+    clients = clients.filter(c => c.id !== client.id);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
 //  API: XÁC THỰC
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -162,6 +187,7 @@ app.patch('/api/settings', requireAdmin, async (req, res) => {
       { $set: update },
       { upsert: true }
     );
+    broadcast({ type: 'SETTINGS_CHANGED' });
     res.json({ success: true, ...update });
   } catch (err) {
     res.status(500).json({ error: 'Lỗi server' });
@@ -212,6 +238,7 @@ app.post('/api/classes', requireAdmin, async (req, res) => {
 
     await classesColl.insertOne(newClass);
     delete newClass._id;
+    broadcast({ type: 'DATA_CHANGED' });
     res.status(201).json(newClass);
   } catch (err) {
     res.status(500).json({ error: 'Lỗi server' });
@@ -234,6 +261,7 @@ app.patch('/api/classes/:classId', requireAdmin, async (req, res) => {
 
     if (!result) return res.status(404).json({ error: 'Không tìm thấy lớp.' });
     delete result._id;
+    broadcast({ type: 'DATA_CHANGED' });
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: 'Lỗi server' });
@@ -247,6 +275,7 @@ app.delete('/api/classes/:classId', requireAdmin, async (req, res) => {
     const classesColl = db.getClassesCollection();
     const result = await classesColl.deleteOne({ id: classId });
     if (result.deletedCount === 0) return res.status(404).json({ error: 'Không tìm thấy lớp.' });
+    broadcast({ type: 'DATA_CHANGED' });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Lỗi server' });
@@ -272,6 +301,7 @@ app.patch('/api/classes/reorder', requireAdmin, async (req, res) => {
 
     if (bulkOps.length > 0) {
       await classesColl.bulkWrite(bulkOps);
+      broadcast({ type: 'DATA_CHANGED' });
     }
     res.json({ success: true });
   } catch (err) {
@@ -299,6 +329,7 @@ app.post('/api/classes/:classId/students', requireAdmin, async (req, res) => {
     );
 
     if (result.matchedCount === 0) return res.status(404).json({ error: 'Không tìm thấy lớp.' });
+    broadcast({ type: 'DATA_CHANGED' });
     res.status(201).json(newStudent);
   } catch (err) {
     res.status(500).json({ error: 'Lỗi server' });
@@ -340,6 +371,7 @@ app.post('/api/classes/:classId/students/bulk', requireAdmin, async (req, res) =
     );
     
     if (result.matchedCount === 0) return res.status(404).json({ error: 'Không tìm thấy lớp.' });
+    broadcast({ type: 'DATA_CHANGED' });
     res.json({ success: true, added: newStudents.length });
   } catch (err) {
     res.status(500).json({ error: 'Lỗi server' });
@@ -363,6 +395,7 @@ app.patch('/api/classes/:classId/students/:studentId', requireAdmin, async (req,
     if (!result) return res.status(404).json({ error: 'Không tìm thấy học sinh hoặc lớp.' });
     
     const updatedStudent = result.students.find(s => s.id === studentId);
+    broadcast({ type: 'DATA_CHANGED' });
     res.json(updatedStudent);
   } catch (err) {
     res.status(500).json({ error: 'Lỗi server' });
@@ -383,6 +416,7 @@ app.delete('/api/classes/:classId/students/:studentId', requireAdmin, async (req
     if (result.matchedCount === 0) return res.status(404).json({ error: 'Không tìm thấy lớp.' });
     if (result.modifiedCount === 0) return res.status(404).json({ error: 'Không tìm thấy học sinh.' });
     
+    broadcast({ type: 'DATA_CHANGED' });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Lỗi server' });
@@ -415,6 +449,7 @@ app.patch('/api/classes/:classId/students/:studentId/points', requireAdmin, asyn
       { returnDocument: 'after' }
     );
 
+    broadcast({ type: 'DATA_CHANGED' });
     res.json({ id: studentId, points: newPoints });
   } catch (err) {
     res.status(500).json({ error: 'Lỗi server' });
