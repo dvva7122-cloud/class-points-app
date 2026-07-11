@@ -188,10 +188,13 @@ function renderCurrentClass() {
   const classInfoEl    = document.querySelector('.class-info');
   const addContainer   = document.getElementById('add-student-container');
 
+  const eventsContainer = document.getElementById('events-container');
+
   if (!cls) {
     classInfoEl.style.display = 'none';
     addContainer.style.display = 'none';
     gridEl.innerHTML = '';
+    eventsContainer.innerHTML = '';
     const p = createEl('p', { text: 'Chưa có lớp học nào. Hãy tạo một lớp mới!', className: 'empty-msg' });
     p.style.cssText = 'text-align:center;width:100%;color:#888;';
     gridEl.appendChild(p);
@@ -210,7 +213,138 @@ function renderCurrentClass() {
     const maxPts = Math.max(...cls.students.map(s => s.points));
     cls.students.forEach(student => renderStudentCard(student, cls.id, maxPts));
   }
+  
+  renderEvents(cls);
 }
+
+// ─── Events (Upcoming Events) ─────────────────────────────────────────────
+function renderEvents(cls) {
+  const container = document.getElementById('events-container');
+  container.innerHTML = '';
+
+  const hasEvents = cls.events && cls.events.length > 0;
+  
+  // Chỉ hiển thị nếu có sự kiện hoặc đang là admin
+  if (!hasEvents && !isAdmin) return;
+
+  const section = createEl('div', { className: 'events-section' });
+  const header = createEl('div', { className: 'events-header' });
+  const title = createEl('h2', { text: '📅 Upcoming Events' });
+  header.appendChild(title);
+
+  if (isAdmin) {
+    const addBtn = createEl('button', { className: 'add-event-btn admin-only', text: '+ Thêm ảnh' });
+    addBtn.addEventListener('click', () => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) doAddEvent(cls.id, file);
+      };
+      input.click();
+    });
+    header.appendChild(addBtn);
+  }
+
+  section.appendChild(header);
+
+  if (hasEvents) {
+    const grid = createEl('div', { className: 'events-grid' });
+    cls.events.forEach(evt => {
+      const card = createEl('div', { className: 'event-card' });
+      const img = createEl('img', { className: 'event-img' });
+      img.src = evt.imageUrl;
+      
+      // Click để phóng to (tùy chọn)
+      img.style.cursor = 'pointer';
+      img.addEventListener('click', () => {
+         const w = window.open();
+         w.document.write(`<img src="${evt.imageUrl}" style="max-width:100%; display:block; margin:auto;" />`);
+      });
+
+      card.appendChild(img);
+
+      if (isAdmin) {
+        const delBtn = createEl('button', { className: 'btn-delete-event admin-only', title: 'Xóa ảnh' });
+        delBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+        delBtn.addEventListener('click', () => {
+          if (confirm('Bạn có chắc chắn muốn xóa sự kiện này?')) {
+            doDeleteEvent(cls.id, evt.id);
+          }
+        });
+        card.appendChild(delBtn);
+      }
+      grid.appendChild(card);
+    });
+    section.appendChild(grid);
+  } else {
+    const emptyMsg = createEl('p', { text: 'Chưa có sự kiện nào.', className: 'empty-msg' });
+    emptyMsg.style.color = '#888';
+    section.appendChild(emptyMsg);
+  }
+
+  container.appendChild(section);
+  updateAdminUI(); // Đảm bảo ẩn/hiện đúng theo mode
+}
+
+async function doAddEvent(classId, file) {
+  try {
+    // Đọc và nén ảnh bằng canvas
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = async () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 800;
+        const MAX_HEIGHT = 800;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height = Math.round((height *= MAX_WIDTH / width));
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width = Math.round((width *= MAX_HEIGHT / height));
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Nén jpeg chất lượng 0.7
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+
+        try {
+          await api('POST', `/api/classes/${classId}/events`, { imageUrl: dataUrl });
+          // SSE sẽ tự động cập nhật
+        } catch (err) {
+          showError(err.message);
+        }
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  } catch (err) {
+    showError('Không thể đọc ảnh');
+  }
+}
+
+async function doDeleteEvent(classId, eventId) {
+  try {
+    await api('DELETE', `/api/classes/${classId}/events/${eventId}`);
+    // SSE sẽ tự động cập nhật
+  } catch (err) {
+    showError(err.message);
+  }
+}
+
 
 function renderStudentCard(student, classId, maxPts) {
   const gridEl   = document.getElementById('student-grid');

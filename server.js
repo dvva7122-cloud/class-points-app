@@ -23,7 +23,7 @@ const app  = express();
 const PORT = process.env.PORT || 3000;
 
 // ─── Middleware chung ─────────────────────────────────────────────────────
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ─── Rate limiter: tối đa 5 lần thử/15 phút per IP ──────────────────────
@@ -451,6 +451,56 @@ app.patch('/api/classes/:classId/students/:studentId/points', requireAdmin, asyn
 
     broadcast({ type: 'DATA_CHANGED' });
     res.json({ id: studentId, points: newPoints });
+  } catch (err) {
+    res.status(500).json({ error: 'Lỗi server' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  API: SỰ KIỆN (UPCOMING EVENTS)
+// ═══════════════════════════════════════════════════════════════════════════
+
+// POST /api/classes/:classId/events  (admin) - Thêm ảnh sự kiện
+app.post('/api/classes/:classId/events', requireAdmin, async (req, res) => {
+  const { classId } = req.params;
+  const { imageUrl } = req.body;
+  if (!imageUrl || typeof imageUrl !== 'string' || !imageUrl.startsWith('data:image/')) {
+    return res.status(400).json({ error: 'Ảnh sự kiện không hợp lệ.' });
+  }
+
+  try {
+    const classesColl = db.getClassesCollection();
+    const newEvent = { id: generateId('e'), imageUrl, created_at: Date.now() };
+    
+    const result = await classesColl.updateOne(
+      { id: classId },
+      { $push: { events: newEvent } }
+    );
+
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Không tìm thấy lớp.' });
+    broadcast({ type: 'DATA_CHANGED' });
+    res.status(201).json(newEvent);
+  } catch (err) {
+    res.status(500).json({ error: 'Lỗi server' });
+  }
+});
+
+// DELETE /api/classes/:classId/events/:eventId  (admin) - Xóa ảnh sự kiện
+app.delete('/api/classes/:classId/events/:eventId', requireAdmin, async (req, res) => {
+  const { classId, eventId } = req.params;
+  
+  try {
+    const classesColl = db.getClassesCollection();
+    const result = await classesColl.updateOne(
+      { id: classId },
+      { $pull: { events: { id: eventId } } }
+    );
+    
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Không tìm thấy lớp.' });
+    if (result.modifiedCount === 0) return res.status(404).json({ error: 'Không tìm thấy sự kiện.' });
+    
+    broadcast({ type: 'DATA_CHANGED' });
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Lỗi server' });
   }
