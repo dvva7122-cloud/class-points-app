@@ -739,13 +739,25 @@ async function init() {
   updateAdminUI();
 
   try {
-    await loadSettings(); // tải title + theme + bg từ server (cho tất cả người dùng)
+    await loadSettings(); // tải title + theme + bg từ server
     await loadAllData();
   } catch (err) {
     if (err.message !== 'Unauthorized') {
-      showError('Không thể kết nối đến server. Hãy chắc chắn server đang chạy.');
+      // Server đang khởi động (Cold Start Render) -> Không hiển thị alert gây khó chịu
+      const gridEl = document.getElementById('student-grid');
+      if (gridEl) {
+        gridEl.innerHTML = `
+          <div style="text-align: center; width: 100%; grid-column: 1 / -1; padding: 40px; color: #F57C00;">
+            <i class="fa-solid fa-spinner fa-spin fa-3x" style="margin-bottom: 16px;"></i>
+            <h3 style="margin-bottom: 8px;">Đang kết nối đến máy chủ...</h3>
+            <p style="color: #6B7280; font-size: 0.95rem;">Máy chủ miễn phí cần khoảng 30-50 giây để khởi động lại nếu không có ai truy cập trong 15 phút. Vui lòng đợi...</p>
+          </div>
+        `;
+      }
+      // Tự động thử lại sau 3 giây
+      setTimeout(init, 3000);
+      return;
     }
-    return;
   }
 
   renderClassTabs();
@@ -753,4 +765,5 @@ async function init() {
 }
 
 init();
+
 
