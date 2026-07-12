@@ -1101,6 +1101,16 @@ function renderWheel(cls) {
     wheelRotationAngle = 0;
     wheelIsSpinning = false;
   }
+  else if (!wheelIsSpinning) {
+  const currentStudentMap = new Map(
+    cls.students.map(student => [student.id, student])
+  );
+
+  // Xóa người không còn trong lớp và cập nhật tên mới
+  wheelActiveStudents = wheelActiveStudents
+    .filter(student => currentStudentMap.has(student.id))
+    .map(student => currentStudentMap.get(student.id));
+}
 
   // Nếu đang quay, không vẽ lại giao diện HTML để tránh giật lag hoặc gián đoạn
   if (wheelIsSpinning) return;
