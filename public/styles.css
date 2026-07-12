@@ -82,6 +82,9 @@ body {
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    /* Tắt bôi đen text toàn trang – hết con trỏ I-beam không cần thiết */
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 body::before {
@@ -100,6 +103,13 @@ input,
 select,
 textarea {
     font: inherit;
+}
+
+input,
+textarea {
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    cursor: text;
 }
 
 button {
@@ -451,25 +461,15 @@ body.custom-bg-active .app-background {
     justify-content: flex-start;
     position: relative;
     border: 1.5px solid #E6EAF2;
+    border-top: 4px solid var(--primary-color); /* Sử dụng viền gốc của trình duyệt giúp tự động khớp 100% với góc bo tròn */
     border-radius: var(--card-radius);
     background: #FFFFFF;
     box-shadow: 0 2px 12px rgba(15, 23, 42, 0.07);
-    transition: var(--transition);\
+    transition: var(--transition);
     overflow: hidden;
     user-select: none;     /* Không cho bôi đen text → hết con trỏ I-beam */
     -webkit-user-select: none;
     cursor: default;
-}
-
-/* Thanh cam nhấn ở đầu thẻ */
-.student-card::before {
-    content: "";
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, #FF9800, #FFB84D);
-    border-radius: var(--card-radius) var(--card-radius) 0 0;
-    opacity: 0.7;
 }
 
 .student-card::after {
