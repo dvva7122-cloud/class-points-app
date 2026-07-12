@@ -473,6 +473,18 @@ function renderStudentCard(student, classId, maxPts) {
 
   card.appendChild(actionRow);
   document.getElementById('student-grid').appendChild(card);
+
+  // Auto-shrink: dùng transform scale thay vì thay font-size
+  // Đảm bảo chữ không bao giờ tràn ra khỏi container
+  requestAnimationFrame(() => {
+    const container = nameEl.parentElement;
+    const availableWidth = container.clientWidth - 16; // trừ padding 8px mỗi bên
+    if (nameEl.scrollWidth > availableWidth && availableWidth > 0) {
+      const scale = availableWidth / nameEl.scrollWidth;
+      nameEl.style.transformOrigin = 'center center';
+      nameEl.style.transform = `scaleX(${scale.toFixed(4)})`;
+    }
+  });
 }
 
 

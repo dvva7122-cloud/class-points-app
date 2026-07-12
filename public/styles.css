@@ -442,8 +442,8 @@ body.custom-bg-active .app-background {
 }
 
 .student-card {
-    min-height: 218px;
-    padding: 24px 18px 18px;
+    height: 300px;         /* Chiều cao CỐ ĐỊNH – mọi thẻ đều bằng nhau */
+    padding: 16px 16px 14px;
     text-align: center;
     display: flex;
     flex-direction: column;
@@ -521,10 +521,12 @@ body.theme-christmas .student-card.with-frame {
 .icons-container {
     display: flex;
     justify-content: center;
-    gap: 15px;
-    min-height: 40px;
-    font-size: 2.5rem;
-    margin-bottom: 12px;
+    align-items: center;
+    gap: 10px;
+    height: 44px;          /* Luôn chiếm đúng 44px dù có icon hay không */
+    flex-shrink: 0;
+    font-size: 2rem;
+    margin-bottom: 4px;
     line-height: 1;
 }
 
@@ -550,31 +552,35 @@ body.theme-christmas .student-card.with-frame {
 
 .student-name-container {
     width: 100%;
-    margin-bottom: 16px;
+    padding: 0 8px;        /* Padding trái/phải để chữ không chạm mép */
+    margin-bottom: 0;
+    flex-shrink: 0;
     display: flex;
     justify-content: center;
+    overflow: hidden;      /* Đảm bảo không tràn ra ngoài thẻ */
+    box-sizing: border-box;
 }
 
 .student-name {
     margin: 0;
     color: var(--text-main);
-    font-size: 1.35rem; /* Sẽ được auto-shrink bằng JS nếu dài */
+    font-size: 1.3rem;
     font-weight: 760;
     white-space: nowrap;
     text-align: center;
     letter-spacing: -0.015em;
-    overflow: visible;
+    max-width: 100%;
+    display: block;
 }
 
 .points-display {
-    margin: auto 0 24px;
-    min-height: 70px;
+    flex: 1;               /* Chiếm toàn bộ khoảng trống còn lại */
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
+    gap: 10px;
     color: var(--primary-color);
-    font-size: 4rem;
+    font-size: 3.2rem;
     line-height: 1;
     font-weight: 860;
     letter-spacing: -0.05em;
@@ -583,14 +589,17 @@ body.theme-christmas .student-card.with-frame {
 }
 
 .points-display img,
-.points-display svg,
-.points-display span {
-    width: auto;
-    height: auto;
-    font-size: 3rem;
-    line-height: 1;
+.points-display svg {
+    width: 44px;
+    height: 44px;
     object-fit: contain;
-    filter: drop-shadow(0 6px 8px rgba(255, 152, 0, 0.2));
+    filter: drop-shadow(0 4px 6px rgba(255, 152, 0, 0.25));
+}
+
+.points-display .orange-emoji {
+    font-size: 2.4rem;
+    line-height: 1;
+    filter: drop-shadow(0 4px 6px rgba(255, 152, 0, 0.25));
 }
 
 .points-display.pop {
@@ -605,17 +614,18 @@ body.theme-christmas .student-card.with-frame {
 
 .action-buttons {
     display: flex;
-    gap: 16px;
+    gap: 12px;
     width: 100%;
-    margin-top: auto;
+    flex-shrink: 0;        /* Không bị nén */
+    margin-top: 10px;
 }
 
 .btn-action {
     flex: 1;
-    min-height: 55px;
+    height: 48px;          /* Chiều cao cố định */
     border: 0;
-    border-radius: 999px; /* Pill shape */
-    font-size: 2.5rem;
+    border-radius: 999px;
+    font-size: 2rem;
     line-height: 1;
     font-weight: 800;
     cursor: pointer;
