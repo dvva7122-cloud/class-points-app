@@ -62,6 +62,9 @@
                 <input type="file" id="excel-upload" accept=".xlsx,.xls,.csv" style="display:none">
             </div>
 
+            <!-- WHEEL OF NAMES -->
+            <div id="wheel-container"></div>
+
             <!-- UPCOMING EVENTS -->
             <div id="events-container"></div>
         </main>
@@ -140,6 +143,24 @@
             <div style="display:flex; justify-content:flex-end; gap:10px;">
                 <button id="custom-prompt-cancel" class="cancel-btn">Hủy</button>
                 <button id="custom-prompt-submit" class="submit-btn" style="background: var(--primary-color); color: white; border: none;">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wheel Winner Modal -->
+    <div class="modal" id="wheel-winner-modal">
+        <div class="modal-content" style="max-width: 450px; text-align: center; position: relative; overflow: hidden; padding: 30px;">
+            <div id="confetti-container" style="position: absolute; inset: 0; pointer-events: none; z-index: 0;"></div>
+            <h2 style="color: var(--primary-dark); font-size: 2rem; margin-bottom: 10px; z-index: 1; position: relative; font-weight: 800;">🎉 CHÚC MỪNG 🎉</h2>
+            <div id="wheel-winner-name" style="font-size: 2.4rem; font-weight: 800; color: #2D3748; margin: 20px 0; z-index: 1; position: relative; word-break: break-word; line-height: 1.2;">Tên Học Sinh</div>
+            <p style="font-size: 1.05rem; color: #718096; margin-bottom: 25px; z-index: 1; position: relative;">Chọn phần thưởng điểm cam bên dưới:</p>
+            <div class="winner-actions-grid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; z-index: 1; position: relative;">
+                <button class="winner-btn cancel-btn" data-points="0" style="grid-column: span 5; font-size: 1rem; padding: 12px; height: auto;">Không làm gì</button>
+                <button class="winner-btn winner-add-btn" data-points="1">+1 🍊</button>
+                <button class="winner-btn winner-add-btn" data-points="2">+2 🍊</button>
+                <button class="winner-btn winner-add-btn" data-points="3">+3 🍊</button>
+                <button class="winner-btn winner-add-btn" data-points="4">+4 🍊</button>
+                <button class="winner-btn winner-add-btn" data-points="5">+5 🍊</button>
             </div>
         </div>
     </div>

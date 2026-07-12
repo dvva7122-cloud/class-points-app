@@ -225,6 +225,7 @@ function renderCurrentClass() {
   }
   
   renderEvents(cls);
+  renderWheel(cls);
 }
 
 // ─── Events (Upcoming Events) ─────────────────────────────────────────────
@@ -1060,5 +1061,327 @@ async function init() {
 }
 
 init();
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  WHEEL OF NAMES (VÒNG QUAY MAY MẮN)
+// ═══════════════════════════════════════════════════════════════════════════
+
+let wheelActiveStudents = [];
+let wheelCurrentClassId = null;
+let wheelRotationAngle = 0;
+let wheelIsSpinning = false;
+
+const wheelColors = [
+  '#FF8A8A', '#FFB38A', '#FFF38A', '#B3FF8A',
+  '#8AFFB3', '#8AFFF3', '#8AB3FF', '#B38AFF',
+  '#FF8AFF', '#FF8AB3'
+];
+
+function renderWheel(cls) {
+  const container = document.getElementById('wheel-container');
+  if (!container) return;
+
+  // Nếu lớp không có học sinh, ẩn vòng quay đi
+  if (!cls || !cls.students || cls.students.length === 0) {
+    container.innerHTML = '';
+    return;
+  }
+
+  // Reset danh sách học sinh của vòng quay khi chuyển lớp
+  if (wheelCurrentClassId !== cls.id) {
+    wheelCurrentClassId = cls.id;
+    wheelActiveStudents = [...cls.students];
+    wheelRotationAngle = 0;
+    wheelIsSpinning = false;
+  }
+
+  // Nếu đang quay, không vẽ lại giao diện HTML để tránh giật lag hoặc gián đoạn
+  if (wheelIsSpinning) return;
+
+  container.innerHTML = '';
+
+  const section = createEl('div', { className: 'wheel-section' });
+  const header = createEl('div', { className: 'wheel-header' });
+  const title = createEl('h2', { text: '🎡 Vòng Quay Ngẫu Nhiên (Wheel of Names)' });
+  header.appendChild(title);
+  section.appendChild(header);
+
+  const body = createEl('div', { className: 'wheel-body' });
+
+  // Cột trái: Vòng quay canvas
+  const canvasContainer = createEl('div', { className: 'wheel-canvas-container' });
+  const canvas = createEl('canvas', { id: 'wheel-canvas' });
+  canvas.width = 680;
+  canvas.height = 680;
+  canvas.style.width = '340px';
+  canvas.style.height = '340px';
+  
+  canvasContainer.appendChild(canvas);
+  canvasContainer.appendChild(createEl('div', { className: 'wheel-pointer' }));
+  body.appendChild(canvasContainer);
+
+  // Cột phải: Bộ điều khiển
+  const controls = createEl('div', { className: 'wheel-controls' });
+  const buttonsRow = createEl('div', { className: 'wheel-buttons' });
+  
+  const shuffleBtn = createEl('button', { id: 'wheel-btn-shuffle', className: 'wheel-btn wheel-btn-shuffle' });
+  shuffleBtn.innerHTML = '<i class="fa-solid fa-random"></i> Shuffle';
+  shuffleBtn.addEventListener('click', () => {
+    if (wheelIsSpinning) return;
+    shuffleWheel();
+  });
+  
+  const resetBtn = createEl('button', { id: 'wheel-btn-reset', className: 'wheel-btn wheel-btn-reset' });
+  resetBtn.innerHTML = '<i class="fa-solid fa-arrow-rotate-left"></i> Reset';
+  resetBtn.addEventListener('click', () => {
+    if (wheelIsSpinning) return;
+    resetWheel(cls);
+  });
+  
+  buttonsRow.appendChild(shuffleBtn);
+  buttonsRow.appendChild(resetBtn);
+  controls.appendChild(buttonsRow);
+
+  // Danh sách học sinh còn lại
+  const listContainer = createEl('div', { className: 'wheel-list-container' });
+  const listHeader = createEl('div', { className: 'wheel-list-header' });
+  listHeader.appendChild(createEl('span', { text: 'Danh sách quay' }));
+  
+  const counter = createEl('span', { id: 'wheel-counter', text: `Còn lại: ${wheelActiveStudents.length}/${cls.students.length}` });
+  listHeader.appendChild(counter);
+  listContainer.appendChild(listHeader);
+
+  const namesList = createEl('div', { id: 'wheel-names-list', className: 'wheel-names-list' });
+  wheelActiveStudents.forEach(st => {
+    const badge = createEl('div', { className: 'wheel-name-badge', text: st.name });
+    namesList.appendChild(badge);
+  });
+  listContainer.appendChild(namesList);
+  controls.appendChild(listContainer);
+  
+  body.appendChild(controls);
+  section.appendChild(body);
+  container.appendChild(section);
+
+  // Gán sự kiện click quay
+  canvas.addEventListener('click', () => {
+    if (wheelIsSpinning || wheelActiveStudents.length === 0) return;
+    spinWheel(cls);
+  });
+
+  drawWheel();
+}
+
+function drawWheel() {
+  const canvas = document.getElementById('wheel-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const size = canvas.width;
+  const center = size / 2;
+  const radius = center - 20;
+
+  ctx.clearRect(0, 0, size, size);
+
+  if (wheelActiveStudents.length === 0) {
+    // Vẽ vòng quay trống
+    ctx.beginPath();
+    ctx.arc(center, center, radius, 0, 2 * Math.PI);
+    ctx.fillStyle = '#F8FAFC';
+    ctx.fill();
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#E2E8F0';
+    ctx.stroke();
+
+    ctx.fillStyle = '#94A3B8';
+    ctx.font = 'bold 28px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Vòng quay trống. Ấn Reset!', center, center);
+    return;
+  }
+
+  const sliceAngle = (2 * Math.PI) / wheelActiveStudents.length;
+
+  for (let i = 0; i < wheelActiveStudents.length; i++) {
+    const startAngle = i * sliceAngle + wheelRotationAngle;
+    const endAngle = startAngle + sliceAngle;
+
+    // Vẽ lát cắt màu
+    ctx.beginPath();
+    ctx.moveTo(center, center);
+    ctx.arc(center, center, radius, startAngle, endAngle);
+    ctx.fillStyle = wheelColors[i % wheelColors.length];
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.stroke();
+
+    // Vẽ tên học sinh
+    ctx.save();
+    ctx.translate(center, center);
+    ctx.rotate(startAngle + sliceAngle / 2);
+    
+    ctx.fillStyle = '#1E293B';
+    ctx.font = 'bold 24px Inter, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    
+    // Cắt tên nếu quá dài để không bị đè lên tâm
+    let displayName = wheelActiveStudents[i].name;
+    if (displayName.length > 15) displayName = displayName.substring(0, 13) + '...';
+    
+    ctx.fillText(displayName, radius - 40, 0);
+    ctx.restore();
+  }
+
+  // Vẽ vòng tròn trung tâm (nút SPIN)
+  ctx.beginPath();
+  ctx.arc(center, center, 65, 0, 2 * Math.PI);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fill();
+  ctx.lineWidth = 6;
+  ctx.strokeStyle = '#FF9800';
+  ctx.stroke();
+
+  // Chữ SPIN ở tâm
+  ctx.fillStyle = '#F57C00';
+  ctx.font = '900 28px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('SPIN', center, center);
+}
+
+function shuffleWheel() {
+  // Fisher-Yates shuffle xáo trộn ngẫu nhiên
+  for (let i = wheelActiveStudents.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [wheelActiveStudents[i], wheelActiveStudents[j]] = [wheelActiveStudents[j], wheelActiveStudents[i]];
+  }
+  const list = document.getElementById('wheel-names-list');
+  if (list) {
+    list.innerHTML = '';
+    wheelActiveStudents.forEach(st => {
+      list.appendChild(createEl('div', { className: 'wheel-name-badge', text: st.name }));
+    });
+  }
+  drawWheel();
+}
+
+function resetWheel(cls) {
+  wheelActiveStudents = [...cls.students];
+  const list = document.getElementById('wheel-names-list');
+  if (list) {
+    list.innerHTML = '';
+    wheelActiveStudents.forEach(st => {
+      list.appendChild(createEl('div', { className: 'wheel-name-badge', text: st.name }));
+    });
+  }
+  const counter = document.getElementById('wheel-counter');
+  if (counter) counter.textContent = `Còn lại: ${wheelActiveStudents.length}/${cls.students.length}`;
+  drawWheel();
+}
+
+function spinWheel(cls) {
+  if (wheelIsSpinning || wheelActiveStudents.length === 0) return;
+  wheelIsSpinning = true;
+
+  const startAngle = wheelRotationAngle % (2 * Math.PI);
+  // Quay ít nhất 5 vòng (10 * PI) cộng thêm một góc ngẫu nhiên
+  const additionalSpin = 10 * Math.PI + Math.random() * 8 * Math.PI;
+  const targetAngle = startAngle + additionalSpin;
+  const duration = 4000;
+  const startTime = performance.now();
+
+  function animate(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    
+    // Easing cubic ease-out
+    const easeOutProgress = 1 - Math.pow(1 - progress, 3);
+    wheelRotationAngle = startAngle + (targetAngle - startAngle) * easeOutProgress;
+    
+    drawWheel();
+
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    } else {
+      wheelIsSpinning = false;
+      
+      const sliceAngle = (2 * Math.PI) / wheelActiveStudents.length;
+      const finalAngle = wheelRotationAngle % (2 * Math.PI);
+      const normalizedAngle = (2 * Math.PI - finalAngle) % (2 * Math.PI);
+      const winnerIndex = Math.floor(normalizedAngle / sliceAngle);
+      
+      const winner = wheelActiveStudents[winnerIndex];
+      showWinnerModal(winner, cls);
+    }
+  }
+
+  requestAnimationFrame(animate);
+}
+
+function showWinnerModal(winner, cls) {
+  const modal = document.getElementById('wheel-winner-modal');
+  const nameEl = document.getElementById('wheel-winner-name');
+  if (!modal || !nameEl) return;
+
+  nameEl.textContent = winner.name;
+  modal.classList.add('show');
+
+  // Khởi động pháo hoa giấy chúc mừng
+  startConfetti();
+
+  const buttons = modal.querySelectorAll('.winner-btn');
+  buttons.forEach(btn => {
+    btn.onclick = async () => {
+      const pointsToAdd = parseInt(btn.getAttribute('data-points'), 10);
+      
+      modal.classList.remove('show');
+      stopConfetti();
+
+      // Nếu cộng điểm, thực hiện cộng điểm trực tiếp
+      if (pointsToAdd > 0) {
+        try {
+          await doUpdatePoints(cls.id, winner.id, pointsToAdd);
+        } catch (err) {
+          showError('Không thể cộng điểm: ' + err.message);
+        }
+      }
+
+      // Xóa học sinh khỏi vòng quay trong lượt chơi này
+      wheelActiveStudents = wheelActiveStudents.filter(s => s.id !== winner.id);
+      
+      // Vẽ lại giao diện vòng quay
+      renderWheel(cls);
+    };
+  });
+}
+
+function startConfetti() {
+  const container = document.getElementById('confetti-container');
+  if (!container) return;
+  container.innerHTML = '';
+  
+  const colors = ['#FF4565', '#35B978', '#FF9800', '#2B6CB0', '#805AD5', '#ECC94B'];
+  
+  for (let i = 0; i < 60; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti';
+    el.style.left = Math.random() * 100 + '%';
+    el.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+    el.style.width = Math.random() * 6 + 6 + 'px';
+    el.style.height = Math.random() * 6 + 6 + 'px';
+    el.style.animationDelay = Math.random() * 2 + 's';
+    el.style.animationDuration = Math.random() * 2 + 1.5 + 's';
+    container.appendChild(el);
+  }
+}
+
+function stopConfetti() {
+  const container = document.getElementById('confetti-container');
+  if (container) container.innerHTML = '';
+}
+
 
 

@@ -1357,3 +1357,204 @@ body:not(.is-editing) #add-student-container {
     transform: scale(1.1);
 }
 
+/* ─── WHEEL OF NAMES SECTION ─── */
+.wheel-section {
+    margin-top: 40px;
+    width: 100%;
+    padding: 30px 24px;
+    background: #FFFFFF;
+    border-radius: var(--card-radius);
+    border: 1.5px solid #E6EAF2;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
+    border-top: 4px solid var(--primary-color);
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.wheel-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    width: 100%;
+}
+
+.wheel-header h2 {
+    font-size: 1.6rem;
+    color: var(--primary-dark);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    font-weight: 800;
+}
+
+.wheel-body {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+}
+
+.wheel-canvas-container {
+    position: relative;
+    width: 340px;
+    height: 340px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.wheel-canvas-container canvas {
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+/* Kim chỉ hướng bên phải chỉ vào tâm */
+.wheel-pointer {
+    position: absolute;
+    right: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-top: 15px solid transparent;
+    border-bottom: 15px solid transparent;
+    border-right: 25px solid #E53E3E; /* Kim màu đỏ */
+    z-index: 10;
+    filter: drop-shadow(-2px 2px 4px rgba(0,0,0,0.15));
+}
+
+.wheel-controls {
+    flex: 1;
+    min-width: 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    height: 340px;
+}
+
+.wheel-buttons {
+    display: flex;
+    gap: 12px;
+}
+
+.wheel-btn {
+    flex: 1;
+    padding: 10px 16px;
+    font-size: 1rem;
+    font-weight: 700;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 44px;
+}
+
+.wheel-btn-shuffle {
+    background: #FFF4E3;
+    color: #F57C00;
+    border: 1px solid #FFB84D;
+}
+
+.wheel-btn-shuffle:hover {
+    background: #FFE8C2;
+    transform: translateY(-2px);
+}
+
+.wheel-btn-reset {
+    background: #F1F5F9;
+    color: #475569;
+    border: 1px solid #CBD5E1;
+}
+
+.wheel-btn-reset:hover {
+    background: #E2E8F0;
+    transform: translateY(-2px);
+}
+
+.wheel-list-container {
+    flex: 1;
+    border: 1.5px solid #E6EAF2;
+    border-radius: 12px;
+    padding: 14px;
+    overflow-y: auto;
+    background: #F8FAFC;
+    max-height: 280px;
+}
+
+.wheel-list-header {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #64748B;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.wheel-names-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-content: flex-start;
+}
+
+.wheel-name-badge {
+    padding: 6px 12px;
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #334155;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    animation: fadeIn 0.2s ease-out;
+}
+
+.winner-btn.winner-add-btn {
+    background: #FFF4E3;
+    color: #F57C00;
+    border: 1.5px solid #FFB84D;
+    font-size: 1.2rem;
+    font-weight: 800;
+    padding: 12px 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: var(--transition);
+    height: auto;
+}
+
+.winner-btn.winner-add-btn:hover {
+    background: #FFE8C2;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(245, 124, 0, 0.2);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* Hiệu ứng Pháo hoa giấy bay */
+.confetti {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #f00;
+    opacity: 0.8;
+    z-index: 0;
+    animation: confetti-fall 3s linear infinite;
+}
+
+@keyframes confetti-fall {
+    0% { transform: translateY(-50px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(500px) rotate(360deg); opacity: 0; }
+}
+
