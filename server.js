@@ -248,14 +248,27 @@ app.post('/api/classes', requireAdmin, async (req, res) => {
 // PATCH /api/classes/:classId  (admin)
 app.patch('/api/classes/:classId', requireAdmin, async (req, res) => {
   const { classId } = req.params;
-  const validName = validateName(req.body.name);
-  if (!validName) return res.status(400).json({ error: 'Tên lớp không hợp lệ.' });
+  const updateData = {};
+  
+  if (req.body.name !== undefined) {
+    const validName = validateName(req.body.name);
+    if (!validName) return res.status(400).json({ error: 'Tên lớp không hợp lệ.' });
+    updateData.name = validName;
+  }
+  
+  if (req.body.gifUrl !== undefined) {
+    updateData.gifUrl = req.body.gifUrl; // có thể là null (để xóa gif)
+  }
+
+  if (Object.keys(updateData).length === 0) {
+    return res.status(400).json({ error: 'Không có dữ liệu cập nhật.' });
+  }
 
   try {
     const classesColl = db.getClassesCollection();
     const result = await classesColl.findOneAndUpdate(
       { id: classId },
-      { $set: { name: validName } },
+      { $set: updateData },
       { returnDocument: 'after' }
     );
 

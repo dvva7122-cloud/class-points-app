@@ -203,6 +203,16 @@ function renderCurrentClass() {
 
   classInfoEl.style.display = 'flex';
   nameEl.textContent = cls.name;
+  
+  const gifEl = document.getElementById('current-class-gif');
+  if (cls.gifUrl) {
+    gifEl.src = cls.gifUrl;
+    gifEl.style.display = 'inline-block';
+  } else {
+    gifEl.src = '';
+    gifEl.style.display = 'none';
+  }
+
   gridEl.innerHTML = '';
 
   if (cls.students.length === 0) {
@@ -557,6 +567,20 @@ async function doEditClassName() {
   }
 }
 
+async function doEditClassGif() {
+  const cls = getCurrentClass();
+  if (!cls) return;
+  const url = prompt('Nhập link ảnh GIF để trang trí (để trống nếu muốn xóa):', cls.gifUrl || '');
+  if (url === null) return; // Cancel
+  try {
+    const res = await api('PATCH', `/api/classes/${currentClassId}`, { gifUrl: url });
+    cls.gifUrl = res.gifUrl;
+    renderCurrentClass();
+  } catch (err) {
+    if (err.message !== 'Unauthorized') showError(err.message);
+  }
+}
+
 async function doDeleteClass() {
   const cls = getCurrentClass();
   if (!cls) return;
@@ -778,6 +802,7 @@ function setupListeners() {
   // Class actions
   document.getElementById('add-class-btn').addEventListener('click', doAddClass);
   document.getElementById('edit-class-btn').addEventListener('click', doEditClassName);
+  document.getElementById('edit-class-gif-btn').addEventListener('click', doEditClassGif);
   document.getElementById('delete-class-btn').addEventListener('click', doDeleteClass);
 
   // Student actions
