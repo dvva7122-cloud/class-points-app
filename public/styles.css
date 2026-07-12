@@ -442,7 +442,7 @@ body.custom-bg-active .app-background {
 }
 
 .student-card {
-    height: 220px;         /* Giảm từ 300px → 220px để hiện nhiều thẻ hơn khi zoom nhỏ */
+    height: 220px;
     padding: 10px 12px 10px;
     text-align: center;
     display: flex;
@@ -454,8 +454,11 @@ body.custom-bg-active .app-background {
     border-radius: var(--card-radius);
     background: #FFFFFF;
     box-shadow: 0 2px 12px rgba(15, 23, 42, 0.07);
-    transition: var(--transition);
+    transition: var(--transition);\
     overflow: hidden;
+    user-select: none;     /* Không cho bôi đen text → hết con trỏ I-beam */
+    -webkit-user-select: none;
+    cursor: default;
 }
 
 /* Thanh cam nhấn ở đầu thẻ */
