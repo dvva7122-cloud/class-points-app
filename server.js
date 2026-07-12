@@ -332,9 +332,11 @@ app.post('/api/classes/:classId/students', requireAdmin, async (req, res) => {
   const validName = validateName(req.body.name);
   if (!validName) return res.status(400).json({ error: 'Tên học sinh không hợp lệ.' });
 
+  const dob = typeof req.body.dob === 'string' ? req.body.dob.trim() : null;
+
   try {
     const classesColl = db.getClassesCollection();
-    const newStudent = { id: generateId('s'), name: validName, points: 0, created_at: Date.now() };
+    const newStudent = { id: generateId('s'), name: validName, dob: dob, points: 0, created_at: Date.now() };
     
     const result = await classesColl.updateOne(
       { id: classId },
@@ -362,11 +364,15 @@ app.post('/api/classes/:classId/students/bulk', requireAdmin, async (req, res) =
 
   const newStudents = [];
   for (const raw of students) {
-    const validName = validateName(raw);
+    let rawName = typeof raw === 'string' ? raw : raw.name;
+    let rawDob = (typeof raw === 'object' && raw.dob) ? String(raw.dob).trim() : null;
+    
+    const validName = validateName(rawName);
     if (!validName) continue;
     newStudents.push({
       id: generateId('s'),
       name: validName,
+      dob: rawDob,
       points: 0,
       created_at: Date.now()
     });
@@ -394,14 +400,26 @@ app.post('/api/classes/:classId/students/bulk', requireAdmin, async (req, res) =
 // PATCH /api/classes/:classId/students/:studentId  (admin) - Đổi tên
 app.patch('/api/classes/:classId/students/:studentId', requireAdmin, async (req, res) => {
   const { classId, studentId } = req.params;
-  const validName = validateName(req.body.name);
-  if (!validName) return res.status(400).json({ error: 'Tên học sinh không hợp lệ.' });
+  
+  const updateFields = {};
+  if (req.body.name !== undefined) {
+    const validName = validateName(req.body.name);
+    if (!validName) return res.status(400).json({ error: 'Tên học sinh không hợp lệ.' });
+    updateFields['students.$.name'] = validName;
+  }
+  if (req.body.dob !== undefined) {
+    updateFields['students.$.dob'] = req.body.dob ? String(req.body.dob).trim() : null;
+  }
+  
+  if (Object.keys(updateFields).length === 0) {
+    return res.status(400).json({ error: 'Không có dữ liệu cập nhật.' });
+  }
 
   try {
     const classesColl = db.getClassesCollection();
     const result = await classesColl.findOneAndUpdate(
       { id: classId, 'students.id': studentId },
-      { $set: { 'students.$.name': validName } },
+      { $set: updateFields },
       { returnDocument: 'after' }
     );
 

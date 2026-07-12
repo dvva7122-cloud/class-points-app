@@ -360,8 +360,21 @@ function renderStudentCard(student, classId, maxPts) {
   const gridEl   = document.getElementById('student-grid');
   const isTop    = maxPts > 0 && student.points === maxPts;
 
+  const today = new Date();
+  const d = String(today.getDate()).padStart(2, '0');
+  const m = String(today.getMonth() + 1).padStart(2, '0');
+  const todayStr = `${d}/${m}`;
+  let isBirthday = false;
+  if (student.dob) {
+    const dobParts = student.dob.split('/');
+    if (dobParts.length >= 2) {
+      const dobStr = `${dobParts[0].padStart(2, '0')}/${dobParts[1].padStart(2, '0')}`;
+      if (dobStr === todayStr) isBirthday = true;
+    }
+  }
+
   const card = createEl('div', {
-    className: `student-card ${themeState.useFrames ? 'with-frame' : ''} ${isTop ? 'is-top' : ''}`,
+    className: `student-card ${themeState.useFrames ? 'with-frame' : ''} ${isTop ? 'is-top' : ''} ${isBirthday ? 'is-birthday' : ''}`,
   });
   card.dataset.studentId = student.id;
 
@@ -375,6 +388,11 @@ function renderStudentCard(student, classId, maxPts) {
 
   const nameEl = createEl('div', { className: 'student-name', text: student.name });
   nameRow.appendChild(nameEl);
+
+  if (isBirthday) {
+    const cake = createEl('span', { className: 'birthday-icon', text: '🎂', title: 'Chúc mừng sinh nhật!' });
+    nameRow.appendChild(cake);
+  }
 
   // Nút sửa tên (chỉ hiện khi is-editing)
   const editBtn = createEl('button', { className: 'action-icon edit-icon admin-edit-only', title: 'Đổi tên' });
@@ -513,14 +531,86 @@ function doUpdatePoints(classId, studentId, change) {
 
 
 
+// ─── Custom Modal System ──────────────────────────────────────────────────
+function showCustomPrompt(title, fields) {
+  return new Promise((resolve) => {
+    const modal = document.getElementById('custom-prompt-modal');
+    if (!modal) {
+      // Fallback nếu không tìm thấy modal
+      const res = {};
+      for (const field of fields) {
+        const val = prompt(field.label, field.value || '');
+        if (val === null) return resolve(null);
+        res[field.key] = val;
+      }
+      return resolve(res);
+    }
+    
+    document.getElementById('custom-prompt-title').textContent = title;
+    const body = document.getElementById('custom-prompt-body');
+    body.innerHTML = '';
+    
+    const inputs = [];
+    fields.forEach(field => {
+      const group = createEl('div', { className: 'prompt-input-group' });
+      const label = createEl('label', { text: field.label });
+      const input = createEl('input', { type: field.type || 'text' });
+      if (field.value) input.value = field.value;
+      if (field.placeholder) input.placeholder = field.placeholder;
+      
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') submitBtn.click();
+        if (e.key === 'Escape') cancelBtn.click();
+      });
+
+      group.appendChild(label);
+      group.appendChild(input);
+      body.appendChild(group);
+      inputs.push({ key: field.key, el: input });
+    });
+
+    const cancelBtn = document.getElementById('custom-prompt-cancel');
+    const submitBtn = document.getElementById('custom-prompt-submit');
+    
+    const cleanup = () => {
+      cancelBtn.onclick = null;
+      submitBtn.onclick = null;
+      modal.classList.remove('show');
+    };
+
+    cancelBtn.onclick = () => {
+      cleanup();
+      resolve(null);
+    };
+
+    submitBtn.onclick = () => {
+      const result = {};
+      inputs.forEach(i => result[i.key] = i.el.value.trim());
+      cleanup();
+      resolve(result);
+    };
+
+    modal.classList.add('show');
+    if (inputs.length > 0) inputs[0].el.focus();
+  });
+}
+
 async function doEditStudentName(classId, studentId, currentName) {
-  const newName = prompt('Nhập tên mới cho học sinh:', currentName);
-  if (!newName || !newName.trim()) return;
+  const cls = appData.find(c => c.id === classId);
+  const student = cls && cls.students.find(s => s.id === studentId);
+  
+  const res = await showCustomPrompt('Sửa thông tin học sinh', [
+    { key: 'name', label: 'Tên học sinh', value: student ? student.name : currentName },
+    { key: 'dob', label: 'Ngày sinh (Ví dụ: 15/08)', value: student ? (student.dob || '') : '', placeholder: 'DD/MM hoặc DD/MM/YYYY' }
+  ]);
+  if (!res || !res.name) return;
+  
   try {
-    const res = await api('PATCH', `/api/classes/${classId}/students/${studentId}`, { name: newName });
-    const cls     = appData.find(c => c.id === classId);
-    const student = cls && cls.students.find(s => s.id === studentId);
-    if (student) student.name = res.name;
+    const patchRes = await api('PATCH', `/api/classes/${classId}/students/${studentId}`, { name: res.name, dob: res.dob });
+    if (student) {
+      student.name = patchRes.name;
+      student.dob = patchRes.dob;
+    }
     renderCurrentClass();
   } catch (err) {
     if (err.message !== 'Unauthorized') showError(err.message);
@@ -540,12 +630,16 @@ async function doDeleteStudent(classId, studentId, name) {
 }
 
 async function doAddStudent() {
-  const name = prompt('Nhập tên học sinh mới:');
-  if (!name || !name.trim()) return;
+  const res = await showCustomPrompt('Thêm học sinh mới', [
+    { key: 'name', label: 'Tên học sinh' },
+    { key: 'dob', label: 'Ngày sinh (Ví dụ: 15/08)', placeholder: 'Để trống nếu không rõ' }
+  ]);
+  if (!res || !res.name) return;
+
   try {
-    const res = await api('POST', `/api/classes/${currentClassId}/students`, { name });
+    const newStudent = await api('POST', `/api/classes/${currentClassId}/students`, { name: res.name, dob: res.dob });
     const cls  = appData.find(c => c.id === currentClassId);
-    if (cls) cls.students.push(res);
+    if (cls) cls.students.push(newStudent);
     renderCurrentClass();
   } catch (err) {
     if (err.message !== 'Unauthorized') showError(err.message);
@@ -555,13 +649,15 @@ async function doAddStudent() {
 async function doEditClassName() {
   const cls = getCurrentClass();
   if (!cls) return;
-  const newName = prompt('Nhập tên mới cho lớp:', cls.name);
-  if (!newName || !newName.trim()) return;
+  const res = await showCustomPrompt('Sửa tên lớp', [
+    { key: 'name', label: 'Tên lớp', value: cls.name }
+  ]);
+  if (!res || !res.name) return;
   try {
-    const res = await api('PATCH', `/api/classes/${currentClassId}`, { name: newName });
-    cls.name = res.name;
+    const patchRes = await api('PATCH', `/api/classes/${currentClassId}`, { name: res.name });
+    cls.name = patchRes.name;
     renderClassTabs();
-    document.getElementById('current-class-name').textContent = res.name;
+    document.getElementById('current-class-name').textContent = patchRes.name;
   } catch (err) {
     if (err.message !== 'Unauthorized') showError(err.message);
   }
@@ -570,11 +666,13 @@ async function doEditClassName() {
 async function doEditClassGif() {
   const cls = getCurrentClass();
   if (!cls) return;
-  const url = prompt('Nhập link ảnh GIF để trang trí (để trống nếu muốn xóa):', cls.gifUrl || '');
-  if (url === null) return; // Cancel
+  const res = await showCustomPrompt('Trang trí lớp học', [
+    { key: 'url', label: 'Link ảnh GIF (để trống nếu muốn xóa)', value: cls.gifUrl || '' }
+  ]);
+  if (!res) return; // Cancel
   try {
-    const res = await api('PATCH', `/api/classes/${currentClassId}`, { gifUrl: url });
-    cls.gifUrl = res.gifUrl;
+    const patchRes = await api('PATCH', `/api/classes/${currentClassId}`, { gifUrl: res.url });
+    cls.gifUrl = patchRes.gifUrl;
     renderCurrentClass();
   } catch (err) {
     if (err.message !== 'Unauthorized') showError(err.message);
@@ -597,12 +695,14 @@ async function doDeleteClass() {
 }
 
 async function doAddClass() {
-  const name = prompt('Nhập tên lớp mới:');
-  if (!name || !name.trim()) return;
+  const res = await showCustomPrompt('Thêm lớp mới', [
+    { key: 'name', label: 'Tên lớp' }
+  ]);
+  if (!res || !res.name) return;
   try {
-    const res = await api('POST', '/api/classes', { name });
-    appData.push(res);
-    currentClassId = res.id;
+    const newClass = await api('POST', '/api/classes', { name: res.name });
+    appData.push(newClass);
+    currentClassId = newClass.id;
     renderClassTabs();
     renderCurrentClass();
   } catch (err) {
@@ -612,13 +712,14 @@ async function doAddClass() {
 
 async function doEditTitle() {
   const current = document.getElementById('app-main-title').textContent;
-  const newTitle = prompt('Nhập tiêu đề mới:', current);
-  if (!newTitle || !newTitle.trim()) return;
+  const res = await showCustomPrompt('Đổi Tiêu Đề', [
+    { key: 'title', label: 'Tiêu đề trang web', value: current }
+  ]);
+  if (!res || !res.title) return;
   try {
-    const res = await api('PATCH', '/api/settings', { title: newTitle });
-    document.getElementById('app-main-title').textContent = res.title;
-    // Lưu preference vào localStorage để hiển thị đúng khi reload trước khi fetch
-    localStorage.setItem('classPointsTitle', res.title);
+    const patchRes = await api('PATCH', '/api/settings', { title: res.title });
+    document.getElementById('app-main-title').textContent = patchRes.title;
+    localStorage.setItem('classPointsTitle', patchRes.title);
   } catch (err) {
     if (err.message !== 'Unauthorized') showError(err.message);
   }
@@ -641,29 +742,38 @@ async function handleExcelUpload(e) {
         return;
       }
 
-      // Tìm cột tên
+      // Tìm cột tên và cột ngày sinh
       let nameCol = 0;
+      let dobCol = -1;
       const header = rows[0];
       for (let i = 0; i < header.length; i++) {
         const h = String(header[i] || '').toLowerCase();
         if (h.includes('tên') || h.includes('name') || h.includes('họ')) {
           nameCol = i;
-          break;
+        }
+        if (h.includes('sinh') || h.includes('dob') || h.includes('birthday')) {
+          dobCol = i;
         }
       }
 
-      const names = [];
+      const studentsToImport = [];
       for (let i = 1; i < rows.length; i++) {
         const val = rows[i][nameCol];
-        if (val) names.push(String(val).trim());
+        if (val) {
+          const studentObj = { name: String(val).trim() };
+          if (dobCol !== -1 && rows[i][dobCol]) {
+            studentObj.dob = String(rows[i][dobCol]).trim();
+          }
+          studentsToImport.push(studentObj);
+        }
       }
 
-      if (names.length === 0) {
+      if (studentsToImport.length === 0) {
         alert('Không tìm thấy tên học sinh trong file.');
         return;
       }
 
-      const res = await api('POST', `/api/classes/${currentClassId}/students/bulk`, { students: names });
+      const res = await api('POST', `/api/classes/${currentClassId}/students/bulk`, { students: studentsToImport });
       alert(`Đã thêm thành công ${res.added} học sinh!`);
       // Reload data
       await loadAllData();

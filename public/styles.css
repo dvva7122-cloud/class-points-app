@@ -1123,6 +1123,52 @@ body:not(.is-editing) #add-student-container {
     }
 }
 
+/* ─── BIRTHDAY FEATURE ─── */
+.student-card.is-birthday {
+    border: 2px solid #EC4899 !important;
+    box-shadow: 0 0 15px rgba(236, 72, 153, 0.4) !important;
+    background: linear-gradient(135deg, #ffffff 0%, #fff0f5 100%);
+}
+
+.birthday-icon {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 1.2rem;
+    animation: bounce-cake 1.5s infinite;
+}
+
+@keyframes bounce-cake {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-5px) scale(1.1); }
+}
+
+/* ─── CUSTOM PROMPT MODAL ─── */
+.prompt-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.prompt-input-group label {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #475569;
+}
+
+.prompt-input-group input {
+    padding: 10px 14px;
+    border: 1.5px solid #CBD5E1;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: var(--transition);
+    outline: none;
+}
+
+.prompt-input-group input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(53, 185, 120, 0.2);
+}
+
 /* ─── UPCOMING EVENTS ─── */
 .events-section {
     margin-top: 40px;
