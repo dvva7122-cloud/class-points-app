@@ -1171,35 +1171,33 @@ body:not(.is-editing) #add-student-container {
 }
 
 .events-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 20px;
-    justify-content: center; /* Ra giữa */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
 }
 
 .event-card {
     position: relative;
     border-radius: 12px;
     overflow: hidden;
-    aspect-ratio: 16/9;
-    box-shadow: var(--shadow-xs);
+    box-shadow: var(--shadow-sm);
     border: 1px solid #E6EAF2;
     transition: var(--transition);
-    max-width: 400px;
-    margin: 0 auto; /* Căn giữa card */
+    max-width: 800px; /* Ảnh to tối đa 800px */
     width: 100%;
+    margin: 0 auto;
 }
 
 .event-card:hover {
     transform: translateY(-4px);
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-md);
     border-color: #FFB84D;
 }
 
 .event-img {
     width: 100%;
-    height: 100%;
-    object-fit: cover;
+    height: auto; /* Giữ nguyên tỷ lệ gốc của ảnh */
     display: block;
 }
 
