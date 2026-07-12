@@ -1257,33 +1257,46 @@ function spinWheel(cls) {
   if (wheelIsSpinning || wheelActiveStudents.length === 0) return;
   wheelIsSpinning = true;
 
-  const startAngle = wheelRotationAngle % (2 * Math.PI);
-  // Quay ít nhất 5 vòng (10 * PI) cộng thêm một góc ngẫu nhiên
-  const additionalSpin = 10 * Math.PI + Math.random() * 8 * Math.PI;
-  const targetAngle = startAngle + additionalSpin;
-  const duration = 4000;
+  const n = wheelActiveStudents.length;
+  const sliceAngle = (2 * Math.PI) / n;
+
+  // 1. Chọn ngẫu nhiên người thắng trước
+  const winnerIndex = Math.floor(Math.random() * n);
+
+  // 2. Tính góc dừng sao cho giữa ô người thắng CĂN ĐÚNG mũi tên bên phải (góc 0 / 2π)
+  //    Tâm của slice winnerIndex phải nằm tại góc 0 (mũi tên bên phải).
+  //    Tâm slice = winnerIndex * sliceAngle + sliceAngle/2 + wheelRotationAngle ≡ 0 (mod 2π)
+  //    => wheelRotationAngle = -(winnerIndex * sliceAngle + sliceAngle/2) (mod 2π)
+  const targetOffset = (-(winnerIndex * sliceAngle + sliceAngle / 2)) % (2 * Math.PI);
+  const normalizedTarget = ((targetOffset % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+
+  // 3. Tổng số góc quay = nhiều vòng đầy (chiều kim đồng hồ = âm, nhưng canvas tăng dương = CKĐ)
+  //    Ta dùng góc tăng dần (CKĐ). Quay thêm ít nhất 8 vòng từ vị trí hiện tại.
+  const currentAngle = ((wheelRotationAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+  let delta = normalizedTarget - currentAngle;
+  if (delta <= 0) delta += 2 * Math.PI; // Đảm bảo luôn quay về phía trước (CKĐ)
+  const fullSpins = Math.floor(Math.random() * 4 + 6) * 2 * Math.PI; // 6–9 vòng ngẫu nhiên
+  const totalSpin = fullSpins + delta;
+
+  const startAngle = wheelRotationAngle;
+  const targetAngle = startAngle + totalSpin;
+  const duration = 4500;
   const startTime = performance.now();
 
   function animate(now) {
     const elapsed = now - startTime;
     const progress = Math.min(elapsed / duration, 1);
-    
-    // Easing cubic ease-out
-    const easeOutProgress = 1 - Math.pow(1 - progress, 3);
-    wheelRotationAngle = startAngle + (targetAngle - startAngle) * easeOutProgress;
-    
+
+    // Ease-out quintic — chậm dần thật tự nhiên
+    const eased = 1 - Math.pow(1 - progress, 5);
+    wheelRotationAngle = startAngle + totalSpin * eased;
+
     drawWheel();
 
     if (progress < 1) {
       requestAnimationFrame(animate);
     } else {
       wheelIsSpinning = false;
-      
-      const sliceAngle = (2 * Math.PI) / wheelActiveStudents.length;
-      const finalAngle = wheelRotationAngle % (2 * Math.PI);
-      const normalizedAngle = (2 * Math.PI - finalAngle) % (2 * Math.PI);
-      const winnerIndex = Math.floor(normalizedAngle / sliceAngle);
-      
       const winner = wheelActiveStudents[winnerIndex];
       showWinnerModal(winner, cls);
     }
