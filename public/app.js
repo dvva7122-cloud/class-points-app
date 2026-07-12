@@ -1082,6 +1082,12 @@ function renderWheel(cls) {
   const container = document.getElementById('wheel-container');
   if (!container) return;
 
+  // Chỉ admin mới được dùng vòng quay
+  if (!isAdmin) {
+    container.innerHTML = '';
+    return;
+  }
+
   // Nếu lớp không có học sinh, ẩn vòng quay đi
   if (!cls || !cls.students || cls.students.length === 0) {
     container.innerHTML = '';
@@ -1103,26 +1109,25 @@ function renderWheel(cls) {
 
   const section = createEl('div', { className: 'wheel-section' });
   const header = createEl('div', { className: 'wheel-header' });
-  const title = createEl('h2', { text: '🎡 Vòng Quay Ngẫu Nhiên (Wheel of Names)' });
+  const title = createEl('h2', { text: '🎡 Wheel of Names' }); // Bỏ tiếng Việt và dấu ngoặc đơn
   header.appendChild(title);
   section.appendChild(header);
 
   const body = createEl('div', { className: 'wheel-body' });
 
-  // Cột trái: Vòng quay canvas
+  // Vòng quay canvas (làm to ra 450px)
   const canvasContainer = createEl('div', { className: 'wheel-canvas-container' });
   const canvas = createEl('canvas', { id: 'wheel-canvas' });
-  canvas.width = 680;
-  canvas.height = 680;
-  canvas.style.width = '340px';
-  canvas.style.height = '340px';
+  canvas.width = 900;
+  canvas.height = 900;
+  canvas.style.width = '450px';
+  canvas.style.height = '450px';
   
   canvasContainer.appendChild(canvas);
   canvasContainer.appendChild(createEl('div', { className: 'wheel-pointer' }));
   body.appendChild(canvasContainer);
 
-  // Cột phải: Bộ điều khiển
-  const controls = createEl('div', { className: 'wheel-controls' });
+  // Bộ điều khiển nằm bên dưới vòng quay
   const buttonsRow = createEl('div', { className: 'wheel-buttons' });
   
   const shuffleBtn = createEl('button', { id: 'wheel-btn-shuffle', className: 'wheel-btn wheel-btn-shuffle' });
@@ -1141,26 +1146,8 @@ function renderWheel(cls) {
   
   buttonsRow.appendChild(shuffleBtn);
   buttonsRow.appendChild(resetBtn);
-  controls.appendChild(buttonsRow);
+  body.appendChild(buttonsRow);
 
-  // Danh sách học sinh còn lại
-  const listContainer = createEl('div', { className: 'wheel-list-container' });
-  const listHeader = createEl('div', { className: 'wheel-list-header' });
-  listHeader.appendChild(createEl('span', { text: 'Danh sách quay' }));
-  
-  const counter = createEl('span', { id: 'wheel-counter', text: `Còn lại: ${wheelActiveStudents.length}/${cls.students.length}` });
-  listHeader.appendChild(counter);
-  listContainer.appendChild(listHeader);
-
-  const namesList = createEl('div', { id: 'wheel-names-list', className: 'wheel-names-list' });
-  wheelActiveStudents.forEach(st => {
-    const badge = createEl('div', { className: 'wheel-name-badge', text: st.name });
-    namesList.appendChild(badge);
-  });
-  listContainer.appendChild(namesList);
-  controls.appendChild(listContainer);
-  
-  body.appendChild(controls);
   section.appendChild(body);
   container.appendChild(section);
 
@@ -1170,16 +1157,17 @@ function renderWheel(cls) {
     spinWheel(cls);
   });
 
-  drawWheel();
+  // Truyền trực tiếp element canvas vừa tạo vào để vẽ ngay lập tức, khắc phục lỗi canvas trắng
+  drawWheel(canvas);
 }
 
-function drawWheel() {
-  const canvas = document.getElementById('wheel-canvas');
+function drawWheel(canvasEl) {
+  const canvas = canvasEl || document.getElementById('wheel-canvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   const size = canvas.width;
   const center = size / 2;
-  const radius = center - 20;
+  const radius = center - 30; // Chừa lề vẽ cho đẹp
 
   ctx.clearRect(0, 0, size, size);
 
@@ -1189,12 +1177,12 @@ function drawWheel() {
     ctx.arc(center, center, radius, 0, 2 * Math.PI);
     ctx.fillStyle = '#F8FAFC';
     ctx.fill();
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 6;
     ctx.strokeStyle = '#E2E8F0';
     ctx.stroke();
 
     ctx.fillStyle = '#94A3B8';
-    ctx.font = 'bold 28px Inter, sans-serif';
+    ctx.font = 'bold 36px Inter, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('Vòng quay trống. Ấn Reset!', center, center);
@@ -1213,7 +1201,7 @@ function drawWheel() {
     ctx.arc(center, center, radius, startAngle, endAngle);
     ctx.fillStyle = wheelColors[i % wheelColors.length];
     ctx.fill();
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3;
     ctx.strokeStyle = '#FFFFFF';
     ctx.stroke();
 
@@ -1223,7 +1211,7 @@ function drawWheel() {
     ctx.rotate(startAngle + sliceAngle / 2);
     
     ctx.fillStyle = '#1E293B';
-    ctx.font = 'bold 24px Inter, sans-serif';
+    ctx.font = 'bold 30px Inter, sans-serif'; // Tăng font size do canvas to lên 900px
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
     
@@ -1231,54 +1219,37 @@ function drawWheel() {
     let displayName = wheelActiveStudents[i].name;
     if (displayName.length > 15) displayName = displayName.substring(0, 13) + '...';
     
-    ctx.fillText(displayName, radius - 40, 0);
+    ctx.fillText(displayName, radius - 45, 0);
     ctx.restore();
   }
 
   // Vẽ vòng tròn trung tâm (nút SPIN)
   ctx.beginPath();
-  ctx.arc(center, center, 65, 0, 2 * Math.PI);
+  ctx.arc(center, center, 85, 0, 2 * Math.PI);
   ctx.fillStyle = '#FFFFFF';
   ctx.fill();
-  ctx.lineWidth = 6;
+  ctx.lineWidth = 8;
   ctx.strokeStyle = '#FF9800';
   ctx.stroke();
 
   // Chữ SPIN ở tâm
   ctx.fillStyle = '#F57C00';
-  ctx.font = '900 28px Inter, sans-serif';
+  ctx.font = '900 36px Inter, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText('SPIN', center, center);
 }
-
 function shuffleWheel() {
   // Fisher-Yates shuffle xáo trộn ngẫu nhiên
   for (let i = wheelActiveStudents.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [wheelActiveStudents[i], wheelActiveStudents[j]] = [wheelActiveStudents[j], wheelActiveStudents[i]];
   }
-  const list = document.getElementById('wheel-names-list');
-  if (list) {
-    list.innerHTML = '';
-    wheelActiveStudents.forEach(st => {
-      list.appendChild(createEl('div', { className: 'wheel-name-badge', text: st.name }));
-    });
-  }
   drawWheel();
 }
 
 function resetWheel(cls) {
   wheelActiveStudents = [...cls.students];
-  const list = document.getElementById('wheel-names-list');
-  if (list) {
-    list.innerHTML = '';
-    wheelActiveStudents.forEach(st => {
-      list.appendChild(createEl('div', { className: 'wheel-name-badge', text: st.name }));
-    });
-  }
-  const counter = document.getElementById('wheel-counter');
-  if (counter) counter.textContent = `Còn lại: ${wheelActiveStudents.length}/${cls.students.length}`;
   drawWheel();
 }
 

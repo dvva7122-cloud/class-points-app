@@ -1392,17 +1392,18 @@ body:not(.is-editing) #add-student-container {
 
 .wheel-body {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 40px;
-    flex-wrap: wrap;
+    gap: 20px;
+    width: 100%;
 }
 
 .wheel-canvas-container {
     position: relative;
-    width: 340px;
-    height: 340px;
+    width: 450px;
+    height: 450px;
+    max-width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1417,7 +1418,7 @@ body:not(.is-editing) #add-student-container {
 /* Kim chỉ hướng bên phải chỉ vào tâm */
 .wheel-pointer {
     position: absolute;
-    right: -10px;
+    right: -12px;
     top: 50%;
     transform: translateY(-50%);
     width: 0;
@@ -1429,18 +1430,13 @@ body:not(.is-editing) #add-student-container {
     filter: drop-shadow(-2px 2px 4px rgba(0,0,0,0.15));
 }
 
-.wheel-controls {
-    flex: 1;
-    min-width: 280px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    height: 340px;
-}
-
 .wheel-buttons {
     display: flex;
-    gap: 12px;
+    gap: 16px;
+    width: 100%;
+    max-width: 320px;
+    justify-content: center;
+    margin-top: 10px;
 }
 
 .wheel-btn {
@@ -1478,44 +1474,6 @@ body:not(.is-editing) #add-student-container {
 .wheel-btn-reset:hover {
     background: #E2E8F0;
     transform: translateY(-2px);
-}
-
-.wheel-list-container {
-    flex: 1;
-    border: 1.5px solid #E6EAF2;
-    border-radius: 12px;
-    padding: 14px;
-    overflow-y: auto;
-    background: #F8FAFC;
-    max-height: 280px;
-}
-
-.wheel-list-header {
-    font-size: 0.9rem;
-    font-weight: 700;
-    color: #64748B;
-    margin-bottom: 10px;
-    display: flex;
-    justify-content: space-between;
-}
-
-.wheel-names-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    align-content: flex-start;
-}
-
-.wheel-name-badge {
-    padding: 6px 12px;
-    background: #FFFFFF;
-    border: 1px solid #E2E8F0;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #334155;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-    animation: fadeIn 0.2s ease-out;
 }
 
 .winner-btn.winner-add-btn {
