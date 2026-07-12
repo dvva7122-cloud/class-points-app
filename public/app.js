@@ -378,79 +378,82 @@ function renderStudentCard(student, classId, maxPts) {
   });
   card.dataset.studentId = student.id;
 
-  // Tên + nút sửa/xóa
-  const nameRow = createEl('div', { className: 'student-name-container' });
-
-  if (isTop) {
-    const crown = createEl('span', { className: 'crown-icon', text: '👑', title: 'Người cao điểm nhất' });
-    nameRow.appendChild(crown);
-  }
-
-  const nameEl = createEl('div', { className: 'student-name', text: student.name });
-  nameRow.appendChild(nameEl);
-
-  if (isBirthday) {
-    const cake = createEl('span', { className: 'birthday-icon', text: '🎂', title: 'Chúc mừng sinh nhật!' });
-    nameRow.appendChild(cake);
-  }
-
-  // Nút sửa tên (chỉ hiện khi is-editing)
-  const editBtn = createEl('button', { className: 'action-icon edit-icon admin-edit-only', title: 'Đổi tên' });
+  // Tầng 0: Nút sửa/xóa lơ lửng
+  const absLayer = createEl('div', { className: 'absolute-buttons admin-edit-only' });
+  const editBtn = createEl('button', { className: 'action-icon edit-icon', title: 'Đổi tên' });
   editBtn.innerHTML = '<i class="fa-solid fa-pen"></i>';
   editBtn.addEventListener('click', () => doEditStudentName(classId, student.id, student.name));
-  nameRow.appendChild(editBtn);
-
-  // Nút xóa (chỉ hiện khi is-editing)
-  const delBtn = createEl('button', { className: 'action-icon delete-icon admin-edit-only', title: 'Xóa học sinh' });
+  
+  const delBtn = createEl('button', { className: 'action-icon delete-icon', title: 'Xóa học sinh' });
   delBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
   delBtn.addEventListener('click', () => doDeleteStudent(classId, student.id, student.name));
-  nameRow.appendChild(delBtn);
+  
+  absLayer.appendChild(editBtn);
+  absLayer.appendChild(delBtn);
+  card.appendChild(absLayer);
 
+  // Tầng 1: Khu vực Biểu tượng
+  const iconsContainer = createEl('div', { className: 'icons-container' });
+  if (isTop) {
+    const crown = createEl('span', { className: 'crown-icon', text: '👑', title: 'Người cao điểm nhất' });
+    iconsContainer.appendChild(crown);
+  }
+  if (isBirthday) {
+    const cake = createEl('span', { className: 'birthday-icon', text: '🎂', title: 'Chúc mừng sinh nhật!' });
+    iconsContainer.appendChild(cake);
+  }
+  card.appendChild(iconsContainer);
+
+  // Tầng 2: Tên Học Sinh
+  const nameRow = createEl('div', { className: 'student-name-container' });
+  const nameEl = createEl('div', { className: 'student-name', text: student.name });
+  nameRow.appendChild(nameEl);
   card.appendChild(nameRow);
 
   // Điểm (click để nhập trực tiếp khi là admin)
   const pointsRow = createEl('div', { className: 'points-display' });
   pointsRow.id = `points-${student.id}`;
-
+  
   const pointVal = createEl('span', { className: 'point-val', text: String(student.points) });
   pointsRow.appendChild(pointVal);
-  pointsRow.appendChild(document.createTextNode(' 🍊'));
+  pointsRow.appendChild(document.createTextNode(' '));
+  
+  const orangeEmoji = createEl('span', { className: 'orange-emoji', text: '🍊' });
+  pointsRow.appendChild(orangeEmoji);
 
-  // Click vào số điểm để nhập trực tiếp (chỉ khi admin)
   if (isAdmin) {
-    pointVal.style.cursor = 'pointer';
-    pointVal.title = 'Click để nhập điểm trực tiếp';
-    pointVal.addEventListener('click', () => {
+    pointsRow.style.cursor = 'pointer';
+    pointsRow.title = 'Nhấn để nhập điểm';
+    pointsRow.addEventListener('click', (e) => {
+      if (document.body.classList.contains('is-editing')) return;
+      if (e.target.tagName === 'INPUT') return; 
+
       const oldPoints = student.points;
-      const input = createEl('input');
+      const input = document.createElement('input');
       input.type = 'number';
-      input.min = '0';
       input.value = oldPoints;
       input.style.cssText = `
-        width: 80px; font-size: 2rem; font-weight: 800;
+        width: 80px; font-size: 2.5rem; font-weight: 800;
         border: 2px solid #FF9800; border-radius: 10px;
         text-align: center; padding: 2px 6px; color: #F57C00;
         background: #FFF4E3; outline: none;
       `;
       pointsRow.replaceChild(input, pointVal);
-      // Xóa emoji tạm
-      pointsRow.lastChild.textContent = '';
       input.focus();
       input.select();
 
       const applyChange = () => {
         const newVal = parseInt(input.value, 10);
         pointsRow.replaceChild(pointVal, input);
-        pointsRow.lastChild.textContent = ' 🍊';
         if (!isNaN(newVal) && newVal !== oldPoints && newVal >= 0) {
           const change = newVal - oldPoints;
           doUpdatePoints(classId, student.id, change);
         }
       };
       input.addEventListener('blur', applyChange);
-      input.addEventListener('keydown', e => {
-        if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
-        if (e.key === 'Escape') { input.value = oldPoints; input.blur(); }
+      input.addEventListener('keydown', ev => {
+        if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); }
+        if (ev.key === 'Escape') { input.value = oldPoints; input.blur(); }
       });
     });
   }

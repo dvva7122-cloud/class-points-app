@@ -518,34 +518,63 @@ body.theme-christmas .student-card.with-frame {
     opacity: 1;
 }
 
-.student-name-container {
-    min-height: 56px;
-    width: 100%;
+.icons-container {
     display: flex;
-    align-items: flex-start;
     justify-content: center;
-    gap: 6px;
+    gap: 15px;
+    min-height: 40px;
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+    line-height: 1;
+}
+
+.icons-container span {
+    line-height: 1;
+    display: inline-block;
+}
+
+.absolute-buttons {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.absolute-buttons > * {
+    pointer-events: auto;
+}
+
+.student-name-container {
+    width: 100%;
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: center;
 }
 
 .student-name {
     margin: 0;
     color: var(--text-main);
-    font-size: 1.08rem;
-    line-height: 1.35;
+    font-size: 1.35rem; /* Sẽ được auto-shrink bằng JS nếu dài */
     font-weight: 760;
+    white-space: nowrap;
+    text-align: center;
     letter-spacing: -0.015em;
-    overflow-wrap: anywhere;
+    overflow: visible;
 }
 
 .points-display {
-    margin: auto 0 16px;
+    margin: auto 0 24px;
     min-height: 70px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 12px;
     color: var(--primary-color);
-    font-size: clamp(2.25rem, 3vw, 3.2rem);
+    font-size: 4rem;
     line-height: 1;
     font-weight: 860;
     letter-spacing: -0.05em;
@@ -554,9 +583,12 @@ body.theme-christmas .student-card.with-frame {
 }
 
 .points-display img,
-.points-display svg {
-    width: 34px;
-    height: 34px;
+.points-display svg,
+.points-display span {
+    width: auto;
+    height: auto;
+    font-size: 3rem;
+    line-height: 1;
     object-fit: contain;
     filter: drop-shadow(0 6px 8px rgba(255, 152, 0, 0.2));
 }
@@ -573,18 +605,17 @@ body.theme-christmas .student-card.with-frame {
 
 .action-buttons {
     display: flex;
-    gap: 10px;
+    gap: 16px;
     width: 100%;
-    margin-top: 2px;
+    margin-top: auto;
 }
 
 .btn-action {
     flex: 1;
-    min-height: 44px;
-    padding: 8px;
+    min-height: 55px;
     border: 0;
-    border-radius: 13px;
-    font-size: 1.28rem;
+    border-radius: 999px; /* Pill shape */
+    font-size: 2.5rem;
     line-height: 1;
     font-weight: 800;
     cursor: pointer;
@@ -592,7 +623,6 @@ body.theme-christmas .student-card.with-frame {
     display: flex;
     justify-content: center;
     align-items: center;
-    box-shadow: var(--shadow-xs);
 }
 
 .btn-action:hover {
@@ -604,25 +634,23 @@ body.theme-christmas .student-card.with-frame {
 }
 
 .btn-minus {
-    color: #EF5350;
-    background: #FEF2F2;
-    border: 1px solid #FECACA;
+    color: #D32F2F;
+    background: #FFF0F0;
+    border: 1px solid #FFE0E0;
 }
 
 .btn-minus:hover {
-    background: #FEE2E2;
-    box-shadow: 0 6px 16px rgba(239, 83, 80, 0.18);
+    background: #FFE0E0;
 }
 
 .btn-plus {
-    color: #22C55E;
-    background: #F0FDF4;
-    border: 1px solid #BBF7D0;
+    color: #388E3C;
+    background: #F0FFF4;
+    border: 1px solid #E0FFE4;
 }
 
 .btn-plus:hover {
-    background: #DCFCE7;
-    box-shadow: 0 6px 16px rgba(34, 197, 94, 0.18);
+    background: #E0FFE4;
 }
 
 .add-student-container {
@@ -1167,6 +1195,42 @@ body:not(.is-editing) #add-student-container {
 .prompt-input-group input:focus {
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(53, 185, 120, 0.2);
+}
+
+.cancel-btn {
+    padding: 10px 18px;
+    background: #F1F5F9;
+    color: #475569;
+    border: 1.5px solid #CBD5E1;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.cancel-btn:hover {
+    background: #E2E8F0;
+    color: #1E293B;
+    border-color: #94A3B8;
+}
+
+.submit-btn {
+    padding: 10px 18px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.submit-btn:hover {
+    filter: brightness(0.95);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(53, 185, 120, 0.3);
 }
 
 /* ─── UPCOMING EVENTS ─── */
