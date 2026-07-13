@@ -1159,7 +1159,16 @@ if (wheelCurrentClassId !== cls.id) {
 
   // Bộ điều khiển nằm bên dưới vòng quay
   const buttonsRow = createEl('div', { className: 'wheel-buttons' });
-  
+  const spinBtn = createEl('button', {
+  id: 'wheel-spin-btn',
+  className: 'wheel-btn wheel-btn-spin',
+  text: 'SPIN'
+});
+
+spinBtn.addEventListener('click', () => {
+  if (wheelIsSpinning || wheelActiveStudents.length === 0) return;
+  spinWheel(cls, canvas);
+});
   const shuffleBtn = createEl('button', { id: 'wheel-btn-shuffle', className: 'wheel-btn wheel-btn-shuffle' });
   shuffleBtn.innerHTML = '<i class="fa-solid fa-random"></i> Shuffle';
   shuffleBtn.addEventListener('click', () => {
@@ -1174,8 +1183,9 @@ if (wheelCurrentClassId !== cls.id) {
     resetWheel(cls);
   });
   
-  buttonsRow.appendChild(shuffleBtn);
-  buttonsRow.appendChild(resetBtn);
+buttonsRow.appendChild(shuffleBtn);
+buttonsRow.appendChild(spinBtn);
+buttonsRow.appendChild(resetBtn);
   body.appendChild(buttonsRow);
 
   section.appendChild(body);
@@ -1183,9 +1193,9 @@ if (wheelCurrentClassId !== cls.id) {
 
   // Gán sự kiện click quay
   canvas.addEventListener('click', () => {
-    if (wheelIsSpinning || wheelActiveStudents.length === 0) return;
-    spinWheel(cls);
-  });
+  if (wheelIsSpinning || wheelActiveStudents.length === 0) return;
+  spinWheel(cls, canvas);
+});
 
   // Truyền trực tiếp element canvas vừa tạo vào để vẽ ngay lập tức, khắc phục lỗi canvas trắng
   drawWheel(canvas);
@@ -1283,58 +1293,116 @@ function resetWheel(cls) {
   drawWheel();
 }
 
-function spinWheel(cls) {
+function spinWheel(cls, canvasEl) {
   if (wheelIsSpinning || wheelActiveStudents.length === 0) return;
-  wheelIsSpinning = true;
 
-  const n = wheelActiveStudents.length;
-  const sliceAngle = (2 * Math.PI) / n;
+  const canvas =
+    canvasEl || document.getElementById('wheel-canvas');
 
-  // 1. Chọn ngẫu nhiên người thắng trước
-  const winnerIndex = Math.floor(Math.random() * n);
-
-  // 2. Tính góc dừng sao cho giữa ô người thắng CĂN ĐÚNG mũi tên bên phải (góc 0 / 2π)
-  //    Tâm của slice winnerIndex phải nằm tại góc 0 (mũi tên bên phải).
-  //    Tâm slice = winnerIndex * sliceAngle + sliceAngle/2 + wheelRotationAngle ≡ 0 (mod 2π)
-  //    => wheelRotationAngle = -(winnerIndex * sliceAngle + sliceAngle/2) (mod 2π)
-  const targetOffset = (-(winnerIndex * sliceAngle + sliceAngle / 2)) % (2 * Math.PI);
-  const normalizedTarget = ((targetOffset % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-
-  // 3. Tổng số góc quay = nhiều vòng đầy (chiều kim đồng hồ = âm, nhưng canvas tăng dương = CKĐ)
-  //    Ta dùng góc tăng dần (CKĐ). Quay thêm ít nhất 8 vòng từ vị trí hiện tại.
-  const currentAngle = ((wheelRotationAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-  let delta = normalizedTarget - currentAngle;
-  if (delta <= 0) delta += 2 * Math.PI; // Đảm bảo luôn quay về phía trước (CKĐ)
-  const fullSpins = Math.floor(Math.random() * 4 + 6) * 2 * Math.PI; // 6–9 vòng ngẫu nhiên
-  const totalSpin = fullSpins + delta;
-
-  const startAngle = wheelRotationAngle;
-  const targetAngle = startAngle + totalSpin;
-  const duration = 4500;
-  const startTime = performance.now();
-
-  function animate(now) {
-    const elapsed = now - startTime;
-    const progress = Math.min(elapsed / duration, 1);
-
-    // Ease-out quintic — chậm dần thật tự nhiên
-    const eased = 1 - Math.pow(1 - progress, 5);
-    wheelRotationAngle = startAngle + totalSpin * eased;
-
-    drawWheel();
-
-    if (progress < 1) {
-      requestAnimationFrame(animate);
-    } else {
-      wheelIsSpinning = false;
-      const winner = wheelActiveStudents[winnerIndex];
-      showWinnerModal(winner, cls);
-    }
+  if (!canvas || !canvas.isConnected) {
+    console.error('Không tìm thấy canvas của vòng quay.');
+    wheelIsSpinning = false;
+    return;
   }
 
-  requestAnimationFrame(animate);
-}
+  wheelIsSpinning = true;
 
+  const spinBtn = document.getElementById('wheel-spin-btn');
+  if (spinBtn) {
+    spinBtn.disabled = true;
+    spinBtn.textContent = 'Đang quay...';
+  }
+
+  const studentsAtStart = [...wheelActiveStudents];
+  const numberOfStudents = studentsAtStart.length;
+  const sliceAngle = (2 * Math.PI) / numberOfStudents;
+
+  const winnerIndex = Math.floor(
+    Math.random() * numberOfStudents
+  );
+
+  const winner = studentsAtStart[winnerIndex];
+
+  // Đưa tâm ô người thắng tới vị trí mũi tên bên phải
+  const targetRotation =
+    -(winnerIndex * sliceAngle + sliceAngle / 2);
+
+  const twoPi = Math.PI * 2;
+
+  const currentNormalized =
+    ((wheelRotationAngle % twoPi) + twoPi) % twoPi;
+
+  const targetNormalized =
+    ((targetRotation % twoPi) + twoPi) % twoPi;
+
+  let remainingAngle =
+    targetNormalized - currentNormalized;
+
+  if (remainingAngle <= 0) {
+    remainingAngle += twoPi;
+  }
+
+  // Quay từ 8 đến 11 vòng
+  const fullTurns =
+    (8 + Math.floor(Math.random() * 4)) * twoPi;
+
+  const startRotation = wheelRotationAngle;
+  const finalRotation =
+    startRotation + fullTurns + remainingAngle;
+
+  const duration = 5000;
+  let startTime = null;
+  let animationFrameId = null;
+
+  function easeOutQuint(value) {
+    return 1 - Math.pow(1 - value, 5);
+  }
+
+  function animate(timestamp) {
+    if (!startTime) {
+      startTime = timestamp;
+    }
+
+    // Canvas bị thay thế trong lúc quay
+    if (!canvas.isConnected) {
+      cancelAnimationFrame(animationFrameId);
+      wheelIsSpinning = false;
+      return;
+    }
+
+    const elapsed = timestamp - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const easedProgress = easeOutQuint(progress);
+
+    wheelRotationAngle =
+      startRotation +
+      (finalRotation - startRotation) * easedProgress;
+
+    // Luôn vẽ vào đúng canvas đang quay
+    drawWheel(canvas);
+
+    if (progress < 1) {
+      animationFrameId =
+        requestAnimationFrame(animate);
+      return;
+    }
+
+    wheelRotationAngle = finalRotation;
+    drawWheel(canvas);
+
+    wheelIsSpinning = false;
+
+    if (spinBtn) {
+      spinBtn.disabled = false;
+      spinBtn.textContent = 'SPIN';
+    }
+
+    showWinnerModal(winner, cls);
+  }
+
+  animationFrameId =
+    requestAnimationFrame(animate);
+}
 function showWinnerModal(winner, cls) {
   const modal = document.getElementById('wheel-winner-modal');
   const nameEl = document.getElementById('wheel-winner-name');
