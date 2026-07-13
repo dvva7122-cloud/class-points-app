@@ -1130,8 +1130,6 @@ if (wheelCurrentClassId !== cls.id) {
   wheelActiveStudents = wheelActiveStudents
     .filter(student => currentStudentMap.has(student.id))
     .map(student => currentStudentMap.get(student.id));
-}
-
   // Nếu đang quay, không vẽ lại giao diện HTML để tránh giật lag hoặc gián đoạn
   if (wheelIsSpinning) return;
 
