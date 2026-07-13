@@ -1094,17 +1094,37 @@ function renderWheel(cls) {
     return;
   }
 
-  // Reset danh sách học sinh của vòng quay khi chuyển lớp
-  if (wheelCurrentClassId !== cls.id) {
-    wheelCurrentClassId = cls.id;
-    wheelActiveStudents = [...cls.students];
-    wheelRotationAngle = 0;
-    wheelIsSpinning = false;
-  }
-  else if (!wheelIsSpinning) {
-  const currentStudentMap = new Map(
-    cls.students.map(student => [student.id, student])
-  );
+  // Đồng bộ danh sách vòng quay với danh sách học sinh hiện tại
+if (wheelCurrentClassId !== cls.id) {
+  wheelCurrentClassId = cls.id;
+  wheelActiveStudents = cls.students.map(student => ({ ...student }));
+  wheelRotationAngle = 0;
+  wheelIsSpinning = false;
+} else if (!wheelIsSpinning) {
+  // Cập nhật tên và loại bỏ những học sinh đã bị xóa
+  const currentIds = new Set(cls.students.map(student => String(student.id)));
+
+  wheelActiveStudents = wheelActiveStudents
+    .filter(student => currentIds.has(String(student.id)))
+    .map(student => {
+      const updatedStudent = cls.students.find(
+        item => String(item.id) === String(student.id)
+      );
+
+      return updatedStudent ? { ...updatedStudent } : student;
+    });
+
+  // Thêm học sinh mới vào vòng quay
+  cls.students.forEach(student => {
+    const exists = wheelActiveStudents.some(
+      item => String(item.id) === String(student.id)
+    );
+
+    if (!exists) {
+      wheelActiveStudents.push({ ...student });
+    }
+  });
+}
 
   // Xóa người không còn trong lớp và cập nhật tên mới
   wheelActiveStudents = wheelActiveStudents
