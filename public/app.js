@@ -1163,7 +1163,7 @@ function renderWheel(cls) {
 
   // Vùng sidebar (pending)
   const sidebar = createEl('div', { className: 'wheel-sidebar' });
-  const sidebarTitle = createEl('h3', { text: 'Đang làm nhiệm vụ' });
+  const sidebarTitle = createEl('h3', { text: '🎯 Khu vực nhiệm vụ' });
   const pendingList = createEl('div', { id: 'pending-winners-list' });
   sidebar.appendChild(sidebarTitle);
   sidebar.appendChild(pendingList);
