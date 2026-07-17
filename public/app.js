@@ -1064,6 +1064,25 @@ async function init() {
   renderClassTabs();
   renderCurrentClass();
   setupRealtime();
+  startClock();
+}
+
+function startClock() {
+  const clockText = document.getElementById('clock-text');
+  if (!clockText) return;
+  
+  function update() {
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const mo = String(now.getMonth() + 1).padStart(2, '0');
+    const yyyy = now.getFullYear();
+    clockText.textContent = `${hh}:${mm} - ${dd}/${mo}/${yyyy}`;
+  }
+  
+  update();
+  setInterval(update, 60000); // Cập nhật mỗi phút
 }
 
 init();
