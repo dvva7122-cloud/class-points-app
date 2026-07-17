@@ -1097,7 +1097,7 @@ function renderWheel(cls) {
   // Reset danh sách học sinh của vòng quay khi chuyển lớp
   if (wheelCurrentClassId !== cls.id) {
     wheelCurrentClassId = cls.id;
-    wheelActiveStudents = [...cls.students];
+    wheelActiveStudents = cls.students.filter(s => !wheelExcludedIds.includes(s.id));
     wheelRotationAngle = 0;
     wheelIsSpinning = false;
   }
@@ -1291,7 +1291,7 @@ function spinWheel(cls) {
     const eased = 1 - Math.pow(1 - progress, 5);
     wheelRotationAngle = startAngle + totalSpin * eased;
 
-    drawWheel();
+    drawWheel(canvas);
 
     if (progress < 1) {
       requestAnimationFrame(animate);
