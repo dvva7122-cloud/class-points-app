@@ -998,16 +998,37 @@ async function loadSettings() {
   } catch (_) {}
 }
 
-// ─── Lắng nghe sự kiện Real-time (SSE) ───────────────────────────────────
+// ─── Lắng nghe sự kiện Real-time (Socket.io) ────────────────────────────
+let _socket = null;
 let isRealtimeSetup = false;
+
+function setSocketStatus(connected) {
+  const el = document.getElementById('socket-status');
+  const txt = document.getElementById('socket-status-text');
+  if (!el || !txt) return;
+  el.className = connected ? 'connected' : 'disconnected';
+  txt.textContent = connected ? 'Đồng bộ thời gian thực' : 'Mất kết nối...';
+}
+
 function setupRealtime() {
   if (isRealtimeSetup) return;
   isRealtimeSetup = true;
-  
-  const evtSource = new EventSource('/api/events');
-  evtSource.onmessage = async (e) => {
+
+  // Khởi tạo Socket.io client
+  _socket = io();
+
+  _socket.on('connect', () => {
+    console.log('[Socket.io] Kết nối thành công:', _socket.id);
+    setSocketStatus(true);
+  });
+
+  _socket.on('disconnect', () => {
+    console.warn('[Socket.io] Mất kết nối, đang thử lại...');
+    setSocketStatus(false);
+  });
+
+  _socket.on('broadcast', async (data) => {
     try {
-      const data = JSON.parse(e.data);
       if (data.type === 'DATA_CHANGED') {
         await loadAllData();
         renderClassTabs();
@@ -1015,8 +1036,10 @@ function setupRealtime() {
       } else if (data.type === 'SETTINGS_CHANGED') {
         await loadSettings();
       }
-    } catch (err) {}
-  };
+    } catch (err) {
+      console.error('[Socket.io] Lỗi xử lý broadcast:', err);
+    }
+  });
 }
 
 async function init() {
@@ -1433,17 +1456,20 @@ function startConfetti() {
   if (!container) return;
   container.innerHTML = '';
   
-  const colors = ['#FF4565', '#35B978', '#FF9800', '#2B6CB0', '#805AD5', '#ECC94B'];
+  const colors = ['#FF4565', '#35B978', '#FF9800', '#2B6CB0', '#805AD5', '#ECC94B', '#06B6D4', '#F97316'];
+  const shapes = ['circle', 'rect'];
   
-  for (let i = 0; i < 60; i++) {
+  for (let i = 0; i < 80; i++) {
     const el = document.createElement('div');
     el.className = 'confetti';
+    const isCircle = Math.random() > 0.5;
     el.style.left = Math.random() * 100 + '%';
     el.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-    el.style.width = Math.random() * 6 + 6 + 'px';
-    el.style.height = Math.random() * 6 + 6 + 'px';
-    el.style.animationDelay = (Math.random() * 0.1) + 's'; // Giảm delay từ 2s xuống 0.1s để rơi ngay lập tức
-    el.style.animationDuration = Math.random() * 1.5 + 1.2 + 's'; // Tăng tốc độ rơi một chút
+    el.style.width = Math.random() * 8 + 5 + 'px';
+    el.style.height = isCircle ? el.style.width : (Math.random() * 5 + 4 + 'px');
+    el.style.borderRadius = isCircle ? '50%' : '2px';
+    el.style.animationDelay = (Math.random() * 0.05) + 's'; // Gần như không delay
+    el.style.animationDuration = Math.random() * 1.2 + 0.8 + 's'; // Nhanh hơn
     container.appendChild(el);
   }
 }

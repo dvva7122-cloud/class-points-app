@@ -396,9 +396,10 @@ body.custom-bg-active .app-background {
     letter-spacing: -0.02em;
     color: var(--primary-dark);
     text-transform: uppercase;
-    text-shadow: 2px 2px 0px rgba(255, 152, 0, 0.2);
+    text-shadow: none; /* gradient text handles coloring */
     position: relative;
     padding-left: 16px;
+    /* Gradient shimmer applied at bottom of CSS */
 }
 
 .class-info h2::before {
@@ -408,9 +409,9 @@ body.custom-bg-active .app-background {
     top: 6px;
     bottom: 6px;
     width: 6px;
-    background: var(--primary-color);
+    background: linear-gradient(180deg, #FF9800, #F57C00);
     border-radius: 4px;
-    box-shadow: 0 0 8px rgba(255, 152, 0, 0.4);
+    box-shadow: 0 0 10px rgba(255, 152, 0, 0.5);
 }
 
 .action-icon {
@@ -1611,7 +1612,86 @@ body:not(.is-editing) #add-student-container {
 }
 
 @keyframes confetti-fall {
-    0% { transform: translateY(-50px) rotate(0deg); opacity: 1; }
-    100% { transform: translateY(500px) rotate(360deg); opacity: 0; }
+    0%   { transform: translateY(-10px) rotate(0deg)   scale(1);   opacity: 1; }
+    60%  { opacity: 0.9; }
+    100% { transform: translateY(420px) rotate(540deg) scale(0.6); opacity: 0; }
+}
+
+/* ─── Socket.io Connection Status Indicator ─── */
+#socket-status {
+    position: fixed;
+    bottom: 18px;
+    right: 18px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(255,255,255,0.95);
+    border: 1.5px solid #E6EAF2;
+    border-radius: 999px;
+    padding: 6px 14px 6px 10px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #475569;
+    box-shadow: 0 4px 14px rgba(15,23,42,0.10);
+    backdrop-filter: blur(12px);
+    z-index: 9999;
+    transition: all 0.3s ease;
+    user-select: none;
+}
+
+#socket-status .dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #94A3B8;
+    transition: background 0.3s ease;
+    flex-shrink: 0;
+}
+
+#socket-status.connected .dot {
+    background: #22C55E;
+    box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);
+    animation: pulse-dot 2s infinite;
+}
+
+#socket-status.disconnected .dot {
+    background: #EF5350;
+    animation: none;
+}
+
+@keyframes pulse-dot {
+    0%, 100% { box-shadow: 0 0 4px rgba(34, 197, 94, 0.5); }
+    50%       { box-shadow: 0 0 10px rgba(34, 197, 94, 0.9); }
+}
+
+/* ─── Live Clock nổi bật hơn ─── */
+#live-clock {
+    animation: clock-glow 3s ease-in-out infinite;
+}
+
+@keyframes clock-glow {
+    0%, 100% { box-shadow: 0 4px 10px rgba(255, 152, 0, 0.15); }
+    50%       { box-shadow: 0 4px 18px rgba(255, 152, 0, 0.38); }
+}
+
+/* ─── Class name highlight shimmer ─── */
+.class-info h2 {
+    background: linear-gradient(90deg, #F57C00 0%, #FF9800 40%, #FFB84D 60%, #F57C00 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: name-shimmer 4s linear infinite;
+    text-shadow: none;
+}
+
+@keyframes name-shimmer {
+    0%   { background-position: 200% center; }
+    100% { background-position: -200% center; }
+}
+
+/* Override for ::before pseudo (keeps the left bar) */
+.class-info h2::before {
+    background: linear-gradient(180deg, #FF9800, #F57C00);
 }
 
