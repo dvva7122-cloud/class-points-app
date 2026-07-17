@@ -1442,8 +1442,8 @@ function startConfetti() {
     el.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
     el.style.width = Math.random() * 6 + 6 + 'px';
     el.style.height = Math.random() * 6 + 6 + 'px';
-    el.style.animationDelay = Math.random() * 2 + 's';
-    el.style.animationDuration = Math.random() * 2 + 1.5 + 's';
+    el.style.animationDelay = (Math.random() * 0.1) + 's'; // Giảm delay từ 2s xuống 0.1s để rơi ngay lập tức
+    el.style.animationDuration = Math.random() * 1.5 + 1.2 + 's'; // Tăng tốc độ rơi một chút
     container.appendChild(el);
   }
 }
