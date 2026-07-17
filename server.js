@@ -3,6 +3,8 @@
 require('dotenv').config();
 
 const express    = require('express');
+const http       = require('http');
+const { Server: SocketIO } = require('socket.io');
 const bcrypt     = require('bcryptjs');
 const jwt        = require('jsonwebtoken');
 const rateLimit  = require('express-rate-limit');
@@ -20,6 +22,10 @@ if (!process.env.ADMIN_PASSWORD_HASH) {
 }
 
 const app  = express();
+const server = http.createServer(app);
+const io = new SocketIO(server, {
+  cors: { origin: '*', methods: ['GET', 'POST'] }
+});
 const PORT = process.env.PORT || 3000;
 
 // ─── Middleware chung ─────────────────────────────────────────────────────
@@ -34,7 +40,6 @@ const loginLimiter = rateLimit({
   standardHeaders : true,
   legacyHeaders   : false,
 });
-
 // ─── Middleware: xác thực JWT Admin ──────────────────────────────────────
 function requireAdmin(req, res, next) {
   const auth = req.headers['authorization'];
@@ -83,15 +88,17 @@ function generateId(prefix = '') {
 let clients = [];
 
 function broadcast(data) {
+  io.emit('broadcast', data);
   const payload = `data: ${JSON.stringify(data)}\n\n`;
   clients.forEach(client => client.res.write(payload));
 }
 
+// Note: SSE endpoint retained for backward compatibility (optional)
 app.get('/api/events', (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
-  res.flushHeaders(); // Yêu cầu với một số server để gửi header ngay lập tức
+  res.flushHeaders();
   
   const client = { id: Date.now(), res };
   clients.push(client);
@@ -548,7 +555,7 @@ app.use((req, res) => {
 
 // ─── Khởi động ────────────────────────────────────────────────────────────
 db.connectDB().then(() => {
-  app.listen(PORT, () => {
+  server.listen(PORT, () => {
     console.log(`✅ Server đang chạy tại http://localhost:${PORT}`);
   });
 });
