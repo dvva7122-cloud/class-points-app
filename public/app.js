@@ -998,37 +998,16 @@ async function loadSettings() {
   } catch (_) {}
 }
 
-// ─── Lắng nghe sự kiện Real-time (Socket.io) ────────────────────────────
-let _socket = null;
+// ─── Lắng nghe sự kiện Real-time (SSE) ───────────────────────────────────
 let isRealtimeSetup = false;
-
-function setSocketStatus(connected) {
-  const el = document.getElementById('socket-status');
-  const txt = document.getElementById('socket-status-text');
-  if (!el || !txt) return;
-  el.className = connected ? 'connected' : 'disconnected';
-  txt.textContent = connected ? 'Đồng bộ thời gian thực' : 'Mất kết nối...';
-}
-
 function setupRealtime() {
   if (isRealtimeSetup) return;
   isRealtimeSetup = true;
-
-  // Khởi tạo Socket.io client
-  _socket = io();
-
-  _socket.on('connect', () => {
-    console.log('[Socket.io] Kết nối thành công:', _socket.id);
-    setSocketStatus(true);
-  });
-
-  _socket.on('disconnect', () => {
-    console.warn('[Socket.io] Mất kết nối, đang thử lại...');
-    setSocketStatus(false);
-  });
-
-  _socket.on('broadcast', async (data) => {
+  
+  const evtSource = new EventSource('/api/events');
+  evtSource.onmessage = async (e) => {
     try {
+      const data = JSON.parse(e.data);
       if (data.type === 'DATA_CHANGED') {
         await loadAllData();
         renderClassTabs();
@@ -1036,10 +1015,8 @@ function setupRealtime() {
       } else if (data.type === 'SETTINGS_CHANGED') {
         await loadSettings();
       }
-    } catch (err) {
-      console.error('[Socket.io] Lỗi xử lý broadcast:', err);
-    }
-  });
+    } catch (err) {}
+  };
 }
 
 async function init() {

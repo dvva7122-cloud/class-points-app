@@ -4,7 +4,6 @@ require('dotenv').config();
 
 const express    = require('express');
 const http       = require('http');
-const { Server: SocketIO } = require('socket.io');
 const bcrypt     = require('bcryptjs');
 const jwt        = require('jsonwebtoken');
 const rateLimit  = require('express-rate-limit');
@@ -23,10 +22,8 @@ if (!process.env.ADMIN_PASSWORD_HASH) {
 
 const app  = express();
 const server = http.createServer(app);
-const io = new SocketIO(server, {
-  cors: { origin: '*', methods: ['GET', 'POST'] }
-});
 const PORT = process.env.PORT || 3000;
+
 
 // ─── Middleware chung ─────────────────────────────────────────────────────
 app.use(express.json({ limit: '10mb' }));
@@ -82,13 +79,9 @@ function generateId(prefix = '') {
   return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  API: REAL-TIME SYNC (SSE)
-// ═══════════════════════════════════════════════════════════════════════════
 let clients = [];
 
 function broadcast(data) {
-  io.emit('broadcast', data);
   const payload = `data: ${JSON.stringify(data)}\n\n`;
   clients.forEach(client => client.res.write(payload));
 }
