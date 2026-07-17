@@ -1392,11 +1392,91 @@ body:not(.is-editing) #add-student-container {
 
 .wheel-body {
     display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 40px;
+    width: 100%;
+    flex-wrap: wrap;
+}
+
+.wheel-main-col {
+    display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
     gap: 20px;
-    width: 100%;
+}
+
+.wheel-sidebar {
+    width: 320px;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 520px;
+    overflow-y: auto;
+}
+
+.wheel-sidebar h3 {
+    margin: 0 0 8px 0;
+    font-size: 1.2rem;
+    color: #334155;
+    text-align: center;
+    font-weight: 800;
+}
+
+.pending-winner-card {
+    background: white;
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    animation: fade-in 0.3s ease-out;
+    border: 1px solid #E2E8F0;
+}
+
+.pending-name {
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: #1E293B;
+    text-align: center;
+}
+
+.pending-actions {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+}
+
+.pending-btn {
+    border: none;
+    border-radius: 6px;
+    font-weight: 800;
+    cursor: pointer;
+    height: 32px;
+    background: #FFF4E3;
+    color: #F57C00;
+    transition: var(--transition);
+}
+
+.pending-btn:hover { background: #FFEDD1; transform: scale(1.05); }
+
+.pending-btn.zero {
+    grid-column: span 5;
+    background: #F1F5F9;
+    color: #475569;
+}
+
+.pending-btn.zero:hover { background: #E2E8F0; transform: scale(1.02); }
+
+@keyframes fade-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .wheel-canvas-container {

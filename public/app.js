@@ -1074,6 +1074,7 @@ init();
 // ═══════════════════════════════════════════════════════════════════════════
 
 let wheelActiveStudents = [];
+let pendingWinners = [];
 let wheelCurrentClassId = null;
 let wheelRotationAngle = 0;
 let wheelIsSpinning = false;
@@ -1104,6 +1105,7 @@ function renderWheel(cls) {
   if (wheelCurrentClassId !== cls.id) {
     wheelCurrentClassId = cls.id;
     wheelActiveStudents = [...cls.students];
+    pendingWinners = [];
     wheelRotationAngle = 0;
     wheelIsSpinning = false;
   }
@@ -1115,7 +1117,7 @@ function renderWheel(cls) {
 
   const section = createEl('div', { className: 'wheel-section' });
   const header = createEl('div', { className: 'wheel-header' });
-  const title = createEl('h2', { text: '🎡 Wheel of Names' }); // Bỏ tiếng Việt và dấu ngoặc đơn
+  const title = createEl('h2', { text: '🎡 Wheel of Names 🎡' }); // Bỏ tiếng Việt và dấu ngoặc đơn
   header.appendChild(title);
   section.appendChild(header);
 
@@ -1152,7 +1154,20 @@ function renderWheel(cls) {
   
   buttonsRow.appendChild(shuffleBtn);
   buttonsRow.appendChild(resetBtn);
-  body.appendChild(buttonsRow);
+
+  // Vùng chính
+  const mainCol = createEl('div', { className: 'wheel-main-col' });
+  mainCol.appendChild(canvasContainer);
+  mainCol.appendChild(buttonsRow);
+  body.appendChild(mainCol);
+
+  // Vùng sidebar (pending)
+  const sidebar = createEl('div', { className: 'wheel-sidebar' });
+  const sidebarTitle = createEl('h3', { text: 'Đang làm nhiệm vụ' });
+  const pendingList = createEl('div', { id: 'pending-winners-list' });
+  sidebar.appendChild(sidebarTitle);
+  sidebar.appendChild(pendingList);
+  body.appendChild(sidebar);
 
   section.appendChild(body);
   container.appendChild(section);
@@ -1165,6 +1180,59 @@ function renderWheel(cls) {
 
   // Truyền trực tiếp element canvas vừa tạo vào để vẽ ngay lập tức, khắc phục lỗi canvas trắng
   drawWheel(canvas);
+  
+  // Vẽ danh sách chờ
+  renderPendingWinners(cls);
+}
+
+function renderPendingWinners(cls) {
+  const container = document.getElementById('pending-winners-list');
+  if (!container) return;
+  container.innerHTML = '';
+
+  if (pendingWinners.length === 0) {
+    const emptyMsg = createEl('div', { text: 'Chưa có ai.', className: 'empty-msg' });
+    emptyMsg.style.textAlign = 'center';
+    emptyMsg.style.color = '#94A3B8';
+    emptyMsg.style.fontSize = '0.95rem';
+    emptyMsg.style.marginTop = '10px';
+    container.appendChild(emptyMsg);
+    return;
+  }
+
+  pendingWinners.forEach((winner, index) => {
+    const card = createEl('div', { className: 'pending-winner-card' });
+    const nameEl = createEl('div', { className: 'pending-name', text: winner.name });
+    card.appendChild(nameEl);
+
+    const actions = createEl('div', { className: 'pending-actions' });
+    
+    // Nút Hủy (0)
+    const btnCancel = createEl('button', { className: 'pending-btn zero', text: 'Không làm gì' });
+    btnCancel.onclick = () => {
+      pendingWinners.splice(index, 1);
+      renderPendingWinners(cls);
+    };
+    actions.appendChild(btnCancel);
+
+    // Các nút cộng 1 đến 5
+    for (let i = 1; i <= 5; i++) {
+      const btn = createEl('button', { className: 'pending-btn', text: '+' + i });
+      btn.onclick = async () => {
+        try {
+          await doUpdatePoints(cls.id, winner.id, i);
+          pendingWinners.splice(index, 1);
+          renderPendingWinners(cls);
+        } catch (err) {
+          showError('Không thể cộng điểm: ' + err.message);
+        }
+      };
+      actions.appendChild(btn);
+    }
+
+    card.appendChild(actions);
+    container.appendChild(card);
+  });
 }
 
 function drawWheel(canvasEl) {
@@ -1322,30 +1390,23 @@ function showWinnerModal(winner, cls) {
   // Khởi động pháo hoa giấy chúc mừng
   startConfetti();
 
-  const buttons = modal.querySelectorAll('.winner-btn');
-  buttons.forEach(btn => {
-    btn.onclick = async () => {
-      const pointsToAdd = parseInt(btn.getAttribute('data-points'), 10);
-      
+  const closeBtn = document.getElementById('winner-close-btn');
+  if (closeBtn) {
+    closeBtn.onclick = () => {
       modal.classList.remove('show');
       stopConfetti();
-
-      // Nếu cộng điểm, thực hiện cộng điểm trực tiếp
-      if (pointsToAdd > 0) {
-        try {
-          await doUpdatePoints(cls.id, winner.id, pointsToAdd);
-        } catch (err) {
-          showError('Không thể cộng điểm: ' + err.message);
-        }
-      }
 
       // Xóa học sinh khỏi vòng quay trong lượt chơi này
       wheelActiveStudents = wheelActiveStudents.filter(s => s.id !== winner.id);
       
-      // Vẽ lại giao diện vòng quay
-      renderWheel(cls);
+      // Đẩy học sinh vào danh sách chờ
+      pendingWinners.push(winner);
+      
+      // Vẽ lại giao diện vòng quay & danh sách chờ
+      drawWheel(); // chỉ cần vẽ lại canvas, không cần render lại toàn bộ section
+      renderPendingWinners(cls);
     };
-  });
+  }
 }
 
 function startConfetti() {
