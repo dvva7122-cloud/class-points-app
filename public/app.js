@@ -100,6 +100,7 @@ function applyTheme() {
 // ─── Render helpers (dùng createElement thay vì innerHTML để chống XSS) ──
 function createEl(tag, opts = {}) {
   const el = document.createElement(tag);
+  if (opts.id) el.id = opts.id;
   if (opts.className) el.className = opts.className;
   if (opts.text !== undefined) el.textContent = opts.text;
   if (opts.title) el.title = opts.title;
@@ -627,7 +628,12 @@ async function doDeleteStudent(classId, studentId, name) {
   try {
     await api('DELETE', `/api/classes/${classId}/students/${studentId}`);
     const cls = appData.find(c => c.id === classId);
-    if (cls) cls.students = cls.students.filter(s => s.id !== studentId);
+    if (cls) {
+      cls.students = cls.students.filter(s => s.id !== studentId);
+    }
+    if (wheelCurrentClassId === classId) {
+      wheelActiveStudents = wheelActiveStudents.filter(s => s.id !== studentId);
+    }
     renderCurrentClass();
   } catch (err) {
     if (err.message !== 'Unauthorized') showError(err.message);
