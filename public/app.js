@@ -1082,7 +1082,7 @@ function startClock() {
   }
   
   update();
-  setInterval(update, 60000); // Cập nhật mỗi phút
+  setInterval(update, 1000); // Cập nhật mỗi giây để sang phút mới là hiển thị ngay
 }
 
 init();

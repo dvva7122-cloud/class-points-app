@@ -390,11 +390,27 @@ body.custom-bg-active .app-background {
 }
 
 .class-info h2 {
-    font-size: clamp(1.8rem, 2.2vw, 2.25rem);
-    line-height: 1;
-    font-weight: 820;
-    letter-spacing: -0.04em;
-    color: var(--text-main);
+    font-size: clamp(2.2rem, 2.8vw, 2.8rem);
+    line-height: 1.1;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    color: var(--primary-dark);
+    text-transform: uppercase;
+    text-shadow: 2px 2px 0px rgba(255, 152, 0, 0.2);
+    position: relative;
+    padding-left: 16px;
+}
+
+.class-info h2::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 6px;
+    bottom: 6px;
+    width: 6px;
+    background: var(--primary-color);
+    border-radius: 4px;
+    box-shadow: 0 0 8px rgba(255, 152, 0, 0.4);
 }
 
 .action-icon {
