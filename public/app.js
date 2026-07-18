@@ -352,12 +352,10 @@ async function doAddEvent(classId, file) {
 async function doDeleteEvent(classId, eventId) {
   try {
     await api('DELETE', `/api/classes/${classId}/events/${eventId}`);
-    // SSE sẽ tự động cập nhật
   } catch (err) {
     showError(err.message);
   }
 }
-
 
 function renderStudentCard(student, classId, maxPts) {
   const gridEl   = document.getElementById('student-grid');
