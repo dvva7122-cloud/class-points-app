@@ -1649,3 +1649,278 @@ body:not(.is-editing) #add-student-container {
     background: linear-gradient(180deg, #FF9800, #F57C00);
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/*  SEATING CHART (SƠ ĐỒ LỚP HỌC)                                              */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+#seating-chart-container {
+    margin-bottom: 30px;
+    background: #fff;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    display: none; /* Ẩn đi nếu không có lớp nào được chọn */
+}
+
+.seating-chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.seating-chart-header h3 {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--primary-dark);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.seating-chart-controls {
+    display: flex;
+    gap: 10px;
+}
+
+.seating-btn {
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-weight: 600;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.seating-btn:hover {
+    background: #e2e8f0;
+}
+
+.seating-btn.primary {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.seating-btn.primary:hover {
+    background: #E65100;
+}
+
+.seating-layout-wrapper {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+/* Khu vực chưa xếp chỗ */
+.unassigned-students-panel {
+    width: 250px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    display: none; /* Chỉ hiện trong Edit mode */
+    flex-shrink: 0;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.unassigned-students-panel.active {
+    display: flex;
+    flex-direction: column;
+}
+
+.unassigned-students-panel h4 {
+    margin: 0 0 12px 0;
+    font-size: 1rem;
+    color: #334155;
+    font-weight: 700;
+}
+
+.unassigned-student-item {
+    background: white;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    cursor: grab;
+    font-weight: 600;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.unassigned-student-item:active {
+    cursor: grabbing;
+}
+
+.unassigned-student-item .avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: bold;
+}
+
+/* Khu vực phòng học */
+.classroom-canvas {
+    flex-grow: 1;
+    height: 600px;
+    background: #f1f5f9;
+    border: 2px solid #cbd5e1;
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+    background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+.blackboard {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 400px;
+    height: 60px;
+    background: #2f5d46;
+    border: 4px solid #8b5a2b;
+    border-radius: 4px;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+/* Các loại bàn */
+.desk {
+    position: absolute;
+    background: #FDE68A;
+    border: 2px solid #D97706;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+    box-sizing: border-box;
+    transition: box-shadow 0.2s;
+}
+
+.desk.draggable {
+    cursor: grab;
+}
+
+.desk.draggable:active {
+    cursor: grabbing;
+    box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+    z-index: 100;
+}
+
+.desk-teacher {
+    background: #FCD34D;
+    width: 140px;
+    height: 70px;
+    justify-content: center;
+    font-weight: bold;
+    color: #92400E;
+}
+
+.desk-student {
+    width: 160px;
+    height: 80px;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.desk-seats-container {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    height: 100%;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.seat {
+    width: 60px;
+    height: 60px;
+    background: white;
+    border: 2px dashed #cbd5e1;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    color: #64748b;
+    text-align: center;
+    position: relative;
+    padding: 4px;
+    box-sizing: border-box;
+    word-break: break-word;
+}
+
+.seat.occupied {
+    border-style: solid;
+    border-color: #3b82f6;
+    background: #eff6ff;
+    color: #1e3a8a;
+    font-weight: 600;
+    cursor: grab;
+}
+
+.seat.drag-over {
+    background: #dbeafe;
+    border-color: #2563eb;
+}
+
+.seat .seat-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.delete-desk-btn {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 20px;
+    height: 20px;
+    background: #ef4444;
+    color: white;
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    cursor: pointer;
+    border: 1px solid white;
+}
+
+.desk.draggable:hover .delete-desk-btn {
+    display: flex;
+}

@@ -260,6 +260,10 @@ app.patch('/api/classes/:classId', requireAdmin, async (req, res) => {
     updateData.gifUrl = req.body.gifUrl; // có thể là null (để xóa gif)
   }
 
+  if (req.body.seatingChart !== undefined) {
+    updateData.seatingChart = req.body.seatingChart;
+  }
+
   if (Object.keys(updateData).length === 0) {
     return res.status(400).json({ error: 'Không có dữ liệu cập nhật.' });
   }

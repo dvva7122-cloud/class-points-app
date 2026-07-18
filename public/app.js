@@ -225,6 +225,7 @@ function renderCurrentClass() {
     cls.students.forEach(student => renderStudentCard(student, cls.id, maxPts));
   }
   
+  renderSeatingChart(cls);
   renderEvents(cls);
   renderWheel(cls);
 }
