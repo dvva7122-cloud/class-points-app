@@ -1621,19 +1621,42 @@ function renderSeatingChart(cls) {
 
   // --- Classroom Canvas ---
   const canvas = createEl('div', { className: 'classroom-canvas' });
+
+  // Bảng đen
   const blackboard = createEl('div', { className: 'blackboard' });
   blackboard.textContent = 'BẢNG VIẾT';
   canvas.appendChild(blackboard);
 
+  // Trang trí phòng học
+  const decorItems = [
+    { emoji: '🌿', style: 'bottom:16px; left:16px; font-size:2.4rem;' },
+    { emoji: '🌿', style: 'bottom:16px; right:16px; font-size:2.4rem;' },
+    { emoji: '🚪', style: 'bottom:0; right:24px; font-size:3rem; line-height:1;' },
+    { emoji: '🖥️', style: 'top:110px; left:16px; font-size:1.6rem; opacity:0.5;' },
+  ];
+  decorItems.forEach(d => {
+    const el = createEl('div', { className: 'classroom-decor' });
+    el.textContent = d.emoji;
+    el.style.cssText += d.style;
+    canvas.appendChild(el);
+  });
+
   currentChartData.desks.forEach(desk => {
-    const deskEl = createEl('div', { className: 'desk desk-' + desk.type + (isEditingSeatingChart ? ' draggable' : '') });
+    const seatCount = desk.seats ? desk.seats.length : 0;
+    const deskClass = desk.type === 'teacher'
+      ? 'desk desk-teacher'
+      : `desk desk-${seatCount === 4 ? '4' : '2'}`;
+    const deskEl = createEl('div', { className: deskClass + (isEditingSeatingChart ? ' draggable' : '') });
     deskEl.style.left = desk.x + 'px';
     deskEl.style.top = desk.y + 'px';
 
     if (desk.type === 'teacher') {
-      deskEl.textContent = desk.label || 'Th. Việt Anh';
+      const label = createEl('span');
+      label.textContent = desk.label || 'Th. Việt Anh';
+      deskEl.appendChild(label);
     } else {
-      const seatsContainer = createEl('div', { className: 'desk-seats-container' });
+      const is4 = seatCount === 4;
+      const seatsContainer = createEl('div', { className: 'desk-seats-container' + (is4 ? ' grid-2x2' : '') });
       desk.seats.forEach((seat, index) => {
         const seatEl = createEl('div', { className: 'seat' });
 

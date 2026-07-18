@@ -1655,12 +1655,12 @@ body:not(.is-editing) #add-student-container {
 
 #seating-chart-container {
     margin-bottom: 30px;
-    background: #fff;
+    background: linear-gradient(135deg, #fef9f0 0%, #fff8f0 100%);
     border-radius: 20px;
     padding: 24px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.06);
     border: 1px solid rgba(226, 232, 240, 0.8);
-    display: none; /* Ẩn đi nếu không có lớp nào được chọn */
+    display: none;
 }
 
 .seating-chart-header {
@@ -1683,6 +1683,7 @@ body:not(.is-editing) #add-student-container {
 .seating-chart-controls {
     display: flex;
     gap: 10px;
+    flex-wrap: wrap;
 }
 
 .seating-btn {
@@ -1698,21 +1699,15 @@ body:not(.is-editing) #add-student-container {
     display: flex;
     align-items: center;
     gap: 6px;
+    font-family: inherit;
 }
-
-.seating-btn:hover {
-    background: #e2e8f0;
-}
-
+.seating-btn:hover { background: #e2e8f0; }
 .seating-btn.primary {
     background: var(--primary-color);
     color: white;
     border-color: var(--primary-color);
 }
-
-.seating-btn.primary:hover {
-    background: #E65100;
-}
+.seating-btn.primary:hover { background: #E65100; }
 
 .seating-layout-wrapper {
     display: flex;
@@ -1720,207 +1715,282 @@ body:not(.is-editing) #add-student-container {
     align-items: flex-start;
 }
 
-/* Khu vực chưa xếp chỗ */
+/* ── Panel học sinh chưa xếp chỗ ── */
 .unassigned-students-panel {
-    width: 250px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    width: 200px;
+    background: white;
+    border: 2px dashed #f59e0b;
     border-radius: 12px;
-    padding: 16px;
-    display: none; /* Chỉ hiện trong Edit mode */
+    padding: 14px;
+    display: none;
     flex-shrink: 0;
-    max-height: 600px;
+    max-height: 620px;
     overflow-y: auto;
 }
-
-.unassigned-students-panel.active {
-    display: flex;
-    flex-direction: column;
-}
-
+.unassigned-students-panel.active { display: flex; flex-direction: column; }
 .unassigned-students-panel h4 {
-    margin: 0 0 12px 0;
-    font-size: 1rem;
-    color: #334155;
+    margin: 0 0 10px 0;
+    font-size: 0.9rem;
+    color: #92400E;
     font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
-
 .unassigned-student-item {
-    background: white;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    padding: 8px 12px;
-    margin-bottom: 8px;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 8px;
+    padding: 7px 10px;
+    margin-bottom: 6px;
     cursor: grab;
     font-weight: 600;
-    color: #0f172a;
+    font-size: 0.82rem;
+    color: #78350f;
     display: flex;
     align-items: center;
     gap: 8px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    transition: transform 0.15s, box-shadow 0.15s;
 }
-.unassigned-student-item:active {
-    cursor: grabbing;
+.unassigned-student-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
 }
-
+.unassigned-student-item:active { cursor: grabbing; }
 .unassigned-student-item .avatar {
-    width: 24px;
-    height: 24px;
+    width: 26px;
+    height: 26px;
     border-radius: 50%;
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     font-weight: bold;
+    flex-shrink: 0;
 }
 
-/* Khu vực phòng học */
+/* ── Phòng học ── */
 .classroom-canvas {
     flex-grow: 1;
-    height: 600px;
-    background: #f1f5f9;
-    border: 2px solid #cbd5e1;
-    border-radius: 12px;
+    min-height: 620px;
+    border-radius: 16px;
     position: relative;
     overflow: hidden;
-    background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
-    background-size: 20px 20px;
+    /* Sàn gỗ */
+    background-color: #f5ede0;
+    background-image:
+        repeating-linear-gradient(
+            90deg,
+            rgba(180,130,80,0.07) 0px,
+            rgba(180,130,80,0.07) 1px,
+            transparent 1px,
+            transparent 60px
+        ),
+        repeating-linear-gradient(
+            0deg,
+            rgba(180,130,80,0.07) 0px,
+            rgba(180,130,80,0.07) 1px,
+            transparent 1px,
+            transparent 40px
+        );
+    border: 3px solid #c4a27a;
+    box-shadow: inset 0 0 40px rgba(0,0,0,0.06);
 }
 
+/* ── Bảng đen đẹp ── */
 .blackboard {
     position: absolute;
-    top: 20px;
+    top: 18px;
     left: 50%;
     transform: translateX(-50%);
-    width: 400px;
-    height: 60px;
-    background: #2f5d46;
-    border: 4px solid #8b5a2b;
-    border-radius: 4px;
-    color: white;
+    width: 420px;
+    height: 72px;
+    background: linear-gradient(180deg, #2d6a4f 0%, #1b4332 100%);
+    border: 5px solid #8b5e3c;
+    border-radius: 6px;
+    color: rgba(255,255,255,0.92);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: bold;
-    font-size: 1.2rem;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    font-weight: 800;
+    font-size: 1.1rem;
+    letter-spacing: 0.15em;
+    box-shadow:
+        0 6px 16px rgba(0,0,0,0.25),
+        inset 0 1px 0 rgba(255,255,255,0.08),
+        inset 0 -2px 0 rgba(0,0,0,0.15);
+    z-index: 2;
+    font-family: 'Chalk', 'Segoe UI', sans-serif;
+}
+.blackboard::before {
+    /* thanh phấn bên dưới */
+    content: '';
+    position: absolute;
+    bottom: -14px;
+    left: 10px;
+    right: 10px;
+    height: 8px;
+    background: #6b4423;
+    border-radius: 0 0 4px 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
-/* Các loại bàn */
+/* ── Trang trí góc ── */
+.classroom-decor {
+    position: absolute;
+    font-size: 2.2rem;
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
+}
+
+/* ── Bàn học sinh ── */
 .desk {
     position: absolute;
-    background: #FDE68A;
-    border: 2px solid #D97706;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.13), 0 1px 3px rgba(0,0,0,0.08);
     box-sizing: border-box;
-    transition: box-shadow 0.2s;
+    transition: box-shadow 0.18s;
+    z-index: 1;
 }
-
-.desk.draggable {
-    cursor: grab;
+.desk.draggable { cursor: grab; }
+.desk.draggable:hover {
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    z-index: 10;
 }
-
 .desk.draggable:active {
     cursor: grabbing;
-    box-shadow: 0 8px 15px rgba(0,0,0,0.2);
     z-index: 100;
 }
 
+/* ── Bàn giáo viên ── */
 .desk-teacher {
-    background: #FCD34D;
-    width: 140px;
-    height: 70px;
-    justify-content: center;
-    font-weight: bold;
-    color: #92400E;
-}
-
-.desk-student {
+    /* Gỗ tối, sang trọng */
+    background: linear-gradient(160deg, #a0522d 0%, #7b3f1a 100%);
+    border: 3px solid #5c2e0a;
     width: 160px;
     height: 80px;
-    flex-direction: row;
-    justify-content: space-around;
+    display: flex;
+    flex-direction: column;
     align-items: center;
+    justify-content: center;
+    gap: 4px;
+    color: #fef3c7;
+    font-weight: 800;
+    font-size: 0.88rem;
+    text-align: center;
+    padding: 8px;
+}
+.desk-teacher::after {
+    /* ghế giáo viên phía sau */
+    content: '🪑';
+    position: absolute;
+    top: -28px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.4rem;
 }
 
+/* ── Bàn học sinh 2 chỗ ── */
+.desk-2 {
+    background: linear-gradient(160deg, #fde68a 0%, #fbbf24 100%);
+    border: 2.5px solid #d97706;
+    width: 158px;
+    height: 82px;
+    padding: 8px;
+}
+
+/* ── Bàn học sinh 4 chỗ (gấp đôi, 2×2) ── */
+.desk-4 {
+    background: linear-gradient(160deg, #fde68a 0%, #fbbf24 100%);
+    border: 2.5px solid #d97706;
+    width: 214px;
+    height: 160px;
+    padding: 10px;
+}
+
+/* ── Ghế trong bàn ── */
 .desk-seats-container {
     display: flex;
-    gap: 10px;
+    gap: 7px;
     width: 100%;
     height: 100%;
     justify-content: space-around;
     align-items: center;
+    flex-wrap: nowrap;
+}
+.desk-seats-container.grid-2x2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 7px;
 }
 
 .seat {
-    width: 60px;
-    height: 60px;
-    background: white;
-    border: 2px dashed #cbd5e1;
-    border-radius: 6px;
+    background: rgba(255,255,255,0.88);
+    border: 2px dashed #d97706;
+    border-radius: 8px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    font-size: 0.75rem;
-    color: #64748b;
+    font-size: 0.7rem;
+    color: #92400E;
     text-align: center;
     position: relative;
     padding: 4px;
     box-sizing: border-box;
     word-break: break-word;
+    min-width: 0;
+    transition: background 0.15s, border-color 0.15s;
 }
-
 .seat.occupied {
     border-style: solid;
-    border-color: #3b82f6;
+    border-color: #2563eb;
     background: #eff6ff;
     color: #1e3a8a;
-    font-weight: 600;
+    font-weight: 700;
     cursor: grab;
 }
-
 .seat.drag-over {
     background: #dbeafe;
     border-color: #2563eb;
+    border-style: solid;
 }
-
 .seat .seat-avatar {
-    width: 24px;
-    height: 24px;
+    width: 26px;
+    height: 26px;
     border-radius: 50%;
-    background: var(--primary-color);
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: bold;
-    margin-bottom: 4px;
+    font-size: 0.68rem;
+    margin-bottom: 3px;
+    flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
 
 .delete-desk-btn {
     position: absolute;
     top: -10px;
     right: -10px;
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
     background: #ef4444;
     color: white;
     border-radius: 50%;
     display: none;
     align-items: center;
     justify-content: center;
-    font-size: 10px;
+    font-size: 11px;
     cursor: pointer;
-    border: 1px solid white;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    z-index: 20;
+    line-height: 1;
 }
-
-.desk.draggable:hover .delete-desk-btn {
-    display: flex;
-}
+.desk.draggable:hover .delete-desk-btn { display: flex; }
