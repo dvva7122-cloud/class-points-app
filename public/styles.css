@@ -1883,16 +1883,6 @@ body:not(.is-editing) #add-student-container {
     text-align: center;
     padding: 8px;
 }
-.desk-teacher::after {
-    /* ghế giáo viên phía sau */
-    content: '🪑';
-    position: absolute;
-    top: -28px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 1.4rem;
-}
-
 /* ── Bàn học sinh 2 chỗ ── */
 .desk-2 {
     background: linear-gradient(160deg, #fde68a 0%, #fbbf24 100%);
@@ -1995,76 +1985,6 @@ body:not(.is-editing) #add-student-container {
 }
 .desk.draggable:hover .delete-desk-btn { display: flex; }
 
-/* ── Bàn được chọn ── */
-.desk.selected {
-    outline: 3px solid #3b82f6;
-    outline-offset: 3px;
-    box-shadow: 0 0 0 6px rgba(59,130,246,0.18), 0 6px 16px rgba(0,0,0,0.15);
-    z-index: 50;
-}
-
-/* ── Xoay bàn 90° ── */
-.desk-2.desk-rotated {
-    width: 82px;
-    height: 158px;
-}
-.desk-4.desk-rotated {
-    width: 160px;
-    height: 214px;
-}
-.desk-2.desk-rotated .desk-seats-container {
-    flex-direction: column;
-}
-.desk-4.desk-rotated .desk-seats-container.grid-2x2 {
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-}
-
-/* ── Context Menu điều khiển bàn ── */
-.desk-context-menu {
-    position: absolute;
-    top: calc(100% + 8px);
-    left: 50%;
-    transform: translateX(-50%);
-    background: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 6px;
-    display: flex;
-    flex-direction: row;
-    gap: 4px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-    z-index: 200;
-    white-space: nowrap;
-}
-
-.ctx-btn {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 7px;
-    padding: 6px 10px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: #334155;
-    transition: all 0.15s;
-    font-family: inherit;
-    white-space: nowrap;
-}
-.ctx-btn:hover {
-    background: #3b82f6;
-    color: white;
-    border-color: #3b82f6;
-}
-.ctx-btn:last-child:hover {
-    background: #ef4444;
-    border-color: #ef4444;
-}
-.ctx-icon { font-size: 1rem; }
-
 /* ── Bàn giáo viên nổi bật ── */
 .desk-teacher {
     background: linear-gradient(160deg, #92400E 0%, #78350F 100%);
@@ -2086,14 +2006,6 @@ body:not(.is-editing) #add-student-container {
     border-radius: 8px;
     border: 1px solid rgba(255,255,255,0.12);
     pointer-events: none;
-}
-.desk-teacher::after {
-    content: '🪑';
-    position: absolute;
-    top: -32px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 1.6rem;
 }
 .teacher-desk-icon {
     font-size: 1.6rem;

@@ -1457,13 +1457,12 @@ function stopConfetti() {
 
 // ═══════════════════════════════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════
 //  SEATING CHART (SƠ ĐỒ LỚP HỌC)
 // ═══════════════════════════════════════════════════════════════════════════
 
 let isEditingSeatingChart = false;
 let currentChartData = null;
-let selectedDeskId = null;
-const GRID_SIZE = 20;
 
 function getInitials(name) {
   const parts = name.trim().split(' ');
@@ -1478,21 +1477,15 @@ function getColorForName(name) {
   return colors[Math.abs(hash) % colors.length];
 }
 
-function snapToGrid(val) {
-  return Math.round(val / GRID_SIZE) * GRID_SIZE;
-}
-
 function addDesk(seatCount) {
   const newDesk = {
     id: 'desk_' + Date.now(),
     type: 'student',
-    x: snapToGrid(60),
-    y: snapToGrid(160),
-    rotated: false,
+    x: 60,
+    y: 160,
     seats: Array(seatCount).fill(null).map(() => ({ studentId: null }))
   };
   currentChartData.desks.push(newDesk);
-  selectedDeskId = newDesk.id;
   renderSeatingChart(getCurrentClass());
 }
 
@@ -1509,14 +1502,13 @@ function renderSeatingChart(cls) {
   if (!cls.seatingChart) {
     cls.seatingChart = {
       desks: [
-        { id: 'desk_teacher', type: 'teacher', label: 'Th. Viet Anh', x: 280, y: 100, rotated: false, seats: [] }
+        { id: 'desk_teacher', type: 'teacher', label: 'Th. Việt Anh', x: 280, y: 100, seats: [] }
       ]
     };
   }
 
   if (!isEditingSeatingChart) {
     currentChartData = JSON.parse(JSON.stringify(cls.seatingChart));
-    selectedDeskId = null;
   }
 
   container.innerHTML = '';
@@ -1525,7 +1517,7 @@ function renderSeatingChart(cls) {
   const header = document.createElement('div');
   header.className = 'seating-chart-header';
   const title = document.createElement('h3');
-  title.textContent = 'So do lop hoc';
+  title.textContent = '🗺️ Sơ đồ lớp học';
   header.appendChild(title);
 
   const controls = document.createElement('div');
@@ -1535,16 +1527,11 @@ function renderSeatingChart(cls) {
     if (!isEditingSeatingChart) {
       const editBtn = document.createElement('button');
       editBtn.className = 'seating-btn';
-      editBtn.innerHTML = '<i class="fa-solid fa-pen"></i> Chinh sua so do';
+      editBtn.innerHTML = '<i class="fa-solid fa-pen"></i> Chỉnh sửa sơ đồ';
       editBtn.onclick = () => { isEditingSeatingChart = true; renderSeatingChart(cls); };
       controls.appendChild(editBtn);
     } else {
-      const hint = document.createElement('span');
-      hint.style.cssText = 'font-size:0.8rem;color:#92400E;align-self:center;margin-right:6px;';
-      hint.textContent = 'Click ban de chon';
-      controls.appendChild(hint);
-
-      ['Ban 2 cho', 'Ban 4 cho'].forEach((label, i) => {
+      ['Bàn 2 chỗ', 'Bàn 4 chỗ'].forEach((label, i) => {
         const btn = document.createElement('button');
         btn.className = 'seating-btn';
         btn.innerHTML = '<i class="fa-solid fa-plus"></i> ' + label;
@@ -1552,33 +1539,22 @@ function renderSeatingChart(cls) {
         controls.appendChild(btn);
       });
 
-      const alignBtn = document.createElement('button');
-      alignBtn.className = 'seating-btn';
-      alignBtn.innerHTML = '<i class="fa-solid fa-align-left"></i> Can hang';
-      alignBtn.title = 'Snap tat ca ban vao luoi';
-      alignBtn.onclick = () => {
-        currentChartData.desks.forEach(d => { d.x = snapToGrid(d.x); d.y = snapToGrid(d.y); });
-        renderSeatingChart(cls);
-      };
-      controls.appendChild(alignBtn);
-
       const cancelBtn = document.createElement('button');
       cancelBtn.className = 'seating-btn';
-      cancelBtn.innerHTML = 'Huy';
-      cancelBtn.onclick = () => { isEditingSeatingChart = false; selectedDeskId = null; renderSeatingChart(cls); };
+      cancelBtn.innerHTML = 'Hủy';
+      cancelBtn.onclick = () => { isEditingSeatingChart = false; renderSeatingChart(cls); };
       controls.appendChild(cancelBtn);
 
       const saveBtn = document.createElement('button');
       saveBtn.className = 'seating-btn primary';
-      saveBtn.innerHTML = '<i class="fa-solid fa-save"></i> Luu So Do';
+      saveBtn.innerHTML = '<i class="fa-solid fa-save"></i> Lưu sơ đồ';
       saveBtn.onclick = async () => {
         try {
           const res = await api('PATCH', '/api/classes/' + cls.id, { seatingChart: currentChartData });
           cls.seatingChart = res.seatingChart;
           isEditingSeatingChart = false;
-          selectedDeskId = null;
           renderSeatingChart(cls);
-        } catch (err) { showError('Loi luu so do: ' + err.message); }
+        } catch (err) { showError('Lỗi lưu sơ đồ: ' + err.message); }
       };
       controls.appendChild(saveBtn);
     }
@@ -1590,11 +1566,11 @@ function renderSeatingChart(cls) {
   const layoutWrapper = document.createElement('div');
   layoutWrapper.className = 'seating-layout-wrapper';
 
-  // Panel hoc sinh chua xep cho
+  // Panel học sinh chưa xếp chỗ
   const panel = document.createElement('div');
   panel.className = 'unassigned-students-panel' + (isEditingSeatingChart ? ' active' : '');
   const panelTitle = document.createElement('h4');
-  panelTitle.textContent = 'Hoc sinh chua xep cho';
+  panelTitle.textContent = 'Học sinh chưa xếp chỗ';
   panel.appendChild(panelTitle);
 
   const assignedIds = new Set();
@@ -1603,7 +1579,7 @@ function renderSeatingChart(cls) {
 
   if (unassigned.length === 0) {
     const p = document.createElement('p');
-    p.textContent = 'Tat ca da co cho!';
+    p.textContent = 'Tất cả đã có chỗ ✅';
     p.style.cssText = 'font-size:0.82rem;color:#166534;';
     panel.appendChild(p);
   } else {
@@ -1638,19 +1614,10 @@ function renderSeatingChart(cls) {
   const canvas = document.createElement('div');
   canvas.className = 'classroom-canvas';
 
-  canvas.addEventListener('click', e => {
-    if (!e.target.closest('.desk')) {
-      selectedDeskId = null;
-      canvas.querySelectorAll('.desk.selected').forEach(el => el.classList.remove('selected'));
-      const old = canvas.querySelector('.desk-context-menu');
-      if (old) old.remove();
-    }
-  });
-
   // Bảng đen
   const bb = document.createElement('div');
   bb.className = 'blackboard';
-  bb.innerHTML = '<span class="bb-text">BANG VIET</span>';
+  bb.innerHTML = '<span class="bb-text">BẢNG VIẾT</span>';
   canvas.appendChild(bb);
 
   // Trang tri
@@ -1668,22 +1635,19 @@ function renderSeatingChart(cls) {
   // Ve ban
   currentChartData.desks.forEach(desk => {
     const seatCount = desk.seats ? desk.seats.length : 0;
-    const isSelected = selectedDeskId === desk.id;
 
     const deskEl = document.createElement('div');
     let deskClass = 'desk';
     if (desk.type === 'teacher') deskClass += ' desk-teacher';
     else deskClass += ' desk-' + (seatCount === 4 ? '4' : '2');
-    if (desk.rotated) deskClass += ' desk-rotated';
     if (isEditingSeatingChart) deskClass += ' draggable';
-    if (isSelected) deskClass += ' selected';
     deskEl.className = deskClass;
     deskEl.style.left = desk.x + 'px';
     deskEl.style.top = desk.y + 'px';
     deskEl.dataset.deskId = desk.id;
 
     if (desk.type === 'teacher') {
-      deskEl.innerHTML = '<div class="teacher-desk-icon">👩‍🏫</div><div class="teacher-desk-name">' + (desk.label || 'Th. Viet Anh') + '</div>';
+      deskEl.innerHTML = '<div class="teacher-desk-icon">💻 📚</div><div class="teacher-desk-name">' + (desk.label || 'Th. Việt Anh') + '</div>';
     } else {
       const is4 = seatCount === 4;
       const sc = document.createElement('div');
@@ -1715,10 +1679,10 @@ function renderSeatingChart(cls) {
             }
           } else {
             seat.studentId = null;
-            seatEl.textContent = 'Trong';
+            seatEl.textContent = 'Trống';
           }
         } else {
-          seatEl.textContent = 'Trong';
+          seatEl.textContent = 'Trống';
         }
 
         if (isEditingSeatingChart) {
@@ -1745,18 +1709,10 @@ function renderSeatingChart(cls) {
     }
 
     if (isEditingSeatingChart) {
-      // Click de chon ban
-      deskEl.addEventListener('click', e => {
-        if (e.target.closest('.seat') || e.target.closest('.desk-context-menu')) return;
-        e.stopPropagation();
-        selectedDeskId = desk.id;
-        renderSeatingChart(cls);
-      });
-
       // Keo ban
       let dragging = false, startX, startY, initX, initY;
       deskEl.onmousedown = e => {
-        if (e.target.closest('.seat') || e.target.closest('.desk-context-menu')) return;
+        if (e.target.closest('.seat') || e.target.closest('.delete-desk-btn')) return;
         e.preventDefault();
         dragging = true;
         startX = e.clientX; startY = e.clientY;
@@ -1771,59 +1727,24 @@ function renderSeatingChart(cls) {
         const onUp = () => {
           if (!dragging) return;
           dragging = false;
-          desk.x = snapToGrid(desk.x);
-          desk.y = snapToGrid(desk.y);
-          deskEl.style.left = desk.x + 'px';
-          deskEl.style.top = desk.y + 'px';
           document.removeEventListener('mousemove', onMove);
           document.removeEventListener('mouseup', onUp);
         };
         document.addEventListener('mousemove', onMove);
         document.addEventListener('mouseup', onUp);
       };
-
-      // Context menu khi chon
-      if (isSelected) {
-        const menu = document.createElement('div');
-        menu.className = 'desk-context-menu';
-
-        const mkBtn = (icon, label, fn) => {
-          const btn = document.createElement('button');
-          btn.className = 'ctx-btn';
-          btn.innerHTML = '<span class="ctx-icon">' + icon + '</span><span>' + label + '</span>';
-          btn.onclick = e => { e.stopPropagation(); fn(); };
-          return btn;
+      
+      // Delete button
+      if (desk.type !== 'teacher') {
+        const delBtn = document.createElement('div');
+        delBtn.className = 'delete-desk-btn';
+        delBtn.innerHTML = '&times;';
+        delBtn.onclick = (e) => {
+          e.stopPropagation();
+          currentChartData.desks = currentChartData.desks.filter(d => d.id !== desk.id);
+          renderSeatingChart(cls);
         };
-
-        menu.appendChild(mkBtn('🔄', 'Xoay', () => { desk.rotated = !desk.rotated; renderSeatingChart(cls); }));
-
-        if (desk.type !== 'teacher') {
-          menu.appendChild(mkBtn('📋', 'Copy', () => {
-            const copy = JSON.parse(JSON.stringify(desk));
-            copy.id = 'desk_' + Date.now();
-            copy.x = snapToGrid(desk.x + 40);
-            copy.y = snapToGrid(desk.y + 40);
-            copy.seats = copy.seats.map(() => ({ studentId: null }));
-            currentChartData.desks.push(copy);
-            selectedDeskId = copy.id;
-            renderSeatingChart(cls);
-          }));
-
-          const newCount = desk.seats.length === 2 ? 4 : 2;
-          menu.appendChild(mkBtn('🔀', desk.seats.length === 2 ? '-> 4 cho' : '-> 2 cho', () => {
-            const existing = desk.seats.filter(s => s.studentId).map(s => s.studentId);
-            desk.seats = Array(newCount).fill(null).map((_, i) => ({ studentId: existing[i] || null }));
-            renderSeatingChart(cls);
-          }));
-
-          menu.appendChild(mkBtn('🗑️', 'Xoa', () => {
-            if (!confirm('Xoa ban nay?')) return;
-            currentChartData.desks = currentChartData.desks.filter(d => d.id !== desk.id);
-            selectedDeskId = null;
-            renderSeatingChart(cls);
-          }));
-        }
-        deskEl.appendChild(menu);
+        deskEl.appendChild(delBtn);
       }
     }
 
