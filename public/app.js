@@ -1455,5 +1455,296 @@ function stopConfetti() {
   if (container) container.innerHTML = '';
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+//  SEATING CHART (SƠ ĐỒ LỚP HỌC)
+// ═══════════════════════════════════════════════════════════════════════════
 
+let isEditingSeatingChart = false;
+let currentChartData = null;
 
+function getInitials(name) {
+  const parts = name.trim().split(' ');
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+}
+
+function getColorForName(name) {
+  const colors = ['#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#ef4444', '#14b8a6'];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return colors[Math.abs(hash) % colors.length];
+}
+
+function addDesk(seatCount) {
+  const newDesk = {
+    id: 'desk_' + Date.now(),
+    type: 'student',
+    x: 50,
+    y: 150,
+    seats: Array(seatCount).fill(null).map(() => ({ studentId: null }))
+  };
+  currentChartData.desks.push(newDesk);
+  renderSeatingChart(getCurrentClass());
+}
+
+function renderSeatingChart(cls) {
+  const container = document.getElementById('seating-chart-container');
+  if (!container) return;
+
+  if (!cls) {
+    container.style.display = 'none';
+    return;
+  }
+  container.style.display = 'block';
+
+  // Khởi tạo data mặc định nếu chưa có
+  if (!cls.seatingChart) {
+    cls.seatingChart = {
+      desks: [
+        { id: 'desk_teacher', type: 'teacher', label: 'Th. Việt Anh', x: 280, y: 100, seats: [] }
+      ]
+    };
+  }
+
+  if (!isEditingSeatingChart) {
+    currentChartData = JSON.parse(JSON.stringify(cls.seatingChart));
+  }
+
+  container.innerHTML = '';
+
+  // --- Header ---
+  const header = createEl('div', { className: 'seating-chart-header' });
+  const title = createEl('h3', { text: '🗺️ Sơ đồ lớp học' });
+  header.appendChild(title);
+
+  const controls = createEl('div', { className: 'seating-chart-controls' });
+
+  if (isAdmin) {
+    if (!isEditingSeatingChart) {
+      const editBtn = createEl('button', { className: 'seating-btn' });
+      editBtn.innerHTML = '<i class="fa-solid fa-pen"></i> Chỉnh sửa sơ đồ';
+      editBtn.onclick = () => {
+        isEditingSeatingChart = true;
+        renderSeatingChart(cls);
+      };
+      controls.appendChild(editBtn);
+    } else {
+      const addDesk2Btn = createEl('button', { className: 'seating-btn' });
+      addDesk2Btn.innerHTML = '+ Bàn 2 chỗ';
+      addDesk2Btn.onclick = () => addDesk(2);
+
+      const addDesk4Btn = createEl('button', { className: 'seating-btn' });
+      addDesk4Btn.innerHTML = '+ Bàn 4 chỗ';
+      addDesk4Btn.onclick = () => addDesk(4);
+
+      const cancelBtn = createEl('button', { className: 'seating-btn' });
+      cancelBtn.innerHTML = 'Hủy';
+      cancelBtn.onclick = () => {
+        isEditingSeatingChart = false;
+        renderSeatingChart(cls);
+      };
+
+      const saveBtn = createEl('button', { className: 'seating-btn primary' });
+      saveBtn.innerHTML = '<i class="fa-solid fa-save"></i> Lưu Sơ Đồ';
+      saveBtn.onclick = async () => {
+        try {
+          const res = await api('PATCH', `/api/classes/${cls.id}`, { seatingChart: currentChartData });
+          cls.seatingChart = res.seatingChart;
+          isEditingSeatingChart = false;
+          renderSeatingChart(cls);
+        } catch (err) {
+          showError('Lỗi lưu sơ đồ: ' + err.message);
+        }
+      };
+
+      controls.appendChild(addDesk2Btn);
+      controls.appendChild(addDesk4Btn);
+      controls.appendChild(cancelBtn);
+      controls.appendChild(saveBtn);
+    }
+  }
+
+  header.appendChild(controls);
+  container.appendChild(header);
+
+  const layoutWrapper = createEl('div', { className: 'seating-layout-wrapper' });
+
+  // --- Panel học sinh chưa xếp chỗ ---
+  const panel = createEl('div', { className: 'unassigned-students-panel' + (isEditingSeatingChart ? ' active' : '') });
+  const panelTitle = createEl('h4', { text: 'Học sinh chưa xếp chỗ' });
+  panel.appendChild(panelTitle);
+
+  const assignedStudentIds = new Set();
+  currentChartData.desks.forEach(d => {
+    d.seats.forEach(s => { if (s.studentId) assignedStudentIds.add(s.studentId); });
+  });
+
+  const unassignedStudents = cls.students.filter(s => !assignedStudentIds.has(s.id));
+
+  if (unassignedStudents.length === 0) {
+    const p = createEl('p', { text: 'Tất cả đã có chỗ.' });
+    p.style.fontSize = '0.85rem';
+    panel.appendChild(p);
+  } else {
+    unassignedStudents.forEach(s => {
+      const item = createEl('div', { className: 'unassigned-student-item' });
+      item.draggable = true;
+      item.dataset.studentId = s.id;
+
+      const avatar = createEl('div', { className: 'avatar' });
+      avatar.textContent = getInitials(s.name);
+      avatar.style.background = getColorForName(s.name);
+      item.appendChild(avatar);
+      item.appendChild(document.createTextNode(s.name));
+
+      item.ondragstart = (e) => {
+        e.dataTransfer.setData('text/plain', s.id);
+        e.dataTransfer.setData('source', 'panel');
+      };
+      panel.appendChild(item);
+    });
+  }
+
+  panel.ondragover = (e) => e.preventDefault();
+  panel.ondrop = (e) => {
+    e.preventDefault();
+    if (!isEditingSeatingChart) return;
+    const studentId = e.dataTransfer.getData('text/plain');
+    if (!studentId) return;
+    currentChartData.desks.forEach(d => {
+      d.seats.forEach(seat => { if (seat.studentId === studentId) seat.studentId = null; });
+    });
+    renderSeatingChart(cls);
+  };
+
+  layoutWrapper.appendChild(panel);
+
+  // --- Classroom Canvas ---
+  const canvas = createEl('div', { className: 'classroom-canvas' });
+  const blackboard = createEl('div', { className: 'blackboard' });
+  blackboard.textContent = 'BẢNG VIẾT';
+  canvas.appendChild(blackboard);
+
+  currentChartData.desks.forEach(desk => {
+    const deskEl = createEl('div', { className: 'desk desk-' + desk.type + (isEditingSeatingChart ? ' draggable' : '') });
+    deskEl.style.left = desk.x + 'px';
+    deskEl.style.top = desk.y + 'px';
+
+    if (desk.type === 'teacher') {
+      deskEl.textContent = desk.label || 'Th. Việt Anh';
+    } else {
+      const seatsContainer = createEl('div', { className: 'desk-seats-container' });
+      desk.seats.forEach((seat, index) => {
+        const seatEl = createEl('div', { className: 'seat' });
+
+        if (seat.studentId) {
+          const student = cls.students.find(s => s.id === seat.studentId);
+          if (student) {
+            seatEl.classList.add('occupied');
+            seatEl.title = student.name;
+            const av = createEl('div', { className: 'seat-avatar' });
+            av.textContent = getInitials(student.name);
+            av.style.background = getColorForName(student.name);
+            seatEl.appendChild(av);
+            seatEl.appendChild(document.createTextNode(student.name.split(' ').pop()));
+
+            if (isEditingSeatingChart) {
+              seatEl.draggable = true;
+              seatEl.ondragstart = (e) => {
+                e.dataTransfer.setData('text/plain', student.id);
+                e.dataTransfer.setData('source', 'seat');
+                e.dataTransfer.setData('sourceDeskId', desk.id);
+                e.dataTransfer.setData('sourceSeatIndex', String(index));
+              };
+            }
+          } else {
+            seat.studentId = null;
+            seatEl.textContent = 'Trống';
+          }
+        } else {
+          seatEl.textContent = 'Trống';
+        }
+
+        if (isEditingSeatingChart) {
+          seatEl.ondragover = (e) => { e.preventDefault(); seatEl.classList.add('drag-over'); };
+          seatEl.ondragleave = () => seatEl.classList.remove('drag-over');
+          seatEl.ondrop = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            seatEl.classList.remove('drag-over');
+            const studentId = e.dataTransfer.getData('text/plain');
+            if (!studentId) return;
+
+            const existingStudentId = seat.studentId;
+
+            // Xóa người mới khỏi chỗ cũ
+            currentChartData.desks.forEach(d => {
+              d.seats.forEach(s => { if (s.studentId === studentId) s.studentId = null; });
+            });
+
+            // Nếu swap thì đặt người cũ vào chỗ mới
+            if (existingStudentId && e.dataTransfer.getData('source') === 'seat') {
+              const srcDeskId = e.dataTransfer.getData('sourceDeskId');
+              const srcIdx = parseInt(e.dataTransfer.getData('sourceSeatIndex'), 10);
+              const srcDesk = currentChartData.desks.find(d => d.id === srcDeskId);
+              if (srcDesk) srcDesk.seats[srcIdx].studentId = existingStudentId;
+            }
+
+            seat.studentId = studentId;
+            renderSeatingChart(cls);
+          };
+        }
+
+        seatsContainer.appendChild(seatEl);
+      });
+      deskEl.appendChild(seatsContainer);
+    }
+
+    if (isEditingSeatingChart) {
+      // Nút xóa bàn
+      if (desk.type !== 'teacher') {
+        const delBtn = createEl('div', { className: 'delete-desk-btn' });
+        delBtn.innerHTML = '&times;';
+        delBtn.onclick = (e) => {
+          e.stopPropagation();
+          currentChartData.desks = currentChartData.desks.filter(d => d.id !== desk.id);
+          renderSeatingChart(cls);
+        };
+        deskEl.appendChild(delBtn);
+      }
+
+      // Kéo bàn bằng mouse
+      let draggingDesk = false;
+      let startX, startY, initX, initY;
+
+      deskEl.onmousedown = (e) => {
+        if (e.target.closest('.seat') || e.target.closest('.delete-desk-btn')) return;
+        draggingDesk = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        initX = desk.x;
+        initY = desk.y;
+
+        const onMove = (me) => {
+          if (!draggingDesk) return;
+          desk.x = Math.max(0, initX + me.clientX - startX);
+          desk.y = Math.max(0, initY + me.clientY - startY);
+          deskEl.style.left = desk.x + 'px';
+          deskEl.style.top = desk.y + 'px';
+        };
+        const onUp = () => {
+          draggingDesk = false;
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+        };
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+      };
+    }
+
+    canvas.appendChild(deskEl);
+  });
+
+  layoutWrapper.appendChild(canvas);
+  container.appendChild(layoutWrapper);
+}
