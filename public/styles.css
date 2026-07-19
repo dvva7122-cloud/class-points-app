@@ -1989,7 +1989,7 @@ body:not(.is-editing) #add-student-container {
     z-index: 20;
     line-height: 1;
 }
-.desk.draggable:hover .delete-desk-btn { display: flex; }
+.desk.draggable:hover .delete-desk-btn, .decor-image-wrapper.draggable:hover .delete-desk-btn { display: flex; }
 
 /* ── Bàn giáo viên nổi bật ── */
 .desk-teacher {
