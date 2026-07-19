@@ -1893,7 +1893,7 @@ body:not(.is-editing) #add-student-container {
 .desk-2 {
     background: linear-gradient(160deg, #fde68a 0%, #fbbf24 100%);
     border: 2.5px solid #d97706;
-    width: 158px;
+    width: 200px;
     height: 82px;
     padding: 8px;
 }
@@ -1902,7 +1902,7 @@ body:not(.is-editing) #add-student-container {
 .desk-4 {
     background: linear-gradient(160deg, #fde68a 0%, #fbbf24 100%);
     border: 2.5px solid #d97706;
-    width: 214px;
+    width: 280px;
     height: 160px;
     padding: 10px;
 }
@@ -2079,4 +2079,20 @@ body:not(.is-editing) #add-student-container {
 .remove-student-seat-btn:hover {
     background: #dc2626;
     transform: scale(1.1);
+}
+
+/* ── Wrapper cho ảnh trang trí ── */
+.decor-image-wrapper {
+    position: absolute;
+    z-index: 2;
+}
+.decor-image-wrapper.draggable {
+    cursor: grab;
+}
+.decor-image-wrapper.draggable:active {
+    cursor: grabbing;
+}
+.decor-image-wrapper .delete-desk-btn {
+    top: -10px;
+    right: -10px;
 }

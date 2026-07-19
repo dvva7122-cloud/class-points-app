@@ -979,8 +979,22 @@ function setupListeners() {
 
 
 // ─── Utility ──────────────────────────────────────────────────────────────
-function showError(msg) {
-  alert('Lỗi: ' + msg);
+function showError(msg, title = 'Thông báo', icon = '⚠️') {
+  const modal = document.getElementById('custom-alert-modal');
+  if (!modal) {
+    alert(msg);
+    return;
+  }
+  document.getElementById('custom-alert-icon').textContent = icon;
+  document.getElementById('custom-alert-title').textContent = title;
+  document.getElementById('custom-alert-message').textContent = msg;
+  modal.classList.add('show');
+  
+  const okBtn = document.getElementById('custom-alert-ok-btn');
+  okBtn.focus();
+  okBtn.onclick = () => {
+    modal.classList.remove('show');
+  };
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────
@@ -1594,6 +1608,28 @@ function renderSeatingChart(cls) {
       randomBtn.innerHTML = '<i class="fa-solid fa-shuffle"></i> Xếp ngẫu nhiên';
       randomBtn.onclick = () => randomAssignSeats(cls);
       controls.appendChild(randomBtn);
+      
+      // Nút Thêm hình ảnh
+      const addImgBtn = document.createElement('button');
+      addImgBtn.className = 'seating-btn';
+      addImgBtn.innerHTML = '<i class="fa-regular fa-image"></i> Thêm ảnh';
+      addImgBtn.onclick = async () => {
+        const res = await showCustomPrompt('Thêm ảnh trang trí', [
+          { id: 'url', label: 'Link ảnh (URL)', type: 'text' }
+        ]);
+        if (res && res.url) {
+          const newImg = {
+            id: 'img_' + Date.now(),
+            type: 'image',
+            url: res.url,
+            x: 100,
+            y: 100
+          };
+          currentChartData.desks.push(newImg);
+          renderSeatingChart(cls);
+        }
+      };
+      controls.appendChild(addImgBtn);
 
       const cancelBtn = document.createElement('button');
       cancelBtn.className = 'seating-btn';
@@ -1676,17 +1712,7 @@ function renderSeatingChart(cls) {
   bb.innerHTML = '<span class="bb-text">BẢNG VIẾT</span>';
   canvas.appendChild(bb);
 
-  // Trang tri
-  [
-    { e: '🪴', s: 'bottom:20px;left:20px;font-size:2.8rem;' },
-    { e: '🪴', s: 'bottom:20px;right:20px;font-size:2.8rem;' },
-  ].forEach(d => {
-    const el = document.createElement('div');
-    el.className = 'classroom-decor';
-    el.textContent = d.e;
-    el.style.cssText += d.s;
-    canvas.appendChild(el);
-  });
+  
 
   // Ve ban
   currentChartData.desks.forEach(desk => {
@@ -1695,6 +1721,7 @@ function renderSeatingChart(cls) {
     const deskEl = document.createElement('div');
     let deskClass = 'desk';
     if (desk.type === 'teacher') deskClass += ' desk-teacher';
+    else if (desk.type === 'image') deskClass = 'decor-image-wrapper';
     else deskClass += ' desk-' + (seatCount === 4 ? '4' : '2');
     if (isEditingSeatingChart) deskClass += ' draggable';
     deskEl.className = deskClass;
@@ -1708,6 +1735,16 @@ function renderSeatingChart(cls) {
         tLabel = 'Thầy Việt Anh';
       }
       deskEl.innerHTML = '<div class="teacher-desk-icon">💻 📚</div><div class="teacher-desk-name">' + tLabel + '</div>';
+    } else if (desk.type === 'image') {
+      const img = document.createElement('img');
+      img.src = desk.url;
+      img.style.width = '120px'; // Kích thước nhỏ nhỏ xinh xinh
+      img.style.height = 'auto';
+      img.style.borderRadius = '8px';
+      img.style.boxShadow = '0 4px 10px rgba(0,0,0,0.15)';
+      img.style.display = 'block';
+      img.style.pointerEvents = 'none'; // Ngăn việc bị kéo nhầm ảnh thay vì kéo wrapper
+      deskEl.appendChild(img);
     } else {
       const is4 = seatCount === 4;
       const sc = document.createElement('div');
