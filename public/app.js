@@ -1615,7 +1615,7 @@ function renderSeatingChart(cls) {
       addImgBtn.innerHTML = '<i class="fa-regular fa-image"></i> Thêm ảnh';
       addImgBtn.onclick = async () => {
         const res = await showCustomPrompt('Thêm ảnh trang trí', [
-          { id: 'url', label: 'Link ảnh (URL)', type: 'text' }
+          { key: 'url', label: 'Link ảnh (URL)', type: 'text' }
         ]);
         if (res && res.url) {
           const newImg = {
