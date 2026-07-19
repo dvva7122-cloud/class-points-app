@@ -1494,7 +1494,7 @@ function randomAssignSeats(cls) {
   });
 
   const assignedIds = new Set();
-  currentChartData.desks.forEach(d => d.seats.forEach(s => { if (s.studentId) assignedIds.add(s.studentId); }));
+  currentChartData.desks.forEach(d => (d.seats || []).forEach(s => { if (s.studentId) assignedIds.add(s.studentId); }));
   const unassignedStudents = cls.students.filter(s => !assignedIds.has(s.id));
 
   if (unassignedStudents.length > emptySeats.length) {
@@ -1666,7 +1666,7 @@ function renderSeatingChart(cls) {
   panel.appendChild(panelTitle);
 
   const assignedIds = new Set();
-  currentChartData.desks.forEach(d => d.seats.forEach(s => { if (s.studentId) assignedIds.add(s.studentId); }));
+  currentChartData.desks.forEach(d => (d.seats || []).forEach(s => { if (s.studentId) assignedIds.add(s.studentId); }));
   const unassigned = cls.students.filter(s => !assignedIds.has(s.id));
 
   if (unassigned.length === 0) {
@@ -1696,7 +1696,7 @@ function renderSeatingChart(cls) {
     if (!isEditingSeatingChart) return;
     const sid = e.dataTransfer.getData('text/plain');
     if (sid) {
-      currentChartData.desks.forEach(d => d.seats.forEach(seat => { if (seat.studentId === sid) seat.studentId = null; }));
+      currentChartData.desks.forEach(d => (d.seats || []).forEach(seat => { if (seat.studentId === sid) seat.studentId = null; }));
       renderSeatingChart(cls);
     }
   };
@@ -1805,7 +1805,7 @@ function renderSeatingChart(cls) {
             const sid = e.dataTransfer.getData('text/plain');
             if (!sid) return;
             const existingSid = seat.studentId;
-            currentChartData.desks.forEach(d => d.seats.forEach(s => { if (s.studentId === sid) s.studentId = null; }));
+            currentChartData.desks.forEach(d => (d.seats || []).forEach(s => { if (s.studentId === sid) s.studentId = null; }));
             if (existingSid && e.dataTransfer.getData('source') === 'seat') {
               const srcDesk = currentChartData.desks.find(d => d.id === e.dataTransfer.getData('sourceDeskId'));
               if (srcDesk) srcDesk.seats[parseInt(e.dataTransfer.getData('sourceSeatIndex'), 10)].studentId = existingSid;
