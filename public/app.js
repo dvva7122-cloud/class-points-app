@@ -1460,6 +1460,44 @@ function stopConfetti() {
 // ═══════════════════════════════════════════════════════════════════════════
 //  SEATING CHART (SƠ ĐỒ LỚP HỌC)
 // ═══════════════════════════════════════════════════════════════════════════
+function resetAllSeats(cls) {
+  currentChartData.desks.forEach(d => {
+    if (d.seats) {
+      d.seats.forEach(s => s.studentId = null);
+    }
+  });
+  renderSeatingChart(cls);
+}
+
+function randomAssignSeats(cls) {
+  const emptySeats = [];
+  currentChartData.desks.forEach(d => {
+    if (d.type !== 'teacher' && d.seats) {
+      d.seats.forEach(s => {
+        if (!s.studentId) emptySeats.push(s);
+      });
+    }
+  });
+
+  const assignedIds = new Set();
+  currentChartData.desks.forEach(d => d.seats.forEach(s => { if (s.studentId) assignedIds.add(s.studentId); }));
+  const unassignedStudents = cls.students.filter(s => !assignedIds.has(s.id));
+
+  if (unassignedStudents.length > emptySeats.length) {
+    const missing = unassignedStudents.length - emptySeats.length;
+    showError(`Chưa đủ chỗ trống! Thiếu ${missing} chỗ ngồi để xếp toàn bộ học sinh.`);
+    return;
+  }
+
+  // Shuffle empty seats or students
+  const shuffledStudents = [...unassignedStudents].sort(() => Math.random() - 0.5);
+  shuffledStudents.forEach((student, index) => {
+    emptySeats[index].studentId = student.id;
+  });
+
+  renderSeatingChart(cls);
+}
+
 
 let isEditingSeatingChart = false;
 let currentChartData = null;
@@ -1502,7 +1540,7 @@ function renderSeatingChart(cls) {
   if (!cls.seatingChart) {
     cls.seatingChart = {
       desks: [
-        { id: 'desk_teacher', type: 'teacher', label: 'Th. Việt Anh', x: 280, y: 100, seats: [] }
+        { id: 'desk_teacher', type: 'teacher', label: 'Thầy Việt Anh', x: 280, y: 100, seats: [] }
       ]
     };
   }
@@ -1538,6 +1576,24 @@ function renderSeatingChart(cls) {
         btn.onclick = () => addDesk(i === 0 ? 2 : 4);
         controls.appendChild(btn);
       });
+
+      // Nút Xóa hết chỗ (Reset)
+      const resetBtn = document.createElement('button');
+      resetBtn.className = 'seating-btn danger';
+      resetBtn.innerHTML = '<i class="fa-solid fa-trash-can"></i> Xóa hết chỗ';
+      resetBtn.onclick = () => {
+        if (confirm('Bạn có chắc chắn muốn xóa toàn bộ học sinh khỏi sơ đồ?')) {
+          resetAllSeats(cls);
+        }
+      };
+      controls.appendChild(resetBtn);
+
+      // Nút Xếp ngẫu nhiên (Random)
+      const randomBtn = document.createElement('button');
+      randomBtn.className = 'seating-btn warning';
+      randomBtn.innerHTML = '<i class="fa-solid fa-shuffle"></i> Xếp ngẫu nhiên';
+      randomBtn.onclick = () => randomAssignSeats(cls);
+      controls.appendChild(randomBtn);
 
       const cancelBtn = document.createElement('button');
       cancelBtn.className = 'seating-btn';
@@ -1647,7 +1703,11 @@ function renderSeatingChart(cls) {
     deskEl.dataset.deskId = desk.id;
 
     if (desk.type === 'teacher') {
-      deskEl.innerHTML = '<div class="teacher-desk-icon">💻 📚</div><div class="teacher-desk-name">' + (desk.label || 'Th. Việt Anh') + '</div>';
+      let tLabel = desk.label || 'Thầy Việt Anh';
+      if (tLabel === 'Th. Việt Anh' || tLabel === 'Th. Viet Anh') {
+        tLabel = 'Thầy Việt Anh';
+      }
+      deskEl.innerHTML = '<div class="teacher-desk-icon">💻 📚</div><div class="teacher-desk-name">' + tLabel + '</div>';
     } else {
       const is4 = seatCount === 4;
       const sc = document.createElement('div');
@@ -1678,6 +1738,18 @@ function renderSeatingChart(cls) {
                 e.dataTransfer.setData('sourceDeskId', desk.id);
                 e.dataTransfer.setData('sourceSeatIndex', String(index));
               };
+
+              // Thêm nút xóa học sinh đưa về danh sách
+              const removeBtn = document.createElement('button');
+              removeBtn.className = 'remove-student-seat-btn';
+              removeBtn.innerHTML = '&times;';
+              removeBtn.title = 'Xóa khỏi chỗ';
+              removeBtn.onclick = (e) => {
+                e.stopPropagation();
+                seat.studentId = null;
+                renderSeatingChart(cls);
+              };
+              seatEl.appendChild(removeBtn);
             }
           } else {
             seat.studentId = null;
