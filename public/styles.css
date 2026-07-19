@@ -1654,12 +1654,13 @@ body:not(.is-editing) #add-student-container {
 /* ═══════════════════════════════════════════════════════════════════════════ */
 
 #seating-chart-container {
-    margin-bottom: 30px;
+    margin-top: 40px;
+    margin-bottom: 40px;
     background: linear-gradient(135deg, #fef9f0 0%, #fff8f0 100%);
     border-radius: 20px;
-    padding: 24px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.06);
-    border: 1px solid rgba(226, 232, 240, 0.8);
+    padding: 28px;
+    box-shadow: 0 10px 35px rgba(0,0,0,0.06);
+    border: 1px solid rgba(226, 232, 240, 0.9);
     display: none;
 }
 
@@ -1716,6 +1717,7 @@ body:not(.is-editing) #add-student-container {
     overflow-x: auto;
     padding-bottom: 10px;
     width: 100%;
+    justify-content: center;
 }
 
 /* ── Panel học sinh chưa xếp chỗ ── */
