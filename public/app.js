@@ -1667,7 +1667,9 @@ function renderSeatingChart(cls) {
             av.textContent = getInitials(student.name);
             av.style.background = getColorForName(student.name);
             seatEl.appendChild(av);
-            seatEl.appendChild(document.createTextNode(student.name.split(' ').pop()));
+            const nameParts = student.name.trim().split(/\s+/);
+            const displayName = nameParts.length > 1 ? nameParts.slice(-2).join(' ') : student.name;
+            seatEl.appendChild(document.createTextNode(displayName));
             if (isEditingSeatingChart) {
               seatEl.draggable = true;
               seatEl.ondragstart = e => {

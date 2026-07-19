@@ -1713,6 +1713,9 @@ body:not(.is-editing) #add-student-container {
     display: flex;
     gap: 20px;
     align-items: flex-start;
+    overflow-x: auto;
+    padding-bottom: 10px;
+    width: 100%;
 }
 
 /* ── Panel học sinh chưa xếp chỗ ── */
@@ -1772,7 +1775,8 @@ body:not(.is-editing) #add-student-container {
 
 /* ── Phòng học ── */
 .classroom-canvas {
-    flex-grow: 1;
+    width: 850px;
+    flex-shrink: 0;
     min-height: 620px;
     border-radius: 16px;
     position: relative;
