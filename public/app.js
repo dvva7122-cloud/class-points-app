@@ -311,6 +311,7 @@ function openImageEditor(imageUrl, onSave) {
 
 function setupEditorToolbar() {
   const drawBtn = document.getElementById('editor-draw-btn');
+  const eraserBtn = document.getElementById('editor-eraser-btn');
   const colorPicker = document.getElementById('editor-color-picker');
   const textBtn = document.getElementById('editor-text-btn');
   const emojiBtn = document.getElementById('editor-emoji-btn');
@@ -318,19 +319,45 @@ function setupEditorToolbar() {
   const zoomOutBtn = document.getElementById('editor-zoom-out-btn');
   const resetZoomBtn = document.getElementById('editor-reset-zoom-btn');
 
+  // Helper: deactivate all draw modes
+  function setDrawMode(mode) {
+    _fabricCanvas.isDrawingMode = false;
+    drawBtn.classList.remove('active');
+    if (eraserBtn) eraserBtn.classList.remove('active');
+    if (mode === 'draw') {
+      _fabricCanvas.isDrawingMode = true;
+      _fabricCanvas.freeDrawingBrush = new fabric.PencilBrush(_fabricCanvas);
+      _fabricCanvas.freeDrawingBrush.color = colorPicker.value;
+      _fabricCanvas.freeDrawingBrush.width = 4;
+      drawBtn.classList.add('active');
+    } else if (mode === 'eraser') {
+      _fabricCanvas.isDrawingMode = true;
+      // Simulate eraser with white wide brush
+      _fabricCanvas.freeDrawingBrush = new fabric.PencilBrush(_fabricCanvas);
+      _fabricCanvas.freeDrawingBrush.color = '#ffffff';
+      _fabricCanvas.freeDrawingBrush.width = 22;
+      if (eraserBtn) eraserBtn.classList.add('active');
+    }
+  }
+
   // Draw toggle
-  let drawing = false;
+  let currentMode = 'none';
   drawBtn.onclick = () => {
-    drawing = !drawing;
-    _fabricCanvas.isDrawingMode = drawing;
-    drawBtn.classList.toggle('active', drawing);
-    _fabricCanvas.freeDrawingBrush.color = colorPicker.value;
-    _fabricCanvas.freeDrawingBrush.width = 3;
+    currentMode = currentMode === 'draw' ? 'none' : 'draw';
+    setDrawMode(currentMode);
   };
+
+  // Eraser toggle
+  if (eraserBtn) {
+    eraserBtn.onclick = () => {
+      currentMode = currentMode === 'eraser' ? 'none' : 'eraser';
+      setDrawMode(currentMode);
+    };
+  }
 
   // Color picker — applies to both free drawing and selected objects
   colorPicker.oninput = () => {
-    if (_fabricCanvas.isDrawingMode) {
+    if (_fabricCanvas.isDrawingMode && currentMode === 'draw') {
       _fabricCanvas.freeDrawingBrush.color = colorPicker.value;
     }
     const active = _fabricCanvas.getActiveObject();
@@ -346,8 +373,8 @@ function setupEditorToolbar() {
 
   // Add text
   textBtn.onclick = () => {
-    _fabricCanvas.isDrawingMode = false;
-    drawBtn.classList.remove('active');
+    currentMode = 'none';
+    setDrawMode('none');
     const text = new fabric.IText('Gõ nội dung vào đây...', {
       left: 100, top: 100,
       fontFamily: 'Arial',
@@ -363,8 +390,8 @@ function setupEditorToolbar() {
 
   // Emoji picker panel
   emojiBtn.onclick = () => {
-    _fabricCanvas.isDrawingMode = false;
-    drawBtn.classList.remove('active');
+    currentMode = 'none';
+    setDrawMode('none');
     showEmojiPicker(colorPicker.value);
   };
 
@@ -382,6 +409,33 @@ function setupEditorToolbar() {
     currentZoom = 1;
     _fabricCanvas.setZoom(1);
   };
+
+  // ── Delete/Backspace key: remove selected objects ─────────────────────────
+  function handleEditorKeyDown(e) {
+    const modal = document.getElementById('image-editor-modal');
+    if (!modal || !modal.classList.contains('show')) return;
+    if (!_fabricCanvas) return;
+    // Don't delete while typing inside text box
+    const active = _fabricCanvas.getActiveObject();
+    if (active && (active.type === 'i-text' || active.type === 'text') && active.isEditing) return;
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      const selected = _fabricCanvas.getActiveObjects();
+      if (selected && selected.length > 0) {
+        // Don't allow deleting the background image (selectable = false)
+        selected.forEach(obj => {
+          if (obj.selectable !== false) _fabricCanvas.remove(obj);
+        });
+        _fabricCanvas.discardActiveObject();
+        _fabricCanvas.renderAll();
+        _editorHasChanges = true;
+        e.preventDefault();
+      }
+    }
+  }
+  // Remove old listener if any, then add fresh
+  document.removeEventListener('keydown', window._editorKeyHandler);
+  window._editorKeyHandler = handleEditorKeyDown;
+  document.addEventListener('keydown', window._editorKeyHandler);
 }
 
 function showEmojiPicker(color) {
