@@ -239,15 +239,19 @@ async function doSaveEventImage(classId, eventId, dataUrl) {
     if (!cls) return;
     const evt = cls.events && cls.events.find(e => e.id === eventId);
     if (!evt) return;
+    // Update in memory FIRST so re-renders use new image
     evt.imageUrl = dataUrl;
-    await fetch('/api/data', {
+    const resp = await fetch('/api/data', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password: adminPassword, data: appData })
     });
-    showCustomAlert('Đã lưu', 'Ảnh đã được lưu thành công!');
+    if (!resp.ok) {
+      throw new Error('Server trả về lỗi ' + resp.status);
+    }
+    showCustomAlert('Đã lưu', 'Ảnh đã được lưu thành công! Các nét vẽ đã được ghi vào ảnh.');
   } catch (err) {
-    showCustomAlert('Lỗi', 'Không thể lưu ảnh: ' + err.message);
+    showCustomAlert('Lỗi', 'Không thể lưu ảnh lên server: ' + err.message + '\nẢnh vẫn hiển thị trong phiên này nhưng sẽ mất khi tải lại trang.');
   }
 }
 
@@ -272,44 +276,48 @@ function openImageEditor(imageUrl, onSave) {
     _fabricCanvas = null;
   }
 
-  const canvasEl = document.getElementById('image-editor-canvas');
+  // Load image first to get original dimensions
+  const tempImg = new Image();
+  tempImg.crossOrigin = 'Anonymous';
+  tempImg.onload = () => {
+    const origW = tempImg.naturalWidth;
+    const origH = tempImg.naturalHeight;
 
-  // Init Fabric canvas at fixed size
-  const EDITOR_W = Math.min(window.innerWidth * 0.88, 1200);
-  const EDITOR_H = Math.min(window.innerHeight * 0.72, 800);
+    // Canvas = original image size (preserve quality 1:1)
+    _fabricCanvas = new fabric.Canvas('image-editor-canvas', {
+      width: origW,
+      height: origH,
+      backgroundColor: '#ffffff',
+      enableRetinaScaling: true
+    });
 
-  _fabricCanvas = new fabric.Canvas('image-editor-canvas', {
-    width: EDITOR_W,
-    height: EDITOR_H,
-    backgroundColor: '#ffffff'
-  });
+    // Load as background at full 1:1 quality (no scaling)
+    fabric.Image.fromURL(imageUrl, (img) => {
+      img.set({ left: 0, top: 0, selectable: false, evented: false, scaleX: 1, scaleY: 1 });
+      _fabricCanvas.add(img);
+      _fabricCanvas.sendToBack(img);
+      _fabricCanvas.renderAll();
+    }, { crossOrigin: 'Anonymous' });
 
-  // Load background image
-  fabric.Image.fromURL(imageUrl, (img) => {
-    const scaleX = EDITOR_W / img.width;
-    const scaleY = EDITOR_H / img.height;
-    const scale = Math.min(scaleX, scaleY);
-    img.scale(scale);
-    img.set({ left: (EDITOR_W - img.width * scale) / 2, top: (EDITOR_H - img.height * scale) / 2, selectable: false, evented: false });
-    _fabricCanvas.add(img);
-    _fabricCanvas.sendToBack(img);
-    _fabricCanvas.renderAll();
-  }, { crossOrigin: 'Anonymous' });
+    _fabricCanvas.on('object:added', () => { _editorHasChanges = true; });
+    _fabricCanvas.on('object:modified', () => { _editorHasChanges = true; });
 
-  _fabricCanvas.on('object:added', () => { _editorHasChanges = true; });
-  _fabricCanvas.on('object:modified', () => { _editorHasChanges = true; });
+    // Toolbar bindings
+    setupEditorToolbar(origW, origH);
 
-  // Toolbar bindings
-  setupEditorToolbar();
+    // Close button
+    document.getElementById('editor-close-btn').onclick = () => closeImageEditor(false);
 
-  // Close button
-  document.getElementById('editor-close-btn').onclick = () => closeImageEditor(false);
-
-  // Save button
-  document.getElementById('editor-save-btn').onclick = () => saveImageEditor();
+    // Save button
+    document.getElementById('editor-save-btn').onclick = () => saveImageEditor(origW, origH);
+  };
+  tempImg.onerror = () => {
+    showCustomAlert('Lỗi', 'Không thể tải ảnh để chỉnh sửa. Vui lòng thử lại.');
+  };
+  tempImg.src = imageUrl;
 }
 
-function setupEditorToolbar() {
+function setupEditorToolbar(origW, origH) {
   const drawBtn = document.getElementById('editor-draw-btn');
   const eraserBtn = document.getElementById('editor-eraser-btn');
   const colorPicker = document.getElementById('editor-color-picker');
@@ -395,19 +403,28 @@ function setupEditorToolbar() {
     showEmojiPicker(colorPicker.value);
   };
 
-  // Zoom
+  // Zoom — min zoom=1 (original), can only zoom IN from default
   let currentZoom = 1;
   zoomInBtn.onclick = () => {
-    currentZoom = Math.min(currentZoom + 0.2, 4);
+    currentZoom = Math.min(currentZoom + 0.25, 5);
     _fabricCanvas.setZoom(currentZoom);
+    _fabricCanvas.setDimensions({
+      width: (origW || _fabricCanvas.width) * currentZoom,
+      height: (origH || _fabricCanvas.height) * currentZoom
+    });
   };
   zoomOutBtn.onclick = () => {
-    currentZoom = Math.max(currentZoom - 0.2, 0.3);
+    currentZoom = Math.max(currentZoom - 0.25, 1); // Never below 1
     _fabricCanvas.setZoom(currentZoom);
+    _fabricCanvas.setDimensions({
+      width: (origW || _fabricCanvas.width / currentZoom) * currentZoom,
+      height: (origH || _fabricCanvas.height / currentZoom) * currentZoom
+    });
   };
   resetZoomBtn.onclick = () => {
     currentZoom = 1;
     _fabricCanvas.setZoom(1);
+    _fabricCanvas.setDimensions({ width: origW || _fabricCanvas.width, height: origH || _fabricCanvas.height });
   };
 
   // ── Delete/Backspace key: remove selected objects ─────────────────────────
@@ -516,9 +533,24 @@ function closeImageEditor(skipConfirm) {
   _editorHasChanges = false;
 }
 
-function saveImageEditor() {
+function saveImageEditor(origW, origH) {
   if (!_fabricCanvas) return;
-  const dataUrl = _fabricCanvas.toDataURL({ format: 'jpeg', quality: 0.85 });
+  // Reset zoom to 1 before exporting to get the correct resolution
+  const prevZoom = _fabricCanvas.getZoom();
+  _fabricCanvas.setZoom(1);
+  const w = origW || _fabricCanvas.getWidth();
+  const h = origH || _fabricCanvas.getHeight();
+  _fabricCanvas.setDimensions({ width: w, height: h });
+  const dataUrl = _fabricCanvas.toDataURL({
+    format: 'jpeg',
+    quality: 0.92,
+    width: w,
+    height: h,
+    left: 0,
+    top: 0
+  });
+  // Restore zoom after export
+  _fabricCanvas.setZoom(prevZoom);
   if (_editorSaveCallback) _editorSaveCallback(dataUrl);
   _editorHasChanges = false;
   closeImageEditor(true);
