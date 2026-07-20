@@ -186,33 +186,36 @@
             <!-- Editor Toolbar -->
             <div id="editor-toolbar" style="display: flex; gap: 15px; padding: 12px 20px; background: #1a202c; align-items: center; justify-content: space-between; border-bottom: 1px solid #4a5568;">
                 
+                <!-- Tools that EVERYONE sees: zoom -->
                 <div style="display: flex; gap: 10px; align-items: center;">
-                    <!-- Draw Mode -->
-                    <button id="editor-draw-btn" class="editor-btn" title="Chế độ vẽ tay"><i class="fa-solid fa-pen"></i></button>
-                    <!-- Eraser -->
-                    <button id="editor-eraser-btn" class="editor-btn" title="Tẩy nét vẽ"><i class="fa-solid fa-eraser"></i></button>
-                    <!-- Color Picker -->
-                    <input type="color" id="editor-color-picker" value="#ff0000" style="width: 35px; height: 35px; border: none; border-radius: 4px; cursor: pointer; padding: 0;" title="Chọn màu">
-                    
-                    <div style="width: 1px; height: 24px; background: #4a5568; margin: 0 5px;"></div>
-                    
-                    <!-- Text -->
-                    <button id="editor-text-btn" class="editor-btn" title="Thêm chữ"><i class="fa-solid fa-t"></i></button>
-                    
-                    <!-- Emoji -->
-                    <button id="editor-emoji-btn" class="editor-btn" title="Thêm biểu tượng"><i class="fa-regular fa-face-smile"></i></button>
-                    
-                    <div style="width: 1px; height: 24px; background: #4a5568; margin: 0 5px;"></div>
-                    
-                    <!-- Zoom -->
+                    <!-- ADMIN-ONLY: draw/erase/color/text/emoji -->
+                    <div id="editor-admin-tools" style="display:none; gap: 10px; align-items: center;">
+                        <!-- Draw Mode -->
+                        <button id="editor-draw-btn" class="editor-btn" title="Chế độ vẽ tay"><i class="fa-solid fa-pen"></i></button>
+                        <!-- Eraser -->
+                        <button id="editor-eraser-btn" class="editor-btn" title="Tẩy nét vẽ"><i class="fa-solid fa-eraser"></i></button>
+                        <!-- Color Picker -->
+                        <input type="color" id="editor-color-picker" value="#ff0000" style="width: 35px; height: 35px; border: none; border-radius: 4px; cursor: pointer; padding: 0;" title="Chọn màu">
+                        <div style="width: 1px; height: 24px; background: #4a5568; margin: 0 5px;"></div>
+                        <!-- Text -->
+                        <button id="editor-text-btn" class="editor-btn" title="Thêm chữ"><i class="fa-solid fa-t"></i></button>
+                        <!-- Emoji -->
+                        <button id="editor-emoji-btn" class="editor-btn" title="Thêm biểu tượng"><i class="fa-regular fa-face-smile"></i></button>
+                        <div style="width: 1px; height: 24px; background: #4a5568; margin: 0 5px;"></div>
+                    </div>
+
+                    <!-- Zoom — available for all users -->
                     <button id="editor-zoom-in-btn" class="editor-btn" title="Phóng to"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
                     <button id="editor-zoom-out-btn" class="editor-btn" title="Thu nhỏ"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
                     <button id="editor-reset-zoom-btn" class="editor-btn" title="Cỡ gốc"><i class="fa-solid fa-expand"></i></button>
                 </div>
 
                 <div style="display: flex; gap: 10px; align-items: center;">
-                    <button id="editor-close-btn" class="editor-btn" style="color: #fca5a5;" title="Đóng & Hủy"><i class="fa-solid fa-xmark"></i> Thoát</button>
-                    <button id="editor-save-btn" class="submit-btn" style="background: var(--primary-color); padding: 8px 16px; margin: 0; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-save"></i> Lưu ảnh</button>
+                    <!-- Role indicator badge -->
+                    <span id="editor-role-badge" style="font-size: 0.75rem; padding: 4px 10px; border-radius: 999px; background: #4a5568; color: #cbd5e0;"></span>
+                    <button id="editor-close-btn" class="editor-btn" style="color: #fca5a5;" title="Đóng"><i class="fa-solid fa-xmark"></i> Đóng</button>
+                    <!-- ADMIN-ONLY: save button -->
+                    <button id="editor-save-btn" class="submit-btn admin-editor-only" style="background: var(--primary-color); padding: 8px 16px; margin: 0; display: none; align-items: center; gap: 8px;"><i class="fa-solid fa-save"></i> Lưu ảnh</button>
                 </div>
             </div>
 

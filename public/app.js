@@ -301,6 +301,27 @@ function openImageEditor(imageUrl, onSave) {
 
     _fabricCanvas.on('object:added', () => { _editorHasChanges = true; });
     _fabricCanvas.on('object:modified', () => { _editorHasChanges = true; });
+    
+    // Disable interaction for non-admin (view only)
+    if (!isAdmin) {
+      _fabricCanvas.selection = false;
+      _fabricCanvas.isDrawingMode = false;
+      _fabricCanvas.forEachObject(obj => { obj.selectable = false; obj.evented = false; });
+    }
+
+    // Show/hide tools based on role
+    const adminTools = document.getElementById('editor-admin-tools');
+    const saveBtn = document.getElementById('editor-save-btn');
+    const roleBadge = document.getElementById('editor-role-badge');
+    if (isAdmin) {
+      if (adminTools) adminTools.style.display = 'flex';
+      if (saveBtn) saveBtn.style.display = 'flex';
+      if (roleBadge) { roleBadge.textContent = '👑 Admin'; roleBadge.style.background = '#c05621'; roleBadge.style.color = '#fff'; }
+    } else {
+      if (adminTools) adminTools.style.display = 'none';
+      if (saveBtn) saveBtn.style.display = 'none';
+      if (roleBadge) { roleBadge.textContent = '👁️ Xem'; roleBadge.style.background = '#2d3748'; roleBadge.style.color = '#a0aec0'; }
+    }
 
     // Toolbar bindings
     setupEditorToolbar(origW, origH);
@@ -308,7 +329,7 @@ function openImageEditor(imageUrl, onSave) {
     // Close button
     document.getElementById('editor-close-btn').onclick = () => closeImageEditor(false);
 
-    // Save button
+    // Save button (admin only)
     document.getElementById('editor-save-btn').onclick = () => saveImageEditor(origW, origH);
   };
   tempImg.onerror = () => {
@@ -507,7 +528,7 @@ function showEmojiPicker(color) {
 }
 
 function closeImageEditor(skipConfirm) {
-  if (!skipConfirm && _editorHasChanges) {
+  if (!skipConfirm && _editorHasChanges && isAdmin) {
     showConfirmModal(
       'Bạn muốn lưu trước khi thoát?',
       'Các thay đổi chưa được lưu sẽ bị mất nếu bạn thoát.',
