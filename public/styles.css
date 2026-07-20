@@ -2097,3 +2097,51 @@ body:not(.is-editing) #add-student-container {
     top: -10px;
     right: -10px;
 }
+
+/* ── Image Editor Styles ── */
+.editor-btn {
+    background: transparent;
+    color: #e2e8f0;
+    border: none;
+    font-size: 1.2rem;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.editor-btn:hover {
+    background: #4a5568;
+    color: #fff;
+}
+.editor-btn.active {
+    background: #3182ce;
+    color: #fff;
+}
+
+/* ── Events Section Image Hover ── */
+.event-card img {
+    cursor: pointer;
+    transition: filter 0.2s;
+}
+.event-card img:hover {
+    filter: brightness(0.9);
+}
+.event-card-hover-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2rem;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+}
+.event-card:hover .event-card-hover-overlay {
+    opacity: 1;
+}

@@ -11,6 +11,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- SheetJS dùng để parse Excel, KHÔNG gọi server -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <!-- Fabric.js for Image Editor -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
 </head>
 <body class="theme-default">
     <div id="app-background" class="app-background"></div>
@@ -173,6 +175,50 @@
             <h3 id="custom-alert-title" style="color: var(--primary-dark); margin: 0 0 10px 0; font-weight: 800; font-size: 1.35rem; letter-spacing: -0.01em;">Thông báo</h3>
             <p id="custom-alert-message" style="color: #4A5568; font-size: 0.95rem; margin: 0 0 24px 0; line-height: 1.55; word-break: break-word; font-weight: 500;">Nội dung thông báo</p>
             <button id="custom-alert-ok-btn" class="submit-btn" style="background: var(--primary-color); color: white; border: none; padding: 11px 24px; border-radius: 10px; font-weight: 700; width: 100%; font-size: 0.95rem; cursor: pointer; transition: transform 0.15s;">Đóng</button>
+        </div>
+    </div>
+
+    
+    <!-- Image Editor Modal -->
+    <div id="image-editor-modal" class="modal" style="z-index: 10000; background-color: rgba(0,0,0,0.85);">
+        <div class="modal-content" style="max-width: 95vw; height: 90vh; display: flex; flex-direction: column; padding: 0; background: #2d3748; border-radius: 12px; overflow: hidden; position: relative;">
+            
+            <!-- Editor Toolbar -->
+            <div id="editor-toolbar" style="display: flex; gap: 15px; padding: 12px 20px; background: #1a202c; align-items: center; justify-content: space-between; border-bottom: 1px solid #4a5568;">
+                
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <!-- Draw Mode -->
+                    <button id="editor-draw-btn" class="editor-btn" title="Chế độ vẽ tay"><i class="fa-solid fa-pen"></i></button>
+                    <!-- Color Picker -->
+                    <input type="color" id="editor-color-picker" value="#ff0000" style="width: 35px; height: 35px; border: none; border-radius: 4px; cursor: pointer; padding: 0;" title="Chọn màu">
+                    
+                    <div style="width: 1px; height: 24px; background: #4a5568; margin: 0 5px;"></div>
+                    
+                    <!-- Text -->
+                    <button id="editor-text-btn" class="editor-btn" title="Thêm chữ"><i class="fa-solid fa-t"></i></button>
+                    
+                    <!-- Emoji -->
+                    <button id="editor-emoji-btn" class="editor-btn" title="Thêm biểu tượng"><i class="fa-regular fa-face-smile"></i></button>
+                    
+                    <div style="width: 1px; height: 24px; background: #4a5568; margin: 0 5px;"></div>
+                    
+                    <!-- Zoom -->
+                    <button id="editor-zoom-in-btn" class="editor-btn" title="Phóng to"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+                    <button id="editor-zoom-out-btn" class="editor-btn" title="Thu nhỏ"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+                    <button id="editor-reset-zoom-btn" class="editor-btn" title="Cỡ gốc"><i class="fa-solid fa-expand"></i></button>
+                </div>
+
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button id="editor-close-btn" class="editor-btn" style="color: #fca5a5;" title="Đóng & Hủy"><i class="fa-solid fa-xmark"></i> Thoát</button>
+                    <button id="editor-save-btn" class="submit-btn" style="background: var(--primary-color); padding: 8px 16px; margin: 0; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-save"></i> Lưu ảnh</button>
+                </div>
+            </div>
+
+            <!-- Canvas Container -->
+            <div id="editor-canvas-container" style="flex: 1; overflow: auto; display: flex; align-items: center; justify-content: center; background: #4a5568;">
+                <canvas id="image-editor-canvas"></canvas>
+            </div>
+            
         </div>
     </div>
 

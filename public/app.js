@@ -231,6 +231,283 @@ function renderCurrentClass() {
 }
 
 // ─── Events (Upcoming Events) ─────────────────────────────────────────────
+
+// Lưu ảnh đã chỉnh sửa lên server
+async function doSaveEventImage(classId, eventId, dataUrl) {
+  try {
+    const cls = appData.find(c => c.id === classId);
+    if (!cls) return;
+    const evt = cls.events && cls.events.find(e => e.id === eventId);
+    if (!evt) return;
+    evt.imageUrl = dataUrl;
+    await fetch('/api/data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: adminPassword, data: appData })
+    });
+    showCustomAlert('Đã lưu', 'Ảnh đã được lưu thành công!');
+  } catch (err) {
+    showCustomAlert('Lỗi', 'Không thể lưu ảnh: ' + err.message);
+  }
+}
+
+
+// ──────────────────────────────────────────────────────────────
+//  IMAGE EDITOR (Fabric.js)
+// ──────────────────────────────────────────────────────────────
+let _fabricCanvas = null;
+let _editorSaveCallback = null;
+let _editorHasChanges = false;
+
+function openImageEditor(imageUrl, onSave) {
+  _editorSaveCallback = onSave;
+  _editorHasChanges = false;
+
+  const modal = document.getElementById('image-editor-modal');
+  modal.classList.add('show');
+
+  // Dispose previous instance
+  if (_fabricCanvas) {
+    _fabricCanvas.dispose();
+    _fabricCanvas = null;
+  }
+
+  const canvasEl = document.getElementById('image-editor-canvas');
+
+  // Init Fabric canvas at fixed size
+  const EDITOR_W = Math.min(window.innerWidth * 0.88, 1200);
+  const EDITOR_H = Math.min(window.innerHeight * 0.72, 800);
+
+  _fabricCanvas = new fabric.Canvas('image-editor-canvas', {
+    width: EDITOR_W,
+    height: EDITOR_H,
+    backgroundColor: '#ffffff'
+  });
+
+  // Load background image
+  fabric.Image.fromURL(imageUrl, (img) => {
+    const scaleX = EDITOR_W / img.width;
+    const scaleY = EDITOR_H / img.height;
+    const scale = Math.min(scaleX, scaleY);
+    img.scale(scale);
+    img.set({ left: (EDITOR_W - img.width * scale) / 2, top: (EDITOR_H - img.height * scale) / 2, selectable: false, evented: false });
+    _fabricCanvas.add(img);
+    _fabricCanvas.sendToBack(img);
+    _fabricCanvas.renderAll();
+  }, { crossOrigin: 'Anonymous' });
+
+  _fabricCanvas.on('object:added', () => { _editorHasChanges = true; });
+  _fabricCanvas.on('object:modified', () => { _editorHasChanges = true; });
+
+  // Toolbar bindings
+  setupEditorToolbar();
+
+  // Close button
+  document.getElementById('editor-close-btn').onclick = () => closeImageEditor(false);
+
+  // Save button
+  document.getElementById('editor-save-btn').onclick = () => saveImageEditor();
+}
+
+function setupEditorToolbar() {
+  const drawBtn = document.getElementById('editor-draw-btn');
+  const colorPicker = document.getElementById('editor-color-picker');
+  const textBtn = document.getElementById('editor-text-btn');
+  const emojiBtn = document.getElementById('editor-emoji-btn');
+  const zoomInBtn = document.getElementById('editor-zoom-in-btn');
+  const zoomOutBtn = document.getElementById('editor-zoom-out-btn');
+  const resetZoomBtn = document.getElementById('editor-reset-zoom-btn');
+
+  // Draw toggle
+  let drawing = false;
+  drawBtn.onclick = () => {
+    drawing = !drawing;
+    _fabricCanvas.isDrawingMode = drawing;
+    drawBtn.classList.toggle('active', drawing);
+    _fabricCanvas.freeDrawingBrush.color = colorPicker.value;
+    _fabricCanvas.freeDrawingBrush.width = 3;
+  };
+
+  // Color picker — applies to both free drawing and selected objects
+  colorPicker.oninput = () => {
+    if (_fabricCanvas.isDrawingMode) {
+      _fabricCanvas.freeDrawingBrush.color = colorPicker.value;
+    }
+    const active = _fabricCanvas.getActiveObject();
+    if (active) {
+      if (active.type === 'i-text' || active.type === 'text') {
+        active.set('fill', colorPicker.value);
+      } else {
+        active.set('stroke', colorPicker.value);
+      }
+      _fabricCanvas.renderAll();
+    }
+  };
+
+  // Add text
+  textBtn.onclick = () => {
+    _fabricCanvas.isDrawingMode = false;
+    drawBtn.classList.remove('active');
+    const text = new fabric.IText('Gõ nội dung vào đây...', {
+      left: 100, top: 100,
+      fontFamily: 'Arial',
+      fill: colorPicker.value,
+      fontSize: 24,
+      editable: true
+    });
+    _fabricCanvas.add(text);
+    _fabricCanvas.setActiveObject(text);
+    text.enterEditing();
+    _fabricCanvas.renderAll();
+  };
+
+  // Emoji picker panel
+  emojiBtn.onclick = () => {
+    _fabricCanvas.isDrawingMode = false;
+    drawBtn.classList.remove('active');
+    showEmojiPicker(colorPicker.value);
+  };
+
+  // Zoom
+  let currentZoom = 1;
+  zoomInBtn.onclick = () => {
+    currentZoom = Math.min(currentZoom + 0.2, 4);
+    _fabricCanvas.setZoom(currentZoom);
+  };
+  zoomOutBtn.onclick = () => {
+    currentZoom = Math.max(currentZoom - 0.2, 0.3);
+    _fabricCanvas.setZoom(currentZoom);
+  };
+  resetZoomBtn.onclick = () => {
+    currentZoom = 1;
+    _fabricCanvas.setZoom(1);
+  };
+}
+
+function showEmojiPicker(color) {
+  // Remove existing picker
+  const old = document.getElementById('emoji-picker-panel');
+  if (old) { old.remove(); return; }
+
+  const emojis = ["😀","😂","😍","🥰","😎","🤩","😜","🤔","😴","🤗","🎉","🎊","🎈","🎁","🏆","🥇","⭐","🌟","💯","🔥","❤️","💙","💚","💛","💜","🖤","💖","💝","💪","👏","📚","📖","✏️","📝","🖊️","📐","📏","🎒","🏫","📓","🌸","🌺","🌻","🌈","☀️","🌙","⛅","🍎","🍊","🍋","🐶","🐱","🐼","🐨","🐸","🦊","🐝","🦋","🌴","🌵","🚀","🎸","🎮","🎯","🏅","🛸","💡","🔮","🌍","🏖️","👋","✌️","🤙","🙌","🫶","🤝","🙏","💪","🎓","🧠"];
+
+  const panel = document.createElement('div');
+  panel.id = 'emoji-picker-panel';
+  panel.style.cssText = `
+    position: fixed; z-index: 99999;
+    top: 70px; left: 50%; transform: translateX(-50%);
+    background: #1a202c; border: 1px solid #4a5568; border-radius: 12px;
+    padding: 12px; display: flex; flex-wrap: wrap; gap: 6px;
+    max-width: 380px; max-height: 260px; overflow-y: auto;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+  `;
+
+  emojis.forEach(emoji => {
+    const btn = document.createElement('button');
+    btn.textContent = emoji;
+    btn.style.cssText = 'font-size: 1.5rem; background: transparent; border: none; cursor: pointer; padding: 4px; border-radius: 4px; transition: background 0.15s;';
+    btn.onmouseover = () => btn.style.background = '#4a5568';
+    btn.onmouseout = () => btn.style.background = 'transparent';
+    btn.onclick = () => {
+      const text = new fabric.IText(emoji, {
+        left: 120, top: 120,
+        fontSize: 36,
+        selectable: true
+      });
+      _fabricCanvas.add(text);
+      _fabricCanvas.setActiveObject(text);
+      _fabricCanvas.renderAll();
+      panel.remove();
+    };
+    panel.appendChild(btn);
+  });
+
+  // Close on outside click
+  setTimeout(() => {
+    document.addEventListener('click', function outsideHandler(e) {
+      if (!panel.contains(e.target) && e.target.id !== 'editor-emoji-btn') {
+        panel.remove();
+        document.removeEventListener('click', outsideHandler);
+      }
+    });
+  }, 100);
+
+  document.body.appendChild(panel);
+}
+
+function closeImageEditor(skipConfirm) {
+  if (!skipConfirm && _editorHasChanges) {
+    showConfirmModal(
+      'Bạn muốn lưu trước khi thoát?',
+      'Các thay đổi chưa được lưu sẽ bị mất nếu bạn thoát.',
+      () => { saveImageEditor(); },
+      () => {
+        _editorHasChanges = false;
+        closeImageEditor(true);
+      },
+      'Lưu & Thoát',
+      'Thoát không lưu'
+    );
+    return;
+  }
+  const modal = document.getElementById('image-editor-modal');
+  modal.classList.remove('show');
+  const old = document.getElementById('emoji-picker-panel');
+  if (old) old.remove();
+  if (_fabricCanvas) {
+    _fabricCanvas.dispose();
+    _fabricCanvas = null;
+  }
+  _editorSaveCallback = null;
+  _editorHasChanges = false;
+}
+
+function saveImageEditor() {
+  if (!_fabricCanvas) return;
+  const dataUrl = _fabricCanvas.toDataURL({ format: 'jpeg', quality: 0.85 });
+  if (_editorSaveCallback) _editorSaveCallback(dataUrl);
+  _editorHasChanges = false;
+  closeImageEditor(true);
+}
+
+// Generic confirm modal (two buttons)
+function showConfirmModal(title, message, onConfirm, onCancel, confirmText = 'Đồng ý', cancelText = 'Hủy') {
+  const modal = document.getElementById('custom-alert-modal') || document.createElement('div');
+  // Re-use existing alert modal and add extra cancel button
+  const existing = document.getElementById('custom-alert-modal');
+  if (!existing) return;
+
+  existing.querySelector('.alert-title').textContent = title;
+  existing.querySelector('.alert-message').textContent = message;
+
+  const okBtn = existing.querySelector('.alert-ok-btn');
+  okBtn.textContent = confirmText;
+  okBtn.onclick = () => {
+    existing.classList.remove('show');
+    if (onConfirm) onConfirm();
+    // Reset button
+    setTimeout(() => { okBtn.textContent = 'Đóng'; }, 300);
+  };
+
+  // Add a cancel button next to ok if not present
+  let cancelBtn = existing.querySelector('.alert-cancel-btn');
+  if (!cancelBtn) {
+    cancelBtn = document.createElement('button');
+    cancelBtn.className = 'alert-ok-btn alert-cancel-btn';
+    cancelBtn.style.background = '#6b7280';
+    okBtn.parentNode.insertBefore(cancelBtn, okBtn);
+  }
+  cancelBtn.textContent = cancelText;
+  cancelBtn.style.display = 'inline-flex';
+  cancelBtn.onclick = () => {
+    existing.classList.remove('show');
+    cancelBtn.style.display = 'none';
+    if (onCancel) onCancel();
+  };
+
+  existing.classList.add('show');
+}
+
 function renderEvents(cls) {
   const container = document.getElementById('events-container');
   container.innerHTML = '';
@@ -269,14 +546,24 @@ function renderEvents(cls) {
       const img = createEl('img', { className: 'event-img' });
       img.src = evt.imageUrl;
       
-      // Click để phóng to (tùy chọn)
+            // Click để mở trình chỉnh sửa
       img.style.cursor = 'pointer';
-      img.addEventListener('click', () => {
-         const w = window.open();
-         w.document.write(`<img src="${evt.imageUrl}" style="max-width:100%; display:block; margin:auto;" />`);
-      });
+      
+      // Overlay hint "✏️ Chỉnh sửa"
+      const overlay = createEl('div', { className: 'event-card-hover-overlay' });
+      overlay.innerHTML = '<i class="fa-solid fa-pen-to-square"></i>';
 
       card.appendChild(img);
+      card.appendChild(overlay);
+
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('.btn-delete-event')) return;
+        openImageEditor(evt.imageUrl, (newDataUrl) => {
+          evt.imageUrl = newDataUrl;
+          img.src = newDataUrl;
+          doSaveEventImage(cls.id, evt.id, newDataUrl);
+        });
+      });
 
       if (isAdmin) {
         const delBtn = createEl('button', { className: 'btn-delete-event admin-only', title: 'Xóa ảnh' });
