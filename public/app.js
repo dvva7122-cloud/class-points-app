@@ -242,7 +242,7 @@ function renderEvents(cls) {
 
   const section = createEl('div', { className: 'events-section' });
   const header = createEl('div', { className: 'events-header' });
-  const title = createEl('h2', { text: '📅 Upcoming Events' });
+  const title = createEl('h2', { text: '📚 Sổ Tay Lớp Học 📓' });
   header.appendChild(title);
 
   if (isAdmin) {
