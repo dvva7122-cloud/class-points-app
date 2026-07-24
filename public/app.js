@@ -239,19 +239,25 @@ async function doSaveEventImage(classId, eventId, dataUrl) {
     if (!cls) return;
     const evt = cls.events && cls.events.find(e => e.id === eventId);
     if (!evt) return;
-    // Update in memory FIRST so re-renders use new image
+    // Update in memory immediately
     evt.imageUrl = dataUrl;
-    const resp = await fetch('/api/data', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: adminPassword, data: appData })
+    // Call the correct API endpoint
+    const token = getToken();
+    const resp = await fetch('/api/classes/' + classId + '/events/' + eventId, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+      },
+      body: JSON.stringify({ imageUrl: dataUrl })
     });
     if (!resp.ok) {
-      throw new Error('Server trả về lỗi ' + resp.status);
+      const errData = await resp.json().catch(() => ({}));
+      throw new Error(errData.error || 'Server trả về lỗi ' + resp.status);
     }
-    showCustomAlert('Đã lưu', 'Ảnh đã được lưu thành công! Các nét vẽ đã được ghi vào ảnh.');
+    showCustomAlert('Đã lưu', 'Ảnh và nét vẽ đã được lưu thành công!');
   } catch (err) {
-    showCustomAlert('Lỗi', 'Không thể lưu ảnh lên server: ' + err.message + '\nẢnh vẫn hiển thị trong phiên này nhưng sẽ mất khi tải lại trang.');
+    showCustomAlert('Lỗi', 'Không thể lưu ảnh: ' + err.message);
   }
 }
 
@@ -1256,11 +1262,39 @@ function updateAdminUI() {
 
 // ─── Data loading ─────────────────────────────────────────────────────────
 async function loadAllData() {
+  // Giu lai cac imageUrl da duoc ve tay (DataURL) khoi bi ghi de boi SSE reload
+  const localAnnotations = {};
+  if (appData && appData.length > 0) {
+    appData.forEach(cls => {
+      if (cls.events && cls.events.length > 0) {
+        cls.events.forEach(evt => {
+          if (evt.imageUrl && evt.imageUrl.startsWith('data:image/')) {
+            if (!localAnnotations[cls.id]) localAnnotations[cls.id] = {};
+            localAnnotations[cls.id][evt.id] = evt.imageUrl;
+          }
+        });
+      }
+    });
+  }
+
   appData = await api('GET', '/api/classes');
+
+  // Phuc hoi lai cac annotation vao data moi
+  if (Object.keys(localAnnotations).length > 0) {
+    appData.forEach(cls => {
+      if (localAnnotations[cls.id] && cls.events) {
+        cls.events.forEach(evt => {
+          if (localAnnotations[cls.id][evt.id]) {
+            evt.imageUrl = localAnnotations[cls.id][evt.id];
+          }
+        });
+      }
+    });
+  }
+
   if (!currentClassId && appData.length > 0) {
     currentClassId = appData[0].id;
   }
-  // Kiểm tra xem currentClassId còn hợp lệ không
   if (currentClassId && !appData.find(c => c.id === currentClassId)) {
     currentClassId = appData.length > 0 ? appData[0].id : null;
   }

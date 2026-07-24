@@ -520,6 +520,27 @@ app.post('/api/classes/:classId/events', requireAdmin, async (req, res) => {
   }
 });
 
+// PATCH /api/classes/:classId/events/:eventId  (admin) - Cập nhật ảnh sự kiện (annotated)
+app.patch('/api/classes/:classId/events/:eventId', requireAdmin, async (req, res) => {
+  const { classId, eventId } = req.params;
+  const { imageUrl } = req.body;
+  if (!imageUrl || typeof imageUrl !== 'string' || !imageUrl.startsWith('data:image/')) {
+    return res.status(400).json({ error: 'imageUrl không hợp lệ.' });
+  }
+  try {
+    const classesColl = db.getClassesCollection();
+    const result = await classesColl.updateOne(
+      { id: classId, 'events.id': eventId },
+      { $set: { 'events.$.imageUrl': imageUrl } }
+    );
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Không tìm thấy sự kiện.' });
+    // Broadcast nhẹ (không dùng DATA_CHANGED để tránh client reload đè mất annotation)
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Lỗi server: ' + err.message });
+  }
+});
+
 // DELETE /api/classes/:classId/events/:eventId  (admin) - Xóa ảnh sự kiện
 app.delete('/api/classes/:classId/events/:eventId', requireAdmin, async (req, res) => {
   const { classId, eventId } = req.params;
