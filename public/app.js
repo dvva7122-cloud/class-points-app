@@ -1488,7 +1488,7 @@ function showError(msg, title = 'Thông báo', icon = '⚠️') {
 
 
 // ══════════════════════════════════════════════════════════════════════════════
-// 🦆 RACE DUCK — INLINE SECTION
+// 🦆 RACE DUCK — LAKE WATER ALL-IN-ONE (Duck Race like classic Online Duck Race)
 // ══════════════════════════════════════════════════════════════════════════════
 
 const DUCK_SKINS = [
@@ -1506,7 +1506,7 @@ const DUCK_SKINS = [
   { body: '#fab1a0', beak: '#e17055', eye: '#1a1a1a',hat: 'bow',      wing: '#e17055' },
 ];
 
-function getDuckSVG(skin, size = 48) {
+function getDuckSVG(skin, size = 42) {
   const { body, beak, eye, hat, wing } = skin;
   let hatSvg = '';
   if (hat === 'crown') {
@@ -1530,7 +1530,7 @@ function getDuckSVG(skin, size = 48) {
                <line x1="30" y1="22" x2="32" y2="21" stroke="#FFD700" stroke-width="1.2"/>`;
   }
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="${size}" height="${size}">
-    <ellipse cx="20" cy="38" rx="13" ry="3" fill="rgba(0,0,0,0.15)"/>
+    <ellipse cx="20" cy="36" rx="13" ry="3" fill="rgba(0,0,0,0.15)"/>
     <ellipse cx="20" cy="28" rx="13" ry="10" fill="${body}"/>
     <ellipse cx="25" cy="29" rx="7" ry="5" fill="${wing}" opacity="0.7" transform="rotate(-15 25 29)"/>
     <circle cx="20" cy="17" r="9" fill="${body}"/>
@@ -1540,8 +1540,6 @@ function getDuckSVG(skin, size = 48) {
     <circle cx="24" cy="13.5" r="1.5" fill="#111"/>
     <circle cx="24.6" cy="13" r="0.5" fill="white" opacity="0.8"/>
     ${hatSvg}
-    <ellipse cx="15" cy="38" rx="4" ry="2" fill="${beak}" transform="rotate(-10 15 38)"/>
-    <ellipse cx="23" cy="38" rx="4" ry="2" fill="${beak}" transform="rotate(10 23 38)"/>
   </svg>`;
 }
 
@@ -1550,7 +1548,7 @@ let _duckRaceAnimFrame = null;
 let _duckRaceDucks = [];
 let _duckRaceCurrentClassId = null;
 let _duckPendingWinners = [];
-let _duckActiveStudents = []; // Currently active list for racing
+let _duckActiveStudents = [];
 
 function renderDuckRaceSection(cls) {
   const container = document.getElementById('duck-race-container');
@@ -1559,7 +1557,6 @@ function renderDuckRaceSection(cls) {
   if (!isAdmin) { container.innerHTML = ''; return; }
   if (!cls || !cls.students || cls.students.length === 0) { container.innerHTML = ''; return; }
 
-  // Reset state when class changes
   if (_duckRaceCurrentClassId !== cls.id) {
     _duckRaceCurrentClassId = cls.id;
     _duckPendingWinners = [];
@@ -1587,22 +1584,40 @@ function renderDuckRaceSection(cls) {
   body.style.flexDirection = 'column';
   body.style.gap = '20px';
 
-  // Race Track Container
+  // Lake Water Track (Fixed Height: 380px)
   const trackWrapper = document.createElement('div');
-  trackWrapper.id = 'duck-inline-track';
-  trackWrapper.style.cssText = 'width:100%; background: linear-gradient(180deg,#1a6e3a,#2d9e56); border-radius:14px; overflow:hidden; border:2px solid rgba(0,0,0,0.1); position:relative; padding: 4px 0; min-height: 120px;';
+  trackWrapper.id = 'duck-lake-track';
+  trackWrapper.style.cssText = 'width:100%; height:380px; background: linear-gradient(180deg, #2b7a78 0%, #3aaf9f 30%, #17252a 100%); border-radius:16px; overflow:hidden; border:3px solid #2b7a78; position:relative; box-shadow: inset 0 0 30px rgba(0,0,0,0.3);';
 
-  // Finish line visual (Exactly 68px from right edge)
+  // Grass banks top & bottom
+  const topGrass = document.createElement('div');
+  topGrass.style.cssText = 'position:absolute; top:0; left:0; right:0; height:18px; background:#40916c; border-bottom:3px solid #2d6a4f; z-index:3;';
+  const bottomGrass = document.createElement('div');
+  bottomGrass.style.cssText = 'position:absolute; bottom:0; left:0; right:0; height:18px; background:#40916c; border-top:3px solid #2d6a4f; z-index:3;';
+  trackWrapper.appendChild(topGrass);
+  trackWrapper.appendChild(bottomGrass);
+
+  // Water ripples background lines
+  const ripples = document.createElement('div');
+  ripples.style.cssText = 'position:absolute; inset:0; opacity:0.15; background: repeating-linear-gradient(0deg, transparent, transparent 20px, #ffffff 20px, #ffffff 22px); pointer-events:none;';
+  trackWrapper.appendChild(ripples);
+
+  // Finish line visual (Checkerboard bar on right edge)
   const finishLine = document.createElement('div');
-  finishLine.style.cssText = 'position:absolute; right:68px; top:0; bottom:0; width:8px; background:repeating-linear-gradient(180deg,#fff 0,#fff 10px,#000 10px,#000 20px); z-index:5; opacity:0.8; pointer-events:none;';
+  finishLine.style.cssText = 'position:absolute; right:70px; top:18px; bottom:18px; width:14px; background:repeating-linear-gradient(180deg,#fff 0,#fff 14px,#000 14px,#000 28px); z-index:5; opacity:0.9; box-shadow:0 0 10px rgba(0,0,0,0.3); pointer-events:none;';
   trackWrapper.appendChild(finishLine);
 
   const finishLabel = document.createElement('div');
-  finishLabel.style.cssText = 'position:absolute; right:20px; top:50%; transform:translateY(-50%); color:white; font-size:0.65rem; font-weight:900; writing-mode:vertical-lr; opacity:0.6; pointer-events:none;';
+  finishLabel.style.cssText = 'position:absolute; right:25px; top:50%; transform:translateY(-50%); color:white; font-size:0.75rem; font-weight:900; writing-mode:vertical-lr; opacity:0.8; letter-spacing:2px; pointer-events:none;';
   finishLabel.textContent = 'FINISH';
   trackWrapper.appendChild(finishLabel);
 
-  // Center Overlay Start Button (No background blur/darkening so ducks & names are 100% clear)
+  // Start Line visual on left
+  const startLine = document.createElement('div');
+  startLine.style.cssText = 'position:absolute; left:140px; top:18px; bottom:18px; width:3px; background:rgba(255,255,255,0.4); border-right:2px dashed rgba(255,255,255,0.6); z-index:5; pointer-events:none;';
+  trackWrapper.appendChild(startLine);
+
+  // Center Overlay Start Button
   const centerOverlay = document.createElement('div');
   centerOverlay.id = 'duck-center-overlay';
   centerOverlay.style.cssText = 'position:absolute; inset:0; z-index:20; display:flex; align-items:center; justify-content:center; pointer-events:none;';
@@ -1618,10 +1633,11 @@ function renderDuckRaceSection(cls) {
   centerOverlay.appendChild(startBtn);
   trackWrapper.appendChild(centerOverlay);
 
-  // Lanes container
-  const lanesEl = document.createElement('div');
-  lanesEl.id = 'duck-inline-lanes';
-  trackWrapper.appendChild(lanesEl);
+  // Duck Lake Arena container
+  const lakeArena = document.createElement('div');
+  lakeArena.id = 'duck-lake-arena';
+  lakeArena.style.cssText = 'position:absolute; inset:18px 0; overflow:hidden;';
+  trackWrapper.appendChild(lakeArena);
 
   // Buttons Row (Shuffle & Reset buttons matching Wheel style)
   const buttonsRow = document.createElement('div');
@@ -1636,7 +1652,7 @@ function renderDuckRaceSection(cls) {
       const j = Math.floor(Math.random() * (i + 1));
       [_duckActiveStudents[i], _duckActiveStudents[j]] = [_duckActiveStudents[j], _duckActiveStudents[i]];
     }
-    _buildInlineLanes(_duckActiveStudents, lanesEl);
+    _buildLakeDucks(_duckActiveStudents, lakeArena);
   };
 
   const resetBtn = document.createElement('button');
@@ -1669,49 +1685,62 @@ function renderDuckRaceSection(cls) {
   section.appendChild(body);
   container.appendChild(section);
 
-  _buildInlineLanes(_duckActiveStudents, lanesEl);
+  _buildLakeDucks(_duckActiveStudents, lakeArena);
   _renderDuckPending(cls);
 }
 
-function _buildInlineLanes(students, lanesEl) {
-  lanesEl.innerHTML = '';
+function _buildLakeDucks(students, arenaEl) {
+  arenaEl.innerHTML = '';
   _duckRaceDucks = [];
 
   if (students.length === 0) {
     const empty = document.createElement('div');
-    empty.style.cssText = 'text-align:center; padding:30px; color:#ffffff; font-weight:700; font-size:1rem;';
+    empty.style.cssText = 'text-align:center; padding:50px; color:#ffffff; font-weight:700; font-size:1.1rem;';
     empty.textContent = 'Tất cả học sinh đã tham gia! Hãy bấm "Reset" để đua lại từ đầu.';
-    lanesEl.appendChild(empty);
+    arenaEl.appendChild(empty);
     return;
   }
 
-  const racers = students;
-  racers.forEach((student, idx) => {
+  const total = students.length;
+  // Calculate vertical height spacing in the lake (total usable height ~320px)
+  const availableHeight = 310;
+  const stepY = total > 1 ? availableHeight / (total + 1) : availableHeight / 2;
+
+  students.forEach((student, idx) => {
     const skin = DUCK_SKINS[idx % DUCK_SKINS.length];
-    const lane = document.createElement('div');
-    lane.className = 'duck-lane';
-    lane.style.background = idx % 2 === 0 ? 'rgba(255,255,255,0.04)' : 'transparent';
+    
+    // Position vertically staggered
+    const topY = 10 + (idx + 1) * stepY - 20;
 
-    const label = document.createElement('div');
-    label.className = 'duck-lane-label';
-    label.textContent = student.name;
-    label.title = student.name;
+    const duckContainer = document.createElement('div');
+    duckContainer.style.cssText = `position:absolute; left:10px; top:${topY}px; display:flex; align-items:center; transition:none; z-index:${Math.floor(topY)};`;
 
-    const trackArea = document.createElement('div');
-    trackArea.style.cssText = 'position:relative; flex:1; height:52px; margin-right:80px;';
+    // Nametag bubble (Speech bubble style)
+    const nameBubble = document.createElement('div');
+    nameBubble.style.cssText = 'background:#ffffff; color:#1a1a1a; font-weight:800; font-size:0.75rem; padding:3px 8px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.3); border:1.5px solid #333; white-space:nowrap; margin-right:4px; flex-shrink:0; pointer-events:none; position:relative;';
+    nameBubble.textContent = student.name;
 
-    const duckEl = document.createElement('div');
-    duckEl.className = 'duck-runner';
-    duckEl.style.cssText = 'position:absolute; left:0; top:0; transition:none;';
-    duckEl.innerHTML = getDuckSVG(skin, 48);
-    duckEl.title = student.name;
+    // Duck Graphic
+    const duckGraphic = document.createElement('div');
+    duckGraphic.className = 'duck-runner';
+    duckGraphic.style.cssText = 'width:42px; height:42px; flex-shrink:0;';
+    duckGraphic.innerHTML = getDuckSVG(skin, 42);
 
-    trackArea.appendChild(duckEl);
-    lane.appendChild(label);
-    lane.appendChild(trackArea);
-    lanesEl.appendChild(lane);
+    duckContainer.appendChild(nameBubble);
+    duckContainer.appendChild(duckGraphic);
+    arenaEl.appendChild(duckContainer);
 
-    _duckRaceDucks.push({ student, skin, el: duckEl, trackEl: trackArea, progress: 0, speed: 0, waver: 0, finished: false });
+    _duckRaceDucks.push({
+      student,
+      skin,
+      el: duckContainer,
+      graphicEl: duckGraphic,
+      progress: 0,
+      baseY: topY,
+      speed: 0,
+      waver: 0,
+      finished: false
+    });
   });
 }
 
@@ -1724,8 +1753,8 @@ function _startInlineDuckRace(cls) {
   // Reset positions
   _duckRaceDucks.forEach(d => {
     d.progress = 0; d.finished = false; d.speed = 0; d.waver = 0;
-    d.el.style.left = '0px';
-    d.el.classList.remove('waddling', 'winner-dance');
+    d.el.style.left = '10px';
+    d.graphicEl.classList.remove('waddling', 'winner-dance');
   });
 
   const winnerIdx = Math.floor(Math.random() * _duckRaceDucks.length);
@@ -1738,17 +1767,16 @@ function _runInlineRace(winnerIdx, cls) {
   const TARGET_DURATION_SEC = 8;
   const totalFrames = TARGET_DURATION_SEC * 60; // 480 frames
   let frameCount = 0;
-
   const FINISH_PERCENT = 100;
 
   _duckRaceDucks.forEach((d, i) => {
     d.waver = Math.random() * Math.PI * 2;
-    d.el.classList.add('waddling');
+    d.graphicEl.classList.add('waddling');
 
     if (i === winnerIdx) {
       d.baseRate = FINISH_PERCENT / totalFrames;
     } else {
-      const endTarget = 65 + Math.random() * 28;
+      const endTarget = 60 + Math.random() * 32;
       d.baseRate = endTarget / totalFrames;
     }
   });
@@ -1760,9 +1788,11 @@ function _runInlineRace(winnerIdx, cls) {
     if (!_duckRaceRunning) return;
 
     if (cachedTrackW <= 0) {
-      const trackWidth = _duckRaceDucks[0] && _duckRaceDucks[0].trackEl.offsetWidth;
-      if (!trackWidth || trackWidth <= 52) { _duckRaceAnimFrame = requestAnimationFrame(animate); return; }
-      cachedTrackW = Math.max(10, trackWidth - 68);
+      const trackEl = document.getElementById('duck-lake-track');
+      const trackWidth = trackEl ? trackEl.offsetWidth : 0;
+      if (!trackWidth || trackWidth <= 150) { _duckRaceAnimFrame = requestAnimationFrame(animate); return; }
+      // Distance from left:10px to right finish line (right:70px)
+      cachedTrackW = Math.max(50, trackWidth - 190);
     }
 
     frameCount++;
@@ -1771,20 +1801,24 @@ function _runInlineRace(winnerIdx, cls) {
       if (d.finished) return;
 
       d.waver += 0.12;
-      const wobble = 1 + 0.25 * Math.sin(d.waver + i);
+      const wobble = 1 + 0.28 * Math.sin(d.waver + i);
+      const bobbingY = 3 * Math.cos(d.waver * 1.5);
 
       d.progress = Math.min(FINISH_PERCENT, d.progress + d.baseRate * wobble);
 
-      const px = Math.max(0, (d.progress / 100) * cachedTrackW);
+      const px = 10 + (d.progress / 100) * cachedTrackW;
+      const py = d.baseY + bobbingY;
+
       d.el.style.left = px + 'px';
+      d.el.style.top = py + 'px';
 
       if (!raceWon && i === winnerIdx && (d.progress >= FINISH_PERCENT || frameCount >= totalFrames)) {
         raceWon = true;
         d.finished = true;
         d.progress = FINISH_PERCENT;
-        d.el.style.left = cachedTrackW + 'px';
-        d.el.classList.remove('waddling');
-        d.el.classList.add('winner-dance');
+        d.el.style.left = (10 + cachedTrackW) + 'px';
+        d.graphicEl.classList.remove('waddling');
+        d.graphicEl.classList.add('winner-dance');
         _onInlineDuckWin(d, cls);
       }
     });
@@ -1794,7 +1828,7 @@ function _runInlineRace(winnerIdx, cls) {
     } else {
       setTimeout(() => {
         _duckRaceDucks.forEach(d => {
-          if (!d.finished) d.el.classList.remove('waddling');
+          if (!d.finished) d.graphicEl.classList.remove('waddling');
         });
         _duckRaceRunning = false;
       }, 500);
@@ -1807,13 +1841,9 @@ function _runInlineRace(winnerIdx, cls) {
 function _onInlineDuckWin(duck, cls) {
   _duckRaceRunning = false;
 
-  // Remove winner from active students for next rounds
   _duckActiveStudents = _duckActiveStudents.filter(s => s.id !== duck.student.id);
-
-  // Add to pending winners list
   _duckPendingWinners.push(duck.student);
 
-  // Show celebration popup using the Wheel's winner modal & confetti!
   const modal = document.getElementById('wheel-winner-modal');
   const nameEl = document.getElementById('wheel-winner-name');
 
@@ -1828,22 +1858,20 @@ function _onInlineDuckWin(duck, cls) {
         modal.classList.remove('show');
         stopConfetti();
 
-        // Restore start overlay and re-render track with remaining students
         const centerOverlay = document.getElementById('duck-center-overlay');
         if (centerOverlay) centerOverlay.style.display = 'flex';
 
-        const lanesEl = document.getElementById('duck-inline-lanes');
-        if (lanesEl) _buildInlineLanes(_duckActiveStudents, lanesEl);
+        const lakeArena = document.getElementById('duck-lake-arena');
+        if (lakeArena) _buildLakeDucks(_duckActiveStudents, lakeArena);
         _renderDuckPending(cls);
       };
     }
   } else {
-    // Fallback if modal not present
     _renderDuckPending(cls);
     const centerOverlay = document.getElementById('duck-center-overlay');
     if (centerOverlay) centerOverlay.style.display = 'flex';
-    const lanesEl = document.getElementById('duck-inline-lanes');
-    if (lanesEl) _buildInlineLanes(_duckActiveStudents, lanesEl);
+    const lakeArena = document.getElementById('duck-lake-arena');
+    if (lakeArena) _buildLakeDucks(_duckActiveStudents, lakeArena);
   }
 }
 
