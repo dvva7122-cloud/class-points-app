@@ -620,37 +620,45 @@ function saveImageEditor(origW, origH) {
 
 // Generic confirm modal (two buttons)
 function showConfirmModal(title, message, onConfirm, onCancel, confirmText = 'Đồng ý', cancelText = 'Hủy') {
-  const modal = document.getElementById('custom-alert-modal') || document.createElement('div');
-  // Re-use existing alert modal and add extra cancel button
   const existing = document.getElementById('custom-alert-modal');
   if (!existing) return;
 
-  existing.querySelector('.alert-title').textContent = title;
-  existing.querySelector('.alert-message').textContent = message;
+  document.getElementById('custom-alert-title').textContent = title;
+  document.getElementById('custom-alert-message').textContent = message;
+  document.getElementById('custom-alert-icon').textContent = '❓';
 
-  const okBtn = existing.querySelector('.alert-ok-btn');
+  const okBtn = document.getElementById('custom-alert-ok-btn');
   okBtn.textContent = confirmText;
+  
+  // Clean up previous event listeners by cloning if necessary, but here we just overwrite onclick
   okBtn.onclick = () => {
     existing.classList.remove('show');
     if (onConfirm) onConfirm();
-    // Reset button
-    setTimeout(() => { okBtn.textContent = 'Đóng'; }, 300);
+    setTimeout(() => { 
+      okBtn.textContent = 'Đóng'; 
+      document.getElementById('custom-alert-icon').textContent = '⚠️';
+    }, 300);
   };
 
-  // Add a cancel button next to ok if not present
-  let cancelBtn = existing.querySelector('.alert-cancel-btn');
+  let cancelBtn = document.getElementById('custom-alert-cancel-btn');
   if (!cancelBtn) {
     cancelBtn = document.createElement('button');
-    cancelBtn.className = 'alert-ok-btn alert-cancel-btn';
+    cancelBtn.id = 'custom-alert-cancel-btn';
+    cancelBtn.className = okBtn.className;
     cancelBtn.style.background = '#6b7280';
+    cancelBtn.style.marginLeft = '10px';
     okBtn.parentNode.insertBefore(cancelBtn, okBtn);
   }
+  
   cancelBtn.textContent = cancelText;
   cancelBtn.style.display = 'inline-flex';
   cancelBtn.onclick = () => {
     existing.classList.remove('show');
     cancelBtn.style.display = 'none';
     if (onCancel) onCancel();
+    setTimeout(() => { 
+      document.getElementById('custom-alert-icon').textContent = '⚠️'; 
+    }, 300);
   };
 
   existing.classList.add('show');
