@@ -1750,8 +1750,9 @@ function _runInlineRace(winnerIdx, cls) {
     if (!_duckRaceRunning) return;
 
     if (cachedTrackW <= 0) {
-      cachedTrackW = (_duckRaceDucks[0] && _duckRaceDucks[0].trackEl.offsetWidth - 52) || 0;
-      if (cachedTrackW <= 0) { _duckRaceAnimFrame = requestAnimationFrame(animate); return; }
+      const trackWidth = _duckRaceDucks[0] && _duckRaceDucks[0].trackEl.offsetWidth;
+      if (!trackWidth || trackWidth <= 52) { _duckRaceAnimFrame = requestAnimationFrame(animate); return; }
+      cachedTrackW = trackWidth - 52;
     }
 
     _duckRaceDucks.forEach((d, i) => {
@@ -1855,58 +1856,6 @@ function _renderDuckPending(cls) {
   });
 }
 
-
-
- {
-  const container = document.getElementById('duck-race-container');
-  if (!container) return;
-
-  // Only admin can see duck race
-  if (!isAdmin) {
-    container.innerHTML = '';
-    return;
-  }
-
-  if (!cls || !cls.students || cls.students.length === 0) {
-    container.innerHTML = '';
-    return;
-  }
-
-  // Avoid re-rendering if already built
-  if (container.querySelector('.duck-race-section')) return;
-
-  container.innerHTML = '';
-  const section = document.createElement('div');
-  section.className = 'duck-race-section wheel-section';
-
-  const header = document.createElement('div');
-  header.className = 'wheel-header';
-
-  const title = document.createElement('h2');
-  title.style.textAlign = 'center';
-  title.style.fontWeight = '900';
-  title.style.fontSize = '1.4rem';
-  title.style.color = 'var(--primary-dark)';
-  title.innerHTML = '🦆 Đua Vịt 🦆';
-  header.appendChild(title);
-
-  const desc = document.createElement('p');
-  desc.style.cssText = 'text-align:center; color:#888; font-size:0.85rem; margin: 0;';
-  desc.textContent = 'Gọi học sinh ngẫu nhiên theo phong cách đua vịt!';
-
-  const btn = document.createElement('button');
-  btn.id = 'duck-race-open-btn';
-  btn.style.cssText = 'display:block; margin: 16px auto 0; background: linear-gradient(135deg, #FFD700, #FF8C00); color: #1a1a1a; border: none; padding: 13px 40px; border-radius: 50px; font-size: 1rem; font-weight: 800; cursor: pointer; box-shadow: 0 6px 20px rgba(255,152,0,0.4); transition: transform 0.15s, box-shadow 0.15s;';
-  btn.innerHTML = '🚀 Bắt đầu đua!';
-  btn.onmouseover = () => { btn.style.transform = 'translateY(-2px)'; btn.style.boxShadow = '0 10px 28px rgba(255,152,0,0.55)'; };
-  btn.onmouseout = () => { btn.style.transform = 'translateY(0)'; btn.style.boxShadow = '0 6px 20px rgba(255,152,0,0.4)'; };
-  btn.onclick = () => openDuckRace();
-
-  section.appendChild(header);
-  section.appendChild(desc);
-  section.appendChild(btn);
-  container.appendChild(section);
-}
 
 // ─── Init ─────────────────────────────────────────────────────────────────
 
