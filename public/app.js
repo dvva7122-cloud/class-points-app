@@ -1685,7 +1685,7 @@ function _buildInlineLanes(students, lanesEl) {
     return;
   }
 
-  const racers = students.slice(0, 12);
+  const racers = students;
   racers.forEach((student, idx) => {
     const skin = DUCK_SKINS[idx % DUCK_SKINS.length];
     const lane = document.createElement('div');
