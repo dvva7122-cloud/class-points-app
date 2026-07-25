@@ -660,7 +660,9 @@ function showConfirmModal(title, message, onConfirm, onCancel, confirmText = 'Đ
   }
   
   cancelBtn.textContent = cancelText;
-  cancelBtn.style.display = 'inline-flex';
+  cancelBtn.style.display = 'flex';
+  cancelBtn.style.justifyContent = 'center';
+  cancelBtn.style.alignItems = 'center';
   cancelBtn.onclick = () => {
     existing.classList.remove('show');
     cancelBtn.style.display = 'none';
