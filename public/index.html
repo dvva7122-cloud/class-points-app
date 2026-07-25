@@ -54,6 +54,7 @@
                 <div id="live-clock" style="font-size: 1.25rem; font-weight: 800; color: #E65100; background: #FFF8F0; border: 2px solid #FF9800; padding: 6px 16px; border-radius: 12px; box-shadow: 0 4px 10px rgba(255, 152, 0, 0.15); display: flex; align-items: center; gap: 8px;">
                     <i class="fa-regular fa-clock"></i> <span id="clock-text">--:--</span>
                 </div>
+
             </div>
 
             <div class="student-grid" id="student-grid"></div>
@@ -76,6 +77,9 @@
 
             <!-- WHEEL OF NAMES -->
             <div id="wheel-container"></div>
+
+            <!-- DUCK RACE -->
+            <div id="duck-race-container"></div>
         </main>
 
         <aside class="conversion-table" id="conversion-table">
@@ -233,5 +237,46 @@
     </div>
 
     <script src="app.js"></script>
+
+    <!-- 🦆 Duck Race Modal -->
+    <div id="duck-race-modal" class="modal" style="z-index: 20000; background: rgba(0,0,0,0.7); backdrop-filter: blur(6px);">
+        <div class="modal-content" style="max-width: 700px; width: 95vw; padding: 0; border-radius: 24px; overflow: hidden; background: linear-gradient(135deg, #1a2a4a 0%, #0f3460 50%, #16213e 100%); box-shadow: 0 30px 80px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);">
+            <!-- Header -->
+            <div style="padding: 20px 24px 0; display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                    <h2 style="color: #FFD700; font-size: 1.6rem; font-weight: 900; margin: 0; text-shadow: 0 0 20px rgba(255,215,0,0.5);">🦆 Đua Vịt</h2>
+                    <p id="duck-race-subtitle" style="color: rgba(255,255,255,0.6); font-size: 0.85rem; margin: 4px 0 0 0;">Ấn START để bắt đầu đua!</p>
+                </div>
+                <button id="duck-race-close-btn" style="background: rgba(255,255,255,0.1); border: none; color: white; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">✕</button>
+            </div>
+
+            <!-- Race Track -->
+            <div id="duck-race-track" style="position: relative; margin: 16px; background: linear-gradient(180deg, #1a6e3a 0%, #2d9e56 100%); border-radius: 16px; overflow: hidden; border: 2px solid rgba(255,255,255,0.15); min-height: 100px;">
+                <!-- Finish line -->
+                <div id="duck-finish-line" style="position: absolute; right: 60px; top: 0; bottom: 0; width: 8px; background: repeating-linear-gradient(180deg, #fff 0px, #fff 10px, #000 10px, #000 20px); z-index: 5; opacity: 0.7;"></div>
+                <!-- Track label -->
+                <div style="position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: white; font-size: 0.7rem; font-weight: 700; writing-mode: vertical-lr; opacity: 0.5;">FINISH</div>
+                <!-- Lane lines -->
+                <div id="duck-lanes" style="position: relative; padding: 8px 0;"></div>
+            </div>
+
+            <!-- Winner display -->
+            <div id="duck-race-winner" style="display: none; margin: 0 16px 16px; padding: 16px; background: linear-gradient(135deg, #FFD700, #FF8C00); border-radius: 12px; text-align: center; animation: winnerPulse 0.6s ease-out;">
+                <div style="font-size: 2rem; margin-bottom: 6px;">🏆</div>
+                <div id="duck-winner-name" style="font-size: 1.4rem; font-weight: 900; color: #1a1a1a;"></div>
+                <div style="font-size: 0.85rem; color: rgba(0,0,0,0.6); margin-top: 4px;">Được gọi lên!</div>
+            </div>
+
+            <!-- Controls -->
+            <div style="padding: 0 16px 20px; display: flex; gap: 10px; justify-content: center;">
+                <button id="duck-race-start-btn" style="background: linear-gradient(135deg, #FFD700, #FF8C00); color: #1a1a1a; border: none; padding: 12px 32px; border-radius: 50px; font-size: 1rem; font-weight: 800; cursor: pointer; box-shadow: 0 6px 20px rgba(255,215,0,0.4); transition: transform 0.15s, box-shadow 0.15s; display: flex; align-items: center; gap: 8px;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                    🚀 START
+                </button>
+                <button id="duck-race-reset-btn" style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 12px 24px; border-radius: 50px; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; gap: 8px;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+                    🔄 Đua lại
+                </button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
