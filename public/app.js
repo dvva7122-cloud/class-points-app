@@ -268,10 +268,32 @@ async function doSaveEventImage(classId, eventId, dataUrl) {
 let _fabricCanvas = null;
 let _editorSaveCallback = null;
 let _editorHasChanges = false;
+let _undoHistory = [];
+let _isHistoryLocked = false;
+
+function saveEditorHistory() {
+  if (_isHistoryLocked || !_fabricCanvas) return;
+  _undoHistory.push(JSON.stringify(_fabricCanvas.toJSON()));
+  if (_undoHistory.length > 50) _undoHistory.shift();
+}
+
+function undoEditorHistory() {
+  if (_undoHistory.length <= 1 || !_fabricCanvas) return;
+  _isHistoryLocked = true;
+  _undoHistory.pop(); // remove current state
+  const prevState = _undoHistory[_undoHistory.length - 1];
+  _fabricCanvas.loadFromJSON(prevState, function() {
+    _fabricCanvas.renderAll();
+    _isHistoryLocked = false;
+    _editorHasChanges = true;
+  });
+}
 
 function openImageEditor(imageUrl, onSave) {
   _editorSaveCallback = onSave;
   _editorHasChanges = false;
+  _undoHistory = [];
+  _isHistoryLocked = false;
 
   const modal = document.getElementById('image-editor-modal');
   modal.classList.add('show');
@@ -303,10 +325,12 @@ function openImageEditor(imageUrl, onSave) {
       _fabricCanvas.add(img);
       _fabricCanvas.sendToBack(img);
       _fabricCanvas.renderAll();
+      saveEditorHistory(); // Save initial state
     }, { crossOrigin: 'Anonymous' });
 
-    _fabricCanvas.on('object:added', () => { _editorHasChanges = true; });
-    _fabricCanvas.on('object:modified', () => { _editorHasChanges = true; });
+    _fabricCanvas.on('object:added', () => { _editorHasChanges = true; saveEditorHistory(); });
+    _fabricCanvas.on('object:modified', () => { _editorHasChanges = true; saveEditorHistory(); });
+    _fabricCanvas.on('object:removed', () => { _editorHasChanges = true; saveEditorHistory(); });
     
     // Disable interaction for non-admin (view only)
     if (!isAdmin) {
@@ -430,6 +454,12 @@ function setupEditorToolbar(origW, origH) {
     showEmojiPicker(colorPicker.value);
   };
 
+  // Undo button
+  const undoBtn = document.getElementById('editor-undo-btn');
+  if (undoBtn) {
+    undoBtn.onclick = () => undoEditorHistory();
+  }
+
   // Zoom — min zoom=1 (original), can only zoom IN from default
   let currentZoom = 1;
   zoomInBtn.onclick = () => {
@@ -462,6 +492,11 @@ function setupEditorToolbar(origW, origH) {
     // Don't delete while typing inside text box
     const active = _fabricCanvas.getActiveObject();
     if (active && (active.type === 'i-text' || active.type === 'text') && active.isEditing) return;
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z')) {
+      undoEditorHistory();
+      e.preventDefault();
+      return;
+    }
     if (e.key === 'Delete' || e.key === 'Backspace') {
       const selected = _fabricCanvas.getActiveObjects();
       if (selected && selected.length > 0) {
@@ -682,9 +717,14 @@ function renderEvents(cls) {
         const delBtn = createEl('button', { className: 'btn-delete-event admin-only', title: 'Xóa ảnh' });
         delBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
         delBtn.addEventListener('click', () => {
-          if (confirm('Bạn có chắc chắn muốn xóa sự kiện này?')) {
-            doDeleteEvent(cls.id, evt.id);
-          }
+          showConfirmModal(
+            'Xác nhận xóa',
+            'Bạn có chắc chắn muốn xóa ảnh này không?',
+            () => { doDeleteEvent(cls.id, evt.id); },
+            null,
+            'Xóa',
+            'Hủy'
+          );
         });
         card.appendChild(delBtn);
       }
