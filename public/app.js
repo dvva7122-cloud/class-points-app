@@ -1713,7 +1713,7 @@ function _buildLakeDucks(students, arenaEl) {
     const topY = 10 + (idx + 1) * stepY - 20;
 
     const duckContainer = document.createElement('div');
-    duckContainer.style.cssText = `position:absolute; left:10px; top:${topY}px; display:flex; align-items:center; transition:none; z-index:${Math.floor(topY)};`;
+    duckContainer.style.cssText = `position:absolute; left:0px; top:${topY}px; width:140px; display:flex; align-items:center; justify-content:flex-end; transition:none; z-index:${Math.floor(topY)};`;
 
     // Nametag bubble (Speech bubble style)
     const nameBubble = document.createElement('div');
@@ -1753,7 +1753,7 @@ function _startInlineDuckRace(cls) {
   // Reset positions
   _duckRaceDucks.forEach(d => {
     d.progress = 0; d.finished = false; d.speed = 0; d.waver = 0;
-    d.el.style.left = '10px';
+    d.el.style.left = '0px';
     d.graphicEl.classList.remove('waddling', 'winner-dance');
   });
 
@@ -1790,9 +1790,9 @@ function _runInlineRace(winnerIdx, cls) {
     if (cachedTrackW <= 0) {
       const trackEl = document.getElementById('duck-lake-track');
       const trackWidth = trackEl ? trackEl.offsetWidth : 0;
-      if (!trackWidth || trackWidth <= 150) { _duckRaceAnimFrame = requestAnimationFrame(animate); return; }
-      // Distance from left:10px to right finish line (right:70px)
-      cachedTrackW = Math.max(50, trackWidth - 190);
+      if (!trackWidth || trackWidth <= 200) { _duckRaceAnimFrame = requestAnimationFrame(animate); return; }
+      // Width of container is 140px. Distance to right finish line (right:70px)
+      cachedTrackW = Math.max(50, trackWidth - 210);
     }
 
     frameCount++;
@@ -1806,7 +1806,7 @@ function _runInlineRace(winnerIdx, cls) {
 
       d.progress = Math.min(FINISH_PERCENT, d.progress + d.baseRate * wobble);
 
-      const px = 10 + (d.progress / 100) * cachedTrackW;
+      const px = (d.progress / 100) * cachedTrackW;
       const py = d.baseY + bobbingY;
 
       d.el.style.left = px + 'px';
