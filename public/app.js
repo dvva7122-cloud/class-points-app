@@ -27,7 +27,7 @@ function clearToken() {
   sessionStorage.removeItem('adminToken');
 }
 
-// ─── API helper ───────────────────────────────────────────────────────────
+// --- API helper ---
 async function api(method, path, body) {
   const headers = { 'Content-Type': 'application/json' };
   const token   = getToken();
@@ -39,14 +39,14 @@ async function api(method, path, body) {
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
 
-  // Phiên hết hạn hoặc token không hợp lệ
-  if (res.status === 401 || res.status === 403) {
+  // Login route: do not treat wrong password as session expired
+  if ((res.status === 401 || res.status === 403) && path !== '/api/admin/login') {
     handleSessionExpired();
     throw new Error('Unauthorized');
   }
 
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || `Lỗi server ${res.status}`);
+  if (!res.ok) throw new Error(data.error || `Loi server ${res.status}`);
   return data;
 }
 
@@ -58,6 +58,7 @@ function handleSessionExpired() {
   renderCurrentClass();
   document.getElementById('session-expired-modal').classList.add('show');
 }
+
 
 // ─── Theme state (chỉ lưu local để tránh chớp màn hình khi tải trang, bản thật lấy từ server) ──
 let themeState = { name: 'default', useFrames: false, customBg: null };
@@ -1264,8 +1265,13 @@ async function verifyPassword() {
 
   if (!pwd) return;
 
+  // Theo dõi số lần thử (client-side, max 5 khớp với server rate limiter)
+  if (typeof window._loginAttempts === 'undefined') window._loginAttempts = 0;
+  const MAX_ATTEMPTS = 5;
+
   try {
     const res = await api('POST', '/api/admin/login', { password: pwd });
+    window._loginAttempts = 0; // reset khi đăng nhập thành công
     setToken(res.token);
     isAdmin = true;
     document.getElementById('password-modal').classList.remove('show');
@@ -1273,10 +1279,20 @@ async function verifyPassword() {
     renderClassTabs();
     renderCurrentClass();
   } catch (err) {
-    if (err.message !== 'Unauthorized') {
-      errorEl.textContent = err.message || 'Mật khẩu không đúng.';
-      errorEl.style.display = 'block';
+    window._loginAttempts++;
+    const remaining = Math.max(0, MAX_ATTEMPTS - window._loginAttempts);
+    let msg = '🔐 Sai mật khẩu!';
+    if (remaining > 0) {
+      msg += ` Còn ${remaining} lần thử.`;
+    } else {
+      msg = '🔒 Đã vượt quá số lần thử. Vui lòng chờ 15 phút rồi thử lại.';
     }
+    // Nếu server trả về thông báo quá nhiều lần thử (rate limit)
+    if (err.message && err.message.includes('nhiều')) {
+      msg = '🔒 Quá nhiều lần thử sai. Vui lòng chờ 15 phút rồi thử lại.';
+    }
+    errorEl.textContent = msg;
+    errorEl.style.display = 'block';
   }
 }
 
