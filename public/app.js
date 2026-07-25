@@ -1488,23 +1488,23 @@ function showError(msg, title = 'Thông báo', icon = '⚠️') {
 
 
 // ══════════════════════════════════════════════════════════════════════════════
-// 🦆 DUCK RACE FEATURE
+// 🦆 DUCK RACE — INLINE SECTION (like Wheel of Names)
 // ══════════════════════════════════════════════════════════════════════════════
 
 // Duck appearance library — 12 unique duck styles
 const DUCK_SKINS = [
-  { body: '#FFD700', beak: '#FF8C00', eye: '#1a1a1a', hat: null,        wing: '#FFA500', label: 'Vịt Vàng' },
-  { body: '#FF6B6B', beak: '#c0392b', eye: '#fff',    hat: 'crown',    wing: '#e74c3c', label: 'Vịt Đỏ' },
-  { body: '#74b9ff', beak: '#0984e3', eye: '#fff',    hat: null,        wing: '#0984e3', label: 'Vịt Xanh' },
-  { body: '#a29bfe', beak: '#6c5ce7', eye: '#fff',    hat: 'tophat',   wing: '#6c5ce7', label: 'Vịt Tím' },
-  { body: '#55efc4', beak: '#00b894', eye: '#1a1a1a', hat: null,        wing: '#00b894', label: 'Vịt Xanh Lá' },
-  { body: '#fd79a8', beak: '#e84393', eye: '#fff',    hat: 'bow',      wing: '#e84393', label: 'Vịt Hồng' },
-  { body: '#fdcb6e', beak: '#e17055', eye: '#1a1a1a', hat: 'cap',      wing: '#e17055', label: 'Vịt Cam' },
-  { body: '#dfe6e9', beak: '#b2bec3', eye: '#636e72', hat: null,        wing: '#b2bec3', label: 'Vịt Trắng' },
-  { body: '#2d3436', beak: '#636e72', eye: '#FFD700', hat: 'glasses',  wing: '#636e72', label: 'Vịt Đen' },
-  { body: '#e17055', beak: '#d35400', eye: '#fff',    hat: 'tophat',   wing: '#d35400', label: 'Vịt Nâu' },
-  { body: '#00cec9', beak: '#00b894', eye: '#fff',    hat: 'crown',    wing: '#00b894', label: 'Vịt Ngọc' },
-  { body: '#fab1a0', beak: '#e17055', eye: '#1a1a1a', hat: 'bow',      wing: '#e17055', label: 'Vịt Đào' },
+  { body: '#FFD700', beak: '#FF8C00', eye: '#1a1a1a', hat: null,       wing: '#FFA500' },
+  { body: '#FF6B6B', beak: '#c0392b', eye: '#fff',   hat: 'crown',    wing: '#e74c3c' },
+  { body: '#74b9ff', beak: '#0984e3', eye: '#fff',   hat: null,       wing: '#0984e3' },
+  { body: '#a29bfe', beak: '#6c5ce7', eye: '#fff',   hat: 'tophat',   wing: '#6c5ce7' },
+  { body: '#55efc4', beak: '#00b894', eye: '#1a1a1a',hat: null,       wing: '#00b894' },
+  { body: '#fd79a8', beak: '#e84393', eye: '#fff',   hat: 'bow',      wing: '#e84393' },
+  { body: '#fdcb6e', beak: '#e17055', eye: '#1a1a1a',hat: 'cap',      wing: '#e17055' },
+  { body: '#dfe6e9', beak: '#b2bec3', eye: '#636e72',hat: null,       wing: '#b2bec3' },
+  { body: '#2d3436', beak: '#636e72', eye: '#FFD700',hat: 'glasses',  wing: '#636e72' },
+  { body: '#e17055', beak: '#d35400', eye: '#fff',   hat: 'tophat',   wing: '#d35400' },
+  { body: '#00cec9', beak: '#00b894', eye: '#fff',   hat: 'crown',    wing: '#00b894' },
+  { body: '#fab1a0', beak: '#e17055', eye: '#1a1a1a',hat: 'bow',      wing: '#e17055' },
 ];
 
 function getDuckSVG(skin, size = 48) {
@@ -1530,27 +1530,17 @@ function getDuckSVG(skin, size = 48) {
                <line x1="12" y1="22" x2="10" y2="21" stroke="#FFD700" stroke-width="1.2"/>
                <line x1="30" y1="22" x2="32" y2="21" stroke="#FFD700" stroke-width="1.2"/>`;
   }
-
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="${size}" height="${size}">
-    <!-- Shadow -->
-    <ellipse cx="20" cy="38" rx="13" ry="3" fill="rgba(0,0,0,0.2)"/>
-    <!-- Body -->
+    <ellipse cx="20" cy="38" rx="13" ry="3" fill="rgba(0,0,0,0.15)"/>
     <ellipse cx="20" cy="28" rx="13" ry="10" fill="${body}"/>
-    <!-- Wing -->
     <ellipse cx="25" cy="29" rx="7" ry="5" fill="${wing}" opacity="0.7" transform="rotate(-15 25 29)"/>
-    <!-- Head -->
     <circle cx="20" cy="17" r="9" fill="${body}"/>
-    <!-- Beak -->
     <ellipse cx="29" cy="18" rx="5" ry="3" fill="${beak}" transform="rotate(-10 29 18)"/>
-    <!-- Nostril -->
     <circle cx="30" cy="17" r="0.8" fill="${wing}" opacity="0.5"/>
-    <!-- Eye -->
     <circle cx="23" cy="14" r="3" fill="${eye === '#fff' ? 'white' : eye}"/>
     <circle cx="24" cy="13.5" r="1.5" fill="#111"/>
     <circle cx="24.6" cy="13" r="0.5" fill="white" opacity="0.8"/>
-    <!-- Hat / accessory -->
     ${hatSvg}
-    <!-- Feet -->
     <ellipse cx="15" cy="38" rx="4" ry="2" fill="${beak}" transform="rotate(-10 15 38)"/>
     <ellipse cx="23" cy="38" rx="4" ry="2" fill="${beak}" transform="rotate(10 23 38)"/>
   </svg>`;
@@ -1559,252 +1549,315 @@ function getDuckSVG(skin, size = 48) {
 let _duckRaceRunning = false;
 let _duckRaceAnimFrame = null;
 let _duckRaceDucks = [];
+let _duckRaceCurrentClassId = null;
+let _duckPendingWinners = [];
 
-function openDuckRace() {
-  const cls = appData.find(c => c.id === currentClassId);
-  if (!cls || !cls.students || cls.students.length === 0) {
-    showError('Lớp chưa có học sinh nào!', 'Thông báo', '🦆');
-    return;
+function renderDuckRaceSection(cls) {
+  const container = document.getElementById('duck-race-container');
+  if (!container) return;
+
+  if (!isAdmin) { container.innerHTML = ''; return; }
+  if (!cls || !cls.students || cls.students.length === 0) { container.innerHTML = ''; return; }
+
+  // Reset state when class changes
+  if (_duckRaceCurrentClassId !== cls.id) {
+    _duckRaceCurrentClassId = cls.id;
+    _duckPendingWinners = [];
+    if (_duckRaceRunning) { cancelAnimationFrame(_duckRaceAnimFrame); _duckRaceRunning = false; }
   }
-  const modal = document.getElementById('duck-race-modal');
-  modal.classList.add('show');
-  _setupDuckRace(cls.students);
+
+  // Don't re-render while race is running
+  if (_duckRaceRunning) return;
+
+  container.innerHTML = '';
+
+  // ── Outer section (same style as wheel-section) ──
+  const section = document.createElement('div');
+  section.className = 'wheel-section';
+
+  // ── Header ──
+  const header = document.createElement('div');
+  header.className = 'wheel-header';
+  const title = document.createElement('h2');
+  title.textContent = '🦆 Đua Vịt 🦆';
+  header.appendChild(title);
+  section.appendChild(header);
+
+  // ── Body: left=track, right=sidebar ──
+  const body = document.createElement('div');
+  body.className = 'wheel-body';
+  body.style.flexDirection = 'column';
+  body.style.gap = '20px';
+
+  // ── Race Track Area ──
+  const trackWrapper = document.createElement('div');
+  trackWrapper.id = 'duck-inline-track';
+  trackWrapper.style.cssText = 'width:100%; background: linear-gradient(180deg,#1a6e3a,#2d9e56); border-radius:14px; overflow:hidden; border:2px solid rgba(0,0,0,0.1); position:relative; padding: 4px 0;';
+
+  // Finish line visual
+  const finishLine = document.createElement('div');
+  finishLine.style.cssText = 'position:absolute; right:68px; top:0; bottom:0; width:8px; background:repeating-linear-gradient(180deg,#fff 0,#fff 10px,#000 10px,#000 20px); z-index:5; opacity:0.6; pointer-events:none;';
+  trackWrapper.appendChild(finishLine);
+
+  const finishLabel = document.createElement('div');
+  finishLabel.style.cssText = 'position:absolute; right:20px; top:50%; transform:translateY(-50%); color:white; font-size:0.6rem; font-weight:900; writing-mode:vertical-lr; opacity:0.5; pointer-events:none;';
+  finishLabel.textContent = 'FINISH';
+  trackWrapper.appendChild(finishLabel);
+
+  // Lanes
+  const lanesEl = document.createElement('div');
+  lanesEl.id = 'duck-inline-lanes';
+  trackWrapper.appendChild(lanesEl);
+
+  // ── Controls row ──
+  const controls = document.createElement('div');
+  controls.style.cssText = 'display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:8px;';
+
+  const startBtn = document.createElement('button');
+  startBtn.id = 'duck-inline-start-btn';
+  startBtn.innerHTML = '🚀 Bắt đầu đua!';
+  startBtn.style.cssText = 'background:linear-gradient(135deg,#FFD700,#FF8C00);color:#1a1a1a;border:none;padding:11px 30px;border-radius:50px;font-size:0.95rem;font-weight:800;cursor:pointer;box-shadow:0 5px 18px rgba(255,152,0,0.4);transition:transform 0.15s;';
+  startBtn.onmouseover = () => startBtn.style.transform = 'translateY(-2px)';
+  startBtn.onmouseout = () => startBtn.style.transform = 'translateY(0)';
+  startBtn.onclick = () => _startInlineDuckRace(cls);
+
+  const resetBtn = document.createElement('button');
+  resetBtn.innerHTML = '🔄 Đặt lại';
+  resetBtn.style.cssText = 'background:#f1f5f9;color:#64748b;border:1.5px solid #e2e8f0;padding:11px 22px;border-radius:50px;font-size:0.95rem;font-weight:700;cursor:pointer;transition:background 0.2s;';
+  resetBtn.onmouseover = () => resetBtn.style.background = '#e2e8f0';
+  resetBtn.onmouseout = () => resetBtn.style.background = '#f1f5f9';
+  resetBtn.onclick = () => { 
+    if (_duckRaceRunning) { cancelAnimationFrame(_duckRaceAnimFrame); _duckRaceRunning = false; }
+    renderDuckRaceSection(cls); 
+  };
+
+  controls.appendChild(startBtn);
+  controls.appendChild(resetBtn);
+
+  // ── Subtitle ──
+  const subtitle = document.createElement('p');
+  subtitle.id = 'duck-inline-subtitle';
+  subtitle.style.cssText = 'text-align:center;color:#94a3b8;font-size:0.82rem;margin:2px 0 0 0;';
+  subtitle.textContent = 'Click "Bắt đầu đua!" để gọi học sinh ngẫu nhiên';
+
+  // ── Sidebar: pending winners (same as wheel) ──
+  const sidebar = document.createElement('div');
+  sidebar.className = 'wheel-sidebar';
+  sidebar.style.cssText = 'width:100%;';
+  const sidebarTitle = document.createElement('h3');
+  sidebarTitle.textContent = '🎯 Khu vực nhiệm vụ';
+  const pendingList = document.createElement('div');
+  pendingList.id = 'duck-pending-list';
+  sidebar.appendChild(sidebarTitle);
+  sidebar.appendChild(pendingList);
+
+  // Assemble
+  body.appendChild(trackWrapper);
+  body.appendChild(controls);
+  body.appendChild(subtitle);
+  body.appendChild(sidebar);
+  section.appendChild(body);
+  container.appendChild(section);
+
+  // Build duck lanes
+  _buildInlineLanes(cls.students, lanesEl);
+
+  // Render pending winners
+  _renderDuckPending(cls);
 }
 
-function closeDuckRace() {
-  const modal = document.getElementById('duck-race-modal');
-  modal.classList.remove('show');
-  if (_duckRaceAnimFrame) cancelAnimationFrame(_duckRaceAnimFrame);
-  _duckRaceRunning = false;
-}
-
-function _setupDuckRace(students) {
-  const lanes = document.getElementById('duck-lanes');
-  lanes.innerHTML = '';
+function _buildInlineLanes(students, lanesEl) {
+  lanesEl.innerHTML = '';
   _duckRaceDucks = [];
-  document.getElementById('duck-race-winner').style.display = 'none';
-  document.getElementById('duck-race-subtitle').textContent = 'Ấn START để bắt đầu đua!';
-  document.getElementById('duck-race-start-btn').disabled = false;
-  document.getElementById('duck-race-start-btn').textContent = '🚀 START';
-
-  // Limit to 12 ducks max
   const racers = students.slice(0, 12);
-  const FINISH_PX = 100; // percentage of track width that is the finish line position
-
   racers.forEach((student, idx) => {
     const skin = DUCK_SKINS[idx % DUCK_SKINS.length];
-
-    // Lane container
     const lane = document.createElement('div');
     lane.className = 'duck-lane';
-    lane.style.background = idx % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'transparent';
+    lane.style.background = idx % 2 === 0 ? 'rgba(255,255,255,0.04)' : 'transparent';
 
-    // Name label
     const label = document.createElement('div');
     label.className = 'duck-lane-label';
     label.textContent = student.name;
     label.title = student.name;
 
-    // Duck wrapper (moves across track)
     const trackArea = document.createElement('div');
-    trackArea.style.cssText = 'position: relative; flex: 1; height: 52px; margin-right: 70px;';
+    trackArea.style.cssText = 'position:relative; flex:1; height:52px; margin-right:80px;';
 
     const duckEl = document.createElement('div');
     duckEl.className = 'duck-runner';
-    duckEl.style.position = 'absolute';
-    duckEl.style.left = '0px';
-    duckEl.style.top = '0px';
-    duckEl.style.transition = 'none';
+    duckEl.style.cssText = 'position:absolute; left:0; top:0; transition:none;';
     duckEl.innerHTML = getDuckSVG(skin, 48);
     duckEl.title = student.name;
 
     trackArea.appendChild(duckEl);
     lane.appendChild(label);
     lane.appendChild(trackArea);
-    lanes.appendChild(lane);
+    lanesEl.appendChild(lane);
 
-    _duckRaceDucks.push({
-      student,
-      skin,
-      el: duckEl,
-      trackEl: trackArea,
-      progress: 0,    // 0–100
-      speed: 0,
-      finished: false,
-      rank: 0
-    });
+    _duckRaceDucks.push({ student, skin, el: duckEl, trackEl: trackArea, progress: 0, speed: 0, waver: 0, finished: false });
   });
 }
 
-function _startDuckRace() {
+function _startInlineDuckRace(cls) {
   if (_duckRaceRunning) return;
-  document.getElementById('duck-race-winner').style.display = 'none';
-  document.getElementById('duck-race-start-btn').disabled = true;
-  document.getElementById('duck-race-subtitle').textContent = 'Đang đua...';
+
+  const startBtn = document.getElementById('duck-inline-start-btn');
+  const subtitle = document.getElementById('duck-inline-subtitle');
+  if (startBtn) startBtn.disabled = true;
+  if (subtitle) subtitle.textContent = 'Đang đếm ngược...';
 
   // Reset positions
   _duckRaceDucks.forEach(d => {
-    d.progress = 0;
-    d.finished = false;
-    d.rank = 0;
+    d.progress = 0; d.finished = false; d.speed = 0; d.waver = 0;
     d.el.style.left = '0px';
     d.el.classList.remove('waddling', 'winner-dance');
   });
 
-  // Predetermined winner (random)
   const winnerIdx = Math.floor(Math.random() * _duckRaceDucks.length);
 
-  // Countdown 3-2-1-GO!
-  const track = document.getElementById('duck-race-track');
-  const overlay = document.createElement('div');
-  overlay.className = 'duck-countdown-overlay';
-  const num = document.createElement('div');
-  num.className = 'duck-countdown-number';
-  overlay.appendChild(num);
-  track.appendChild(overlay);
-
-  let countdown = 3;
-  const sounds = ['3', '2', '1', 'GO! 🏁'];
-  let ci = 0;
-
-  const tick = () => {
-    num.textContent = sounds[ci];
-    num.style.animation = 'none';
-    void num.offsetWidth; // reflow
-    num.style.animation = 'countdownPop 0.8s ease-out';
-    ci++;
-    if (ci >= sounds.length) {
-      setTimeout(() => {
-        track.removeChild(overlay);
-        _runDuckRace(winnerIdx);
-      }, 400);
+  // Countdown 3-2-1-GO in subtitle
+  const steps = ['3...', '2...', '1...', '🏁 GO!'];
+  let si = 0;
+  const countTick = () => {
+    if (subtitle) subtitle.textContent = steps[si];
+    si++;
+    if (si < steps.length) {
+      setTimeout(countTick, 750);
     } else {
-      setTimeout(tick, 900);
+      setTimeout(() => _runInlineRace(winnerIdx, cls), 200);
     }
   };
-  tick();
+  countTick();
 }
 
-function _runDuckRace(winnerIdx) {
+function _runInlineRace(winnerIdx, cls) {
   _duckRaceRunning = true;
-  let finishedCount = 0;
-  const TOTAL_RACERS = _duckRaceDucks.length;
+  const subtitle = document.getElementById('duck-inline-subtitle');
+  if (subtitle) subtitle.textContent = '🦆 Đang đua...';
 
-  // Assign base speeds — winner gets slight edge near end
-  _duckRaceDucks.forEach((d, i) => {
-    d.speed = 0.4 + Math.random() * 0.6; // base speed 0.4–1.0
-    d.waver = Math.random() * 2 * Math.PI; // phase for wobble
+  _duckRaceDucks.forEach(d => {
+    d.speed = 0.35 + Math.random() * 0.65;
+    d.waver = Math.random() * Math.PI * 2;
     d.el.classList.add('waddling');
   });
 
-  // Give winner a slight boost in the last stretch
   const FINISH = 95;
+  let raceWon = false;
+  let cachedTrackW = 0;
 
-  const animate = (timestamp) => {
+  const animate = () => {
     if (!_duckRaceRunning) return;
 
-    let allDone = true;
+    if (cachedTrackW <= 0) {
+      cachedTrackW = (_duckRaceDucks[0] && _duckRaceDucks[0].trackEl.offsetWidth - 52) || 0;
+      if (cachedTrackW <= 0) { _duckRaceAnimFrame = requestAnimationFrame(animate); return; }
+    }
 
     _duckRaceDucks.forEach((d, i) => {
       if (d.finished) return;
-      allDone = false;
-
       d.waver += 0.15;
-
-      // Speed wobble
       let spd = d.speed * (0.7 + 0.3 * Math.sin(d.waver));
-
-      // Winner gets boost in last 30%
-      if (i === winnerIdx && d.progress > 65) {
-        spd *= 1.35;
-      }
-      // Non-winners slow down if they're too close to finish when winner is near
-      if (i !== winnerIdx && d.progress > 85 && _duckRaceDucks[winnerIdx].progress < 90) {
-        spd *= 0.4;
-      }
-
+      if (i === winnerIdx && d.progress > 60) spd *= 1.4;
+      if (i !== winnerIdx && d.progress > 80 && _duckRaceDucks[winnerIdx].progress < 88) spd *= 0.35;
       d.progress = Math.min(d.progress + spd * 0.5, 100);
+      d.el.style.left = Math.max(0, (d.progress / 100) * cachedTrackW) + 'px';
 
-      // Map progress to pixel position
-      const trackW = d.trackEl.offsetWidth - 52;
-      const px = (d.progress / 100) * trackW;
-      d.el.style.left = px + 'px';
-
-      if (d.progress >= FINISH && i === winnerIdx) {
+      if (!raceWon && i === winnerIdx && d.progress >= FINISH) {
+        raceWon = true;
         d.finished = true;
-        d.rank = ++finishedCount;
         d.el.classList.remove('waddling');
         d.el.classList.add('winner-dance');
-        _onDuckWin(d, finishedCount);
-      } else if (d.progress >= 100 && i !== winnerIdx) {
-        d.finished = true;
-        d.rank = ++finishedCount;
-        d.el.classList.remove('waddling');
+        _onInlineDuckWin(d, cls);
       }
     });
 
-    if (!allDone || finishedCount < TOTAL_RACERS) {
-      _duckRaceAnimFrame = requestAnimationFrame(animate);
-    } else {
-      _duckRaceRunning = false;
+    if (!raceWon) _duckRaceAnimFrame = requestAnimationFrame(animate);
+    else {
+      // Let non-winners slowly finish
+      setTimeout(() => {
+        _duckRaceDucks.forEach(d => { if (!d.finished) d.el.classList.remove('waddling'); });
+        _duckRaceRunning = false;
+      }, 1000);
     }
   };
 
   _duckRaceAnimFrame = requestAnimationFrame(animate);
 }
 
-function _onDuckWin(duck, rank) {
-  if (rank !== 1) return; // Only announce 1st place
-
+function _onInlineDuckWin(duck, cls) {
   _duckRaceRunning = false;
-  if (_duckRaceAnimFrame) cancelAnimationFrame(_duckRaceAnimFrame);
 
-  // Stop all other ducks
-  setTimeout(() => {
-    _duckRaceDucks.forEach(d => {
-      if (!d.finished) {
-        d.finished = true;
-        d.el.classList.remove('waddling');
-      }
-    });
-  }, 800);
+  const subtitle = document.getElementById('duck-inline-subtitle');
+  if (subtitle) subtitle.textContent = '🏆 ' + duck.student.name + ' về đích đầu tiên!';
 
-  document.getElementById('duck-race-subtitle').textContent = '🎉 Kết quả đã có!';
-  document.getElementById('duck-winner-name').textContent = '🦆 ' + duck.student.name;
-  const winnerDiv = document.getElementById('duck-race-winner');
-  winnerDiv.style.display = 'block';
-  winnerDiv.style.animation = 'none';
-  void winnerDiv.offsetWidth;
-  winnerDiv.style.animation = 'winnerPulse 0.6s ease-out';
+  const startBtn = document.getElementById('duck-inline-start-btn');
+  if (startBtn) startBtn.disabled = false;
 
-  document.getElementById('duck-race-start-btn').disabled = false;
-  document.getElementById('duck-race-start-btn').textContent = '🚀 START';
+  // Add to pending winners (same pattern as wheel)
+  _duckPendingWinners.push(duck.student);
+  _renderDuckPending(cls);
 }
 
-function _bindDuckRaceButtons() {
-  document.getElementById('duck-race-close-btn').onclick = closeDuckRace;
-  document.getElementById('duck-race-start-btn').onclick = () => {
-    if (_duckRaceRunning) return;
-    const cls = appData.find(c => c.id === currentClassId);
-    if (cls) _setupDuckRace(cls.students);
-    setTimeout(_startDuckRace, 50);
-  };
-  document.getElementById('duck-race-reset-btn').onclick = () => {
-    if (_duckRaceRunning) {
-      cancelAnimationFrame(_duckRaceAnimFrame);
-      _duckRaceRunning = false;
+function _renderDuckPending(cls) {
+  const container = document.getElementById('duck-pending-list');
+  if (!container) return;
+  container.innerHTML = '';
+
+  if (_duckPendingWinners.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'empty-msg';
+    empty.style.cssText = 'text-align:center;color:#94A3B8;font-size:0.95rem;margin-top:10px;';
+    empty.textContent = 'Chưa có ai.';
+    container.appendChild(empty);
+    return;
+  }
+
+  _duckPendingWinners.forEach((winner, index) => {
+    const card = document.createElement('div');
+    card.className = 'pending-winner-card';
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'pending-name';
+    nameEl.textContent = winner.name;
+    card.appendChild(nameEl);
+
+    const actions = document.createElement('div');
+    actions.className = 'pending-actions';
+
+    const btnCancel = document.createElement('button');
+    btnCancel.className = 'pending-btn zero';
+    btnCancel.textContent = 'Không làm gì';
+    btnCancel.onclick = () => {
+      _duckPendingWinners.splice(index, 1);
+      _renderDuckPending(cls);
+    };
+    actions.appendChild(btnCancel);
+
+    for (let i = 1; i <= 5; i++) {
+      const btn = document.createElement('button');
+      btn.className = 'pending-btn';
+      btn.textContent = '+' + i;
+      btn.onclick = async () => {
+        try {
+          await doUpdatePoints(cls.id, winner.id, i);
+          _duckPendingWinners.splice(index, 1);
+          _renderDuckPending(cls);
+        } catch (err) {
+          showError('Không thể cộng điểm: ' + err.message);
+        }
+      };
+      actions.appendChild(btn);
     }
-    const cls = appData.find(c => c.id === currentClassId);
-    if (cls) _setupDuckRace(cls.students);
-  };
-  document.getElementById('duck-race-modal').addEventListener('click', (e) => {
-    if (e.target === document.getElementById('duck-race-modal')) closeDuckRace();
+
+    card.appendChild(actions);
+    container.appendChild(card);
   });
 }
 
 
 
-function renderDuckRaceSection(cls) {
+ {
   const container = document.getElementById('duck-race-container');
   if (!container) return;
 
