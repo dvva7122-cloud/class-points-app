@@ -646,7 +646,16 @@ function showConfirmModal(title, message, onConfirm, onCancel, confirmText = 'Đ
     cancelBtn.id = 'custom-alert-cancel-btn';
     cancelBtn.className = okBtn.className;
     cancelBtn.style.background = '#6b7280';
-    cancelBtn.style.marginLeft = '10px';
+    cancelBtn.style.flex = '1';
+    cancelBtn.style.margin = '0';
+    cancelBtn.style.color = 'white';
+    cancelBtn.style.border = 'none';
+    cancelBtn.style.padding = '11px 24px';
+    cancelBtn.style.borderRadius = '10px';
+    cancelBtn.style.fontWeight = '700';
+    cancelBtn.style.fontSize = '0.95rem';
+    cancelBtn.style.cursor = 'pointer';
+    cancelBtn.style.transition = 'transform 0.15s';
     okBtn.parentNode.insertBefore(cancelBtn, okBtn);
   }
   
