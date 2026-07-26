@@ -1785,7 +1785,12 @@ function _runInlineRace(winnerIdx, cls) {
   let frameCount = 0;
   const FINISH_PERCENT = 100;
 
-  // Initialize random speed multipliers and wobble phases for dramatic pacing
+  // Randomize race scenario style for the winner each race:
+  // 0: Wire-to-Wire Lead (Dẫn đầu từ đầu đến cuối)
+  // 1: Mid-Race Comeback (Dẫn trước từ giữa trận)
+  // 2: Late Sprint Surge (Bứt phá phút cuối)
+  const raceScenario = Math.floor(Math.random() * 3);
+
   _duckRaceDucks.forEach((d, i) => {
     d.waver = Math.random() * Math.PI * 2;
     d.graphicEl.classList.add('waddling');
@@ -1818,29 +1823,46 @@ function _runInlineRace(winnerIdx, cls) {
       let targetProgress = 0;
 
       if (i === winnerIdx) {
-        // Winner progress curve: Starts slightly behind/middle, stays close, then surges past at t > 0.7
-        if (t < 0.5) {
-          // 0-50%: Starts moderate (reaches ~40%)
-          targetProgress = 40 * Math.pow(t / 0.5, 1.1) + wobble * 5;
-        } else if (t < 0.75) {
-          // 50-75%: Stays in top group around 70-75%
-          const subT = (t - 0.5) / 0.25;
-          targetProgress = 40 + subT * 32 + wobble * 4;
+        if (raceScenario === 0) {
+          // Wire-to-Wire: Dẫn đầu ổn định suốt cuộc đua
+          targetProgress = 100 * Math.pow(t, 0.85) + wobble * 3;
+        } else if (raceScenario === 1) {
+          // Mid-Race Comeback: Vươn lên dẫn đầu từ giữa trận (~40%)
+          if (t < 0.4) {
+            targetProgress = 30 * (t / 0.4) + wobble * 4;
+          } else {
+            const subT = (t - 0.4) / 0.6;
+            targetProgress = 30 + Math.pow(subT, 0.9) * 70;
+          }
         } else {
-          // 75-100%: Dramatic sprint to 100%!
-          const subT = (t - 0.75) / 0.25;
-          targetProgress = 72 + Math.pow(subT, 1.4) * 28;
+          // Late Sprint Surge: Bứt phá phút cuối (t > 0.75)
+          if (t < 0.5) {
+            targetProgress = 38 * Math.pow(t / 0.5, 1.1) + wobble * 5;
+          } else if (t < 0.75) {
+            const subT = (t - 0.5) / 0.25;
+            targetProgress = 38 + subT * 32 + wobble * 4;
+          } else {
+            const subT = (t - 0.75) / 0.25;
+            targetProgress = 70 + Math.pow(subT, 1.4) * 30;
+          }
         }
       } else {
-        // Non-winners: Have fake early leads or steady pace, but cap out between 65% - 94%
-        const maxFinal = 65 + (i * 17 + winnerIdx * 7) % 29;
+        // Non-winners: Cap between 60% - 94%
+        const maxFinal = 60 + (i * 17 + winnerIdx * 7) % 33;
         
-        // Add random burst for non-winners during mid-race to create drama
-        const midLeadBurst = (i % 2 === 0) ? Math.sin(t * Math.PI) * 12 : 0;
-        
-        targetProgress = maxFinal * Math.pow(t, 0.9) + midLeadBurst + wobble * 6;
-        
-        // Ensure non-winners don't cross finish line early or beat winner near the end
+        if (raceScenario === 0) {
+          // Non-winners lag slightly behind
+          targetProgress = (maxFinal - 5) * Math.pow(t, 1.0) + wobble * 5;
+        } else if (raceScenario === 1) {
+          // Non-winners start fast then slow down
+          const earlyLead = Math.sin(t * Math.PI) * 10;
+          targetProgress = maxFinal * Math.pow(t, 0.9) + earlyLead + wobble * 5;
+        } else {
+          // Non-winners lead early & mid race
+          const midBurst = Math.sin(t * Math.PI) * 14;
+          targetProgress = maxFinal * Math.pow(t, 0.9) + midBurst + wobble * 6;
+        }
+
         if (t > 0.85) {
           targetProgress = Math.min(targetProgress, 93);
         }
