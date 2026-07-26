@@ -1929,17 +1929,8 @@ function _runInlineRace(winnerIdx, cls) {
           targetProgress = 100 * (linearT + lateBoost) + wobble * 1.8;
 
         } else if (raceScenario === 4) {
-          // 4: Final Surge - bắt đầu nhỉnh lên từ 65% đường, dùng Smoothstep cực mượt
-          if (t < 0.65) {
-            // Đi đều sát nhóm đầu
-            targetProgress = 76 * Math.sin(t * Math.PI * 0.5) + wobble * 1.5;
-          } else {
-            // Smoothstep: chậm → tăng dần đều → chậm lại khi chạm đích (mượt nhất)
-            const surgeT = Math.min(1, (t - 0.65) / 0.35);
-            const smooth = surgeT * surgeT * (3 - 2 * surgeT);
-            targetProgress = 76 + smooth * 24;
-          }
-
+          // 4: Final Surge - Đường cong gia tốc liên tục mượt mà (t^1.18), bám sát nhóm đầu từ đầu và nhỉnh dần đều về đích mà không giật
+          targetProgress = 100 * Math.pow(t, 1.18) + wobble * 1.5;
         }
 
       } else {
