@@ -260,6 +260,10 @@ app.patch('/api/classes/:classId', requireAdmin, async (req, res) => {
     updateData.gifUrl = req.body.gifUrl; // có thể là null (để xóa gif)
   }
 
+  if (req.body.gifUrls !== undefined) {
+    updateData.gifUrls = Array.isArray(req.body.gifUrls) ? req.body.gifUrls : [];
+  }
+
   if (req.body.seatingChart !== undefined) {
     updateData.seatingChart = req.body.seatingChart;
   }

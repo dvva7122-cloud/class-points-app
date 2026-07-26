@@ -189,7 +189,6 @@ function renderCurrentClass() {
   const gridEl         = document.getElementById('student-grid');
   const classInfoEl    = document.querySelector('.class-info');
   const addContainer   = document.getElementById('add-student-container');
-
   const eventsContainer = document.getElementById('events-container');
 
   if (!cls) {
@@ -205,14 +204,52 @@ function renderCurrentClass() {
 
   classInfoEl.style.display = 'flex';
   nameEl.textContent = cls.name;
-  
-  const gifEl = document.getElementById('current-class-gif');
-  if (cls.gifUrl) {
-    gifEl.src = cls.gifUrl;
-    gifEl.style.display = 'inline-block';
-  } else {
-    gifEl.src = '';
-    gifEl.style.display = 'none';
+
+  // Render multi GIFs/images beside class name
+  const gifsContainer = document.getElementById('current-class-gifs');
+  if (gifsContainer) {
+    gifsContainer.innerHTML = '';
+    let urls = Array.isArray(cls.gifUrls) ? [...cls.gifUrls] : [];
+    if (cls.gifUrl && !urls.includes(cls.gifUrl)) urls.unshift(cls.gifUrl);
+
+    urls.forEach((url, index) => {
+      if (!url) return;
+      const itemWrapper = document.createElement('div');
+      itemWrapper.style.cssText = 'position: relative; display: inline-block; margin-left: 4px;';
+
+      const img = document.createElement('img');
+      img.src = url;
+      img.alt = 'Trang trí lớp';
+      img.style.cssText = 'max-height: 55px; border-radius: 8px; vertical-align: middle; object-fit: contain; box-shadow: 0 2px 8px rgba(0,0,0,0.1);';
+      itemWrapper.appendChild(img);
+
+      if (isAdmin && isEditingMode) {
+        const deleteBtn = document.createElement('button');
+        deleteBtn.innerHTML = '×';
+        deleteBtn.title = 'Xóa ảnh này';
+        deleteBtn.style.cssText = 'position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: #FF4D4D; color: white; border: 2px solid white; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.3); padding: 0; line-height: 1; z-index: 10; transition: transform 0.15s ease;';
+        deleteBtn.onmouseover = () => deleteBtn.style.transform = 'scale(1.2)';
+        deleteBtn.onmouseout = () => deleteBtn.style.transform = 'scale(1)';
+
+        deleteBtn.onclick = async (e) => {
+          e.stopPropagation();
+          urls.splice(index, 1);
+          try {
+            const patchRes = await api('PATCH', '/api/classes/' + currentClassId, {
+              gifUrls: urls,
+              gifUrl: urls[0] || null
+            });
+            cls.gifUrls = patchRes.gifUrls;
+            cls.gifUrl = patchRes.gifUrl;
+            renderCurrentClass();
+          } catch (err) {
+            if (err.message !== 'Unauthorized') showError(err.message);
+          }
+        };
+        itemWrapper.appendChild(deleteBtn);
+      }
+      gifsContainer.appendChild(itemWrapper);
+    });
   }
 
   gridEl.innerHTML = '';
@@ -1137,12 +1174,24 @@ async function doEditClassName() {
 async function doEditClassGif() {
   const cls = getCurrentClass();
   if (!cls) return;
-  const res = await showCustomPrompt('Trang trí lớp học', [
-    { key: 'url', label: 'Link ảnh GIF (để trống nếu muốn xóa)', value: cls.gifUrl || '' }
+  const res = await showCustomPrompt('Thêm ảnh/GIF trang trí lớp', [
+    { key: 'url', label: 'Nhập link ảnh hoặc GIF mới', value: '' }
   ]);
-  if (!res) return; // Cancel
+  if (!res || !res.url || !res.url.trim()) return; // Cancel or empty
+
+  const newUrl = res.url.trim();
+  let urls = Array.isArray(cls.gifUrls) ? [...cls.gifUrls] : [];
+  if (cls.gifUrl && !urls.includes(cls.gifUrl)) urls.unshift(cls.gifUrl);
+  
+  // Append new URL (support multiple images added rightwards)
+  urls.push(newUrl);
+
   try {
-    const patchRes = await api('PATCH', `/api/classes/${currentClassId}`, { gifUrl: res.url });
+    const patchRes = await api('PATCH', `/api/classes/${currentClassId}`, {
+      gifUrls: urls,
+      gifUrl: urls[0] || null
+    });
+    cls.gifUrls = patchRes.gifUrls;
     cls.gifUrl = patchRes.gifUrl;
     renderCurrentClass();
   } catch (err) {
