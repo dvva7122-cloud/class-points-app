@@ -1534,48 +1534,84 @@ function getDuckSVG(skin, size = 42) {
   const { body, beak, eye, hat, wing } = skin;
   let hatSvg = '';
   if (hat === 'crown') {
-    hatSvg = `<polygon points="12,12 16,6 20,12 24,6 28,12" fill="#FFD700" stroke="#FFA500" stroke-width="0.5"/>
-               <rect x="10" y="12" width="20" height="3" rx="1" fill="#FFD700"/>`;
+    // Crown tilted slightly forward over head
+    hatSvg = `<g transform="translate(14, 2) rotate(-8 20 10)">
+               <polygon points="2,10 6,2 10,8 14,2 18,10" fill="#FFD700" stroke="#FFA500" stroke-width="0.5"/>
+               <rect x="1" y="9" width="18" height="3" rx="1" fill="#FFD700"/>
+              </g>`;
   } else if (hat === 'tophat') {
-    hatSvg = `<rect x="13" y="6" width="14" height="10" rx="1" fill="#1a1a1a"/>
-               <rect x="10" y="15" width="20" height="3" rx="1" fill="#1a1a1a"/>`;
+    // Tophat angled on side head
+    hatSvg = `<g transform="translate(13, 2) rotate(-10 20 10)">
+               <rect x="4" y="2" width="12" height="10" rx="1" fill="#1a1a1a"/>
+               <rect x="0" y="11" width="20" height="3" rx="1" fill="#1a1a1a"/>
+               <rect x="4" y="9" width="12" height="2" fill="#e74c3c"/>
+              </g>`;
   } else if (hat === 'bow') {
-    hatSvg = `<path d="M14,14 Q20,8 26,14 Q20,11 14,14 Z" fill="#FF6B9D"/>
-               <circle cx="20" cy="13" r="2" fill="#FF6B9D"/>`;
+    // Cute bow placed near back of head
+    hatSvg = `<g transform="translate(12, 8) rotate(-15 15 10)">
+               <path d="M0,5 Q5,0 10,5 Q5,3 0,5 Z" fill="#FF6B9D"/>
+               <path d="M10,5 Q15,0 20,5 Q15,3 10,5 Z" fill="#FF6B9D"/>
+               <circle cx="10" cy="4.5" r="2.2" fill="#FF6B9D"/>
+              </g>`;
   } else if (hat === 'cap') {
-    hatSvg = `<ellipse cx="20" cy="15" rx="10" ry="4" fill="#2d3436"/>
-               <rect x="10" y="11" width="20" height="5" rx="2" fill="#2d3436"/>
-               <rect x="25" y="12" width="7" height="3" rx="1" fill="#2d3436"/>`;
+    // Baseball cap with visor pointing RIGHT (forward in swimming direction)
+    hatSvg = `<g transform="translate(12, 5)">
+               <path d="M1,11 A9,8 0 0,1 17,11 Z" fill="#e74c3c"/>
+               <rect x="14" y="9" width="10" height="3" rx="1.5" fill="#c0392b" transform="rotate(8 14 9)"/>
+              </g>`;
   } else if (hat === 'glasses') {
-    hatSvg = `<circle cx="16" cy="22" r="4" fill="none" stroke="#FFD700" stroke-width="1.5"/>
-               <circle cx="26" cy="22" r="4" fill="none" stroke="#FFD700" stroke-width="1.5"/>
-               <line x1="20" y1="22" x2="22" y2="22" stroke="#FFD700" stroke-width="1.2"/>
-               <line x1="12" y1="22" x2="10" y2="21" stroke="#FFD700" stroke-width="1.2"/>
-               <line x1="30" y1="22" x2="32" y2="21" stroke="#FFD700" stroke-width="1.2"/>`;
+    // Monocle / Cool Sunglasses seen from side profile on eye & beak
+    hatSvg = `<g transform="translate(19, 11)">
+               <ellipse cx="6" cy="4" rx="4.5" ry="3.5" fill="rgba(0,0,0,0.75)" stroke="#FFD700" stroke-width="1"/>
+               <line x1="1.5" y1="4" x2="-2" y2="4" stroke="#FFD700" stroke-width="1"/>
+               <line x1="10.5" y1="4" x2="13" y2="5" stroke="#FFD700" stroke-width="1"/>
+              </g>`;
   } else if (hat === 'pirate') {
-    hatSvg = `<path d="M8,15 Q20,6 32,15 L28,11 Q20,8 12,11 Z" fill="#1a1a1a"/>
-               <circle cx="20" cy="11" r="2" fill="#e74c3c"/>`;
+    // Pirate hat with skull/feather on side
+    hatSvg = `<g transform="translate(10, 3) rotate(-5 20 10)">
+               <path d="M0,12 Q10,2 22,12 L18,9 Q10,6 2,9 Z" fill="#1a1a1a"/>
+               <circle cx="11" cy="8" r="1.5" fill="#fff"/>
+               <path d="M2,10 Q-3,2 3,0" stroke="#e74c3c" stroke-width="2" fill="none"/>
+              </g>`;
   } else if (hat === 'wizard') {
-    hatSvg = `<polygon points="20,2 11,15 29,15" fill="#6c5ce7"/>
-               <ellipse cx="20" cy="15" rx="11" ry="3" fill="#4834d4"/>
-               <polygon points="20,6 21,9 24,9 22,11 23,14 20,12 17,14 18,11 16,9 19,9" fill="#FFD700" transform="scale(0.4) translate(30,10)"/>`;
+    // Wizard hat leaning back
+    hatSvg = `<g transform="translate(10, 1) rotate(-12 18 10)">
+               <polygon points="12,0 4,14 20,14" fill="#6c5ce7"/>
+               <ellipse cx="12" cy="14" rx="10" ry="3" fill="#4834d4"/>
+               <polygon points="12,4 13,6 15,6 13.5,7.5 14,10 12,8.5 10,10 10.5,7.5 9,6 11,6" fill="#FFD700"/>
+              </g>`;
   } else if (hat === 'headphones') {
-    hatSvg = `<path d="M12,18 A9,9 0 0,1 28,18" fill="none" stroke="#e74c3c" stroke-width="2.5"/>
-               <rect x="10" y="15" width="4" height="7" rx="2" fill="#333"/>
-               <rect x="26" y="15" width="4" height="7" rx="2" fill="#333"/>`;
+    // Side profile headphone over ear/eye area
+    hatSvg = `<g transform="translate(14, 8) rotate(-10 20 15)">
+               <path d="M2,10 A8,8 0 0,1 18,10" fill="none" stroke="#e74c3c" stroke-width="2.5"/>
+               <rect x="7" y="7" width="5" height="8" rx="2" fill="#2d3436" stroke="#e74c3c" stroke-width="1"/>
+              </g>`;
   } else if (hat === 'viking') {
-    hatSvg = `<path d="M11,15 Q20,9 29,15 Z" fill="#7f8c8d"/>
-               <path d="M11,15 Q7,8 5,10" fill="none" stroke="#fff" stroke-width="2"/>
-               <path d="M29,15 Q33,8 35,10" fill="none" stroke="#fff" stroke-width="2"/>`;
+    // Side profile Viking helmet with one prominent horn pointing up
+    hatSvg = `<g transform="translate(12, 4) rotate(-5 20 10)">
+               <path d="M2,11 Q10,5 18,11 Z" fill="#7f8c8d"/>
+               <rect x="2" y="10" width="16" height="2" fill="#95a5a6"/>
+               <path d="M15,9 Q20,2 22,1" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+              </g>`;
   } else if (hat === 'ninja') {
-    hatSvg = `<rect x="10" y="11" width="20" height="6" rx="2" fill="#2d3436"/>
-               <rect x="27" y="13" width="6" height="3" rx="1" fill="#e74c3c"/>`;
+    // Ninja headband with flowing tail behind head
+    hatSvg = `<g transform="translate(13, 9)">
+               <rect x="1" y="3" width="15" height="4" rx="1" fill="#2d3436"/>
+               <rect x="4" y="3" width="9" height="4" fill="#e74c3c"/>
+               <path d="M1,5 Q-4,8 -6,13" fill="none" stroke="#e74c3c" stroke-width="2"/>
+              </g>`;
   } else if (hat === 'detective') {
-    hatSvg = `<ellipse cx="20" cy="14" rx="12" ry="4" fill="#6e5773"/>
-               <path d="M13,14 Q20,7 27,14 Z" fill="#6e5773"/>`;
+    // Detective Sherlock hat side view
+    hatSvg = `<g transform="translate(10, 4) rotate(-8 20 10)">
+               <path d="M2,11 Q11,3 20,11 Z" fill="#6e5773"/>
+               <ellipse cx="11" cy="11" rx="11" ry="3" fill="#5c3d46"/>
+              </g>`;
   } else if (hat === 'chef') {
-    hatSvg = `<path d="M13,14 C10,10 14,5 18,7 C20,4 24,5 25,8 C29,7 31,11 27,14 Z" fill="#ffffff" stroke="#ccc" stroke-width="0.5"/>
-               <rect x="14" y="13" width="12" height="3" fill="#ffffff"/>`;
+    // Chef hat side view
+    hatSvg = `<g transform="translate(12, 1) rotate(-8 20 10)">
+               <path d="M3,11 C1,6 5,1 10,3 C12,0 16,1 17,4 C20,3 22,7 18,11 Z" fill="#ffffff" stroke="#ddd" stroke-width="0.8"/>
+               <rect x="4" y="10" width="14" height="3" fill="#ffffff" stroke="#ccc" stroke-width="0.5"/>
+              </g>`;
   }
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="${size}" height="${size}">
     <ellipse cx="20" cy="36" rx="13" ry="3" fill="rgba(0,0,0,0.15)"/>
