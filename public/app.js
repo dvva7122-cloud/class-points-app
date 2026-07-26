@@ -1848,7 +1848,7 @@ function _startInlineDuckRace(cls) {
 
   // Reset positions
   _duckRaceDucks.forEach(d => {
-    d.progress = 0; d.finished = false; d.speed = 0; d.waver = 0;
+    d.progress = 0; d.maxReachedProgress = 0; d.finished = false; d.speed = 0; d.waver = 0;
     d.el.style.left = '0px';
     d.graphicEl.classList.remove('waddling', 'winner-dance');
   });
@@ -1865,13 +1865,23 @@ function _runInlineRace(winnerIdx, cls) {
   let frameCount = 0;
   const FINISH_PERCENT = 100;
 
-  // 🎲 Randomly pick 1 of 5 natural dynamic scenarios per race match:
+  // 🎲 Randomly pick 1 of 8 natural dynamic scenarios per race match:
   // 0: Wire-to-Wire Controlled Lead
-  // 1: Mid-Race Surge (Vươn lên từ giữa)
-  // 2: Chaos & Multi-lead Swap (Giằng co)
-  // 3: Linear Smooth Pace (Đều nhau, winner chỉ nhỉnh ở 80% cuối)
-  // 4: Final Rocket (Ngang nhau đến 85%, vịt thắng tên lửa 1s cuối)
-  const raceScenario = Math.floor(Math.random() * 5);
+  // 1: Mid-Race Surge
+  // 2: Chaos & Multi-lead Swap
+  // 3: Linear Smooth Pace
+  // 4: Final Surge (t^1.18)
+  // 5: Duo Photo-Finish Battle (2 con song kè đan xen tiến tới)
+  // 6: Tight Pack Sprint (Đàn vịt bơi dính chùm ngang nhau)
+  // 7: Precision Late Pass (Núp gió Top 2-3 rồi lướt qua về đích)
+  const raceScenario = Math.floor(Math.random() * 8);
+
+  // Pick a rival duck index for Scenario 5 (Duo Battle)
+  let rivalIdx = (winnerIdx + 1) % Math.max(1, _duckRaceDucks.length);
+  if (_duckRaceDucks.length > 2) {
+    rivalIdx = (winnerIdx + 1 + Math.floor(Math.random() * (_duckRaceDucks.length - 1))) % _duckRaceDucks.length;
+    if (rivalIdx === winnerIdx) rivalIdx = (winnerIdx + 1) % _duckRaceDucks.length;
+  }
 
   _duckRaceDucks.forEach((d, i) => {
     d.waver = Math.random() * Math.PI * 2;
@@ -1907,51 +1917,76 @@ function _runInlineRace(winnerIdx, cls) {
 
       if (i === winnerIdx) {
         if (raceScenario === 0) {
-          // 0: Dẫn đầu sát nút từ đầu tới cuối
           const easeT = Math.sin(t * Math.PI * 0.5);
           targetProgress = 100 * Math.pow(easeT, 1.08) + wobble * 1.5;
 
         } else if (raceScenario === 1) {
-          // 1: Vươn lên từ giữa chặng (Sine surge)
           const smoothSurge = t + 0.12 * Math.sin(t * Math.PI * 2);
           targetProgress = 100 * Math.pow(smoothSurge, 1.05) + wobble * 2;
 
         } else if (raceScenario === 2) {
-          // 2: Giằng co liên tục mượt mà
           const smoothWaver = t + 0.05 * Math.sin(t * Math.PI * 3);
           targetProgress = 100 * Math.pow(smoothWaver, 1.08) + wobble * 2.5;
 
         } else if (raceScenario === 3) {
-          // 3: Linear Smooth - đều đặn tới 80%, sau đó nhỉnh nhẹ về đích
-          // Winner có tốc độ tuyến tính nhưng nhỉnh hơn nhóm khoảng 4% liên tục
           const linearT = t;
           const lateBoost = t > 0.8 ? (t - 0.8) * 0.25 : 0;
           targetProgress = 100 * (linearT + lateBoost) + wobble * 1.8;
 
         } else if (raceScenario === 4) {
-          // 4: Final Surge - Đường cong gia tốc liên tục mượt mà (t^1.18), bám sát nhóm đầu từ đầu và nhỉnh dần đều về đích mà không giật
           targetProgress = 100 * Math.pow(t, 1.18) + wobble * 1.5;
+
+        } else if (raceScenario === 5) {
+          // 5: Duo Photo-Finish Battle (Winner)
+          // Đảm bảo hàm luôn tăng (Monotonic) bằng cách cộng Sine dao động nhỏ vào tiến trình tăng đều t
+          const duoWave = Math.sin(t * Math.PI * 3) * 1.8;
+          targetProgress = 100 * Math.pow(t, 1.02) + duoWave + wobble * 1.2;
+
+        } else if (raceScenario === 6) {
+          // 6: Tight Pack Sprint (Winner) - Cả đàn đi sát nhau, winner chỉ tiến trước 2% ở đoạn cuối
+          targetProgress = 100 * Math.pow(t, 1.05) + wobble * 1.5;
+
+        } else {
+          // 7: Precision Late Pass (Winner) - Núp gió Top 2-3 đến 75% rồi lướt qua
+          const latePassPace = Math.pow(t, 1.12);
+          targetProgress = 100 * latePassPace + wobble * 1.5;
         }
 
       } else {
-        // Vịt không thắng: Mỗi kịch bản có cách đánh lừa khác nhau
+        // Vịt không thắng
         const rankOffset = (i * 13 + winnerIdx * 7) % 22;
         const maxFinal = 68 + rankOffset * 1.1; // 68-92%
 
-        if (raceScenario === 3) {
-          // Linear Smooth: Tất cả bơi đều như winner, chỉ kém về cuối
+        if (raceScenario === 5 && i === rivalIdx) {
+          // 5: Duo Photo-Finish Rival (Đối thủ so kè trực tiếp)
+          // Ngược pha nhẹ với winner nhưng ĐẢM BẢO luôn tiến lên trước, chỉ cán đích sau winner 1.5-2.5%
+          const rivalWave = -Math.sin(t * Math.PI * 3) * 1.8;
+          targetProgress = 98.2 * Math.pow(t, 1.02) + rivalWave + wobble * 1.2;
+
+        } else if (raceScenario === 6) {
+          // 6: Tight Pack Sprint (Nhóm vịt bơi dính chùm)
+          // Nhóm sau bám sát winner (chỉ kém 2% - 8%)
+          const tightPace = Math.pow(t, 1.05);
+          const tightFinal = Math.max(90, maxFinal);
+          targetProgress = tightFinal * tightPace + wobble * 1.8;
+
+        } else if (raceScenario === 7) {
+          // 7: Precision Late Pass (Vịt khác dẫn trước 75% đường)
+          if (i === rivalIdx) {
+            // Rival dẫn đầu 75% đầu đường đua, sau đó giữ nguyên nhịp 94% để winner lướt qua
+            const leadPace = Math.sin(t * Math.PI * 0.5);
+            targetProgress = 94 * Math.pow(leadPace, 0.95) + wobble * 1.8;
+          } else {
+            const smoothLag = Math.sin(t * Math.PI * 0.5);
+            targetProgress = maxFinal * Math.pow(smoothLag, 1.05) + wobble * 2.5;
+          }
+
+        } else if (raceScenario === 3 || raceScenario === 4) {
           const linearLag = Math.sin(t * Math.PI * 0.5);
-          targetProgress = (maxFinal) * linearLag + wobble * 1.8;
-
-        } else if (raceScenario === 4) {
-          // Final Rocket: Nhóm sau cũng bơi đều sát winner suốt 85% đường
-          const evenPace = Math.sin(t * Math.PI * 0.5);
-          targetProgress = (maxFinal * 0.98) * evenPace + wobble * 1.5;
-
-
+          targetProgress = (maxFinal * 0.98) * linearLag + wobble * 1.8;
 
         } else {
-          // Kịch bản 0, 1, 2: Dùng công thức Sine lag chuẩn
+          // Kịch bản 0, 1, 2
           const smoothLag = Math.sin(t * Math.PI * 0.5);
           targetProgress = maxFinal * Math.pow(smoothLag, 1.05) + wobble * 2.5;
         }
@@ -1961,7 +1996,10 @@ function _runInlineRace(winnerIdx, cls) {
         }
       }
 
-      d.progress = Math.max(0, Math.min(FINISH_PERCENT, targetProgress));
+      // 🛡️ BẢO VỆ TUYỆT ĐỐI: Đảm bảo vịt CHỈ CÓ ĐI TỚI (Monotonic Forward Motion), không bao giờ lùi pixel nào!
+      if (typeof d.maxReachedProgress === 'undefined') d.maxReachedProgress = 0;
+      d.progress = Math.max(d.maxReachedProgress, Math.min(FINISH_PERCENT, targetProgress));
+      d.maxReachedProgress = d.progress;
 
       const px = (d.progress / 100) * cachedTrackW;
       const py = d.baseY + bobbingY;
