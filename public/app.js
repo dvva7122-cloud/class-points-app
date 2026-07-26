@@ -1865,14 +1865,13 @@ function _runInlineRace(winnerIdx, cls) {
   let frameCount = 0;
   const FINISH_PERCENT = 100;
 
-  // 🎲 Randomly pick 1 of 6 natural dynamic scenarios per race match:
+  // 🎲 Randomly pick 1 of 5 natural dynamic scenarios per race match:
   // 0: Wire-to-Wire Controlled Lead
   // 1: Mid-Race Surge (Vươn lên từ giữa)
   // 2: Chaos & Multi-lead Swap (Giằng co)
   // 3: Linear Smooth Pace (Đều nhau, winner chỉ nhỉnh ở 80% cuối)
   // 4: Final Rocket (Ngang nhau đến 85%, vịt thắng tên lửa 1s cuối)
-  // 5: Rotating Leader (Cứ 2s 1 con vịt khác dẫn đầu, vịt thắng chiếm top 2s cuối)
-  const raceScenario = Math.floor(Math.random() * 6);
+  const raceScenario = Math.floor(Math.random() * 5);
 
   _duckRaceDucks.forEach((d, i) => {
     d.waver = Math.random() * Math.PI * 2;
@@ -1940,17 +1939,6 @@ function _runInlineRace(winnerIdx, cls) {
             targetProgress = 82 + Math.pow(rocketT, 0.6) * 18;
           }
 
-        } else {
-          // 5: Rotating Leader - vịt thắng nằm top 2-3 suốt 6s đầu
-          // đến t=0.75 mới chiếm ngôi đầu và bứt tốc mượt về đích
-          if (t < 0.75) {
-            // Bơi theo nhóm đầu nhưng không dẫn đầu (khoảng 50-70%)
-            targetProgress = 65 * Math.sin(t * Math.PI * 0.5) + wobble * 2;
-          } else {
-            // Chiếm ngôi đầu và tăng tốc Sine mượt
-            const subT = (t - 0.75) / 0.25;
-            targetProgress = 65 + Math.pow(Math.sin(subT * Math.PI * 0.5), 0.85) * 35;
-          }
         }
 
       } else {
@@ -1968,12 +1956,7 @@ function _runInlineRace(winnerIdx, cls) {
           const evenPace = Math.sin(t * Math.PI * 0.5);
           targetProgress = (maxFinal * 0.98) * evenPace + wobble * 1.5;
 
-        } else if (raceScenario === 5) {
-          // Rotating Leader: Mỗi con vịt lần lượt dẫn đầu 2s theo vòng quay
-          // Tạo sóng dẫn đầu xoay vòng qua từng vịt
-          const rotatePhase = (i * 2.5) / Math.max(1, _duckRaceDucks.length);
-          const leadWave = Math.sin((t * 4 + rotatePhase) * Math.PI) * 8;
-          targetProgress = (maxFinal - 5) * Math.sin(t * Math.PI * 0.5) + leadWave + wobble * 2;
+
 
         } else {
           // Kịch bản 0, 1, 2: Dùng công thức Sine lag chuẩn
