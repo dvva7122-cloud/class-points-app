@@ -1929,15 +1929,16 @@ function _runInlineRace(winnerIdx, cls) {
           targetProgress = 100 * (linearT + lateBoost) + wobble * 1.8;
 
         } else if (raceScenario === 4) {
-          // 4: Final Rocket - ngang nhau tới 85%, 1.2s cuối winner vọt thẳng về đích
-          if (t < 0.85) {
-            // Tiến đều, không ai dẫn xa
-            targetProgress = 82 * Math.sin(t * Math.PI * 0.5) + wobble * 1.5;
+          // 4: Final Rocket - ngang nhau tới 78%, sau đó tăng tốc mượt dần dần về đích
+          if (t < 0.78) {
+            // Đi đều, bám sát nhóm đầu
+            targetProgress = 80 * Math.sin(t * Math.PI * 0.5) + wobble * 1.5;
           } else {
-            // Rocket: tăng tốc exponential cực nhanh
-            const rocketT = (t - 0.85) / 0.15;
-            targetProgress = 82 + Math.pow(rocketT, 0.6) * 18;
+            // Tăng tốc Sine mượt (không exponential để không bị giật)
+            const surgeT = (t - 0.78) / 0.22;
+            targetProgress = 80 + Math.sin(surgeT * Math.PI * 0.5) * 20;
           }
+
 
         }
 
