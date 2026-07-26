@@ -220,7 +220,7 @@ function renderCurrentClass() {
       const img = document.createElement('img');
       img.src = url;
       img.alt = 'Trang trí lớp';
-      img.style.cssText = 'max-height: 55px; border-radius: 8px; vertical-align: middle; object-fit: contain; box-shadow: 0 2px 8px rgba(0,0,0,0.1);';
+      img.style.cssText = 'max-height: 55px; vertical-align: middle; object-fit: contain; background: transparent; border: none; outline: none;';
       itemWrapper.appendChild(img);
 
       if (isAdmin && isEditingMode) {
