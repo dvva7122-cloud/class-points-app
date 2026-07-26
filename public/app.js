@@ -1817,17 +1817,18 @@ function _runInlineRace(winnerIdx, cls) {
   let frameCount = 0;
   const FINISH_PERCENT = 100;
 
-  // Natural organic physics simulation:
-  // Each duck has variable speed, acceleration, and randomized stamina bursts throughout the race
+  // 🎲 Randomly pick 1 of 4 dynamic scenarios per race match:
+  // 0: Wire-to-Wire Controlled Lead (Dẫn đầu sát nút từ đầu đến cuối, không quá xa nhóm sau)
+  // 1: Mid-Race Surge (Vươn lên dẫn đầu ở giữa chặng ~giây 3-5)
+  // 2: Late Sprint Surge (Ở nhóm giữa suốt 6s đầu, 2s cuối mới bứt tốc dữ dội)
+  // 3: Chaos & Multi-lead Swap (Đổi ngôi Top 1 liên tục, thắng sát nút)
+  const raceScenario = Math.floor(Math.random() * 4);
+
   _duckRaceDucks.forEach((d, i) => {
     d.waver = Math.random() * Math.PI * 2;
     d.graphicEl.classList.add('waddling');
-    
-    // Assign random personality curves:
-    // Some ducks start strong, some have mid-race energy, some save energy for late
-    d.burstTime = 0.2 + Math.random() * 0.6; // random peak time (20% to 80% of race)
-    d.burstDuration = 0.2 + Math.random() * 0.3; // duration of burst
-    d.staminaFactor = 0.85 + Math.random() * 0.3;
+    d.burstTime = 0.2 + Math.random() * 0.5;
+    d.burstDuration = 0.25;
   });
 
   let raceWon = false;
@@ -1851,45 +1852,77 @@ function _runInlineRace(winnerIdx, cls) {
 
       d.waver += 0.12;
       const bobbingY = 3 * Math.cos(d.waver * 1.5);
+      const wobble = 0.85 + 0.3 * Math.sin(frameCount * 0.08 + i * 1.7) + 0.1 * (Math.random() - 0.5);
 
-      // Micro-random noise for dynamic movement every frame
-      const microNoise = 0.85 + 0.3 * Math.sin(frameCount * 0.08 + i * 1.7) + 0.1 * (Math.random() - 0.5);
-
-      // Individual duck burst boost window
-      let burstBoost = 0;
-      if (t >= d.burstTime && t <= d.burstTime + d.burstDuration) {
-        const burstT = (t - d.burstTime) / d.burstDuration;
-        burstBoost = Math.sin(burstT * Math.PI) * 0.35; // smooth wave boost
-      }
-
-      let speedRate = 0;
+      let targetProgress = 0;
 
       if (i === winnerIdx) {
-        // Winner gets smooth, natural pace that stays competitive throughout and edges ahead near 90-100%
-        let winnerBase = 1.0;
-        if (t > 0.7) {
-          // Subtle late acceleration to secure victory naturally
-          winnerBase += (t - 0.7) * 0.6;
+        if (raceScenario === 0) {
+          // Kịch bản 1: Dẫn đầu từ đầu đến cuối nhưng SÁT NÚT (không xa nhóm sau)
+          // Tiến độ winner luôn nhỉnh hơn top nhóm sau khoảng 3% - 6%
+          targetProgress = 100 * Math.pow(t, 0.92) + wobble * 2;
+        } else if (raceScenario === 1) {
+          // Kịch bản 2: Vươn lên dẫn đầu từ giữa chặng (t ~ 0.4 -> 0.6)
+          if (t < 0.4) {
+            targetProgress = 36 * (t / 0.4) + wobble * 3; // Nằm nhóm giữa
+          } else {
+            const subT = (t - 0.4) / 0.6;
+            targetProgress = 36 + Math.pow(subT, 0.88) * 64; // Bứt lên dẫn đầu
+          }
+        } else if (raceScenario === 2) {
+          // Kịch bản 3: Nằm ở NHÓM GIỮA suốt 6s đầu (t < 0.75), 2s CUỐI mới bứt tốc vượt lên!
+          if (t < 0.75) {
+            // Duy trì ở nhóm giữa (khoảng 60-65% tiến độ)
+            const subT = t / 0.75;
+            targetProgress = 62 * Math.pow(subT, 1.0) + wobble * 4;
+          } else {
+            // 2s cuối (75% -> 100%): Bứt tốc dữ dội về đích!
+            const subT = (t - 0.75) / 0.25;
+            targetProgress = 62 + Math.pow(subT, 1.35) * 38;
+          }
+        } else {
+          // Kịch bản 4: Giằng co liên tục, bứt tốc ở 1.5s cuối
+          if (t < 0.8) {
+            targetProgress = 72 * (t / 0.8) + wobble * 5;
+          } else {
+            const subT = (t - 0.8) / 0.2;
+            targetProgress = 72 + Math.pow(subT, 1.2) * 28;
+          }
         }
-        speedRate = (winnerBase + burstBoost) * microNoise * 1.02;
       } else {
-        // Non-winners have realistic speed fluctuations
-        let nonWinnerBase = d.staminaFactor;
-        if (t > 0.8) {
-          // Non-winners slightly fatigue in the last 20%
-          nonWinnerBase *= (1.0 - (t - 0.8) * 0.8);
+        // Vịt không thắng: Tính toán dựa trên kịch bản để tạo sự cạnh tranh sát sao
+        const rankOffset = (i * 13 + winnerIdx * 7) % 25; // 0 - 24% gap
+        const maxFinal = 65 + rankOffset * 1.1; // 65% - 92.5% final position
+
+        if (raceScenario === 0) {
+          // Kịch bản 1: Nhóm sau đuổi theo RẤT SÁT (chỉ kém winner 3 - 6%)
+          const chaseMax = Math.min(94, maxFinal);
+          targetProgress = (chaseMax) * Math.pow(t, 0.93) + wobble * 3;
+        } else if (raceScenario === 1) {
+          // Kịch bản 2: Vịt khác dẫn trước ở 4s đầu
+          const earlyLead = (i % 3 === 0) ? Math.sin(t * Math.PI) * 8 : 0;
+          targetProgress = maxFinal * Math.pow(t, 0.9) + earlyLead + wobble * 4;
+        } else if (raceScenario === 2) {
+          // Kịch bản 3: Vịt khác dẫn đầu suốt 6s đầu (t < 0.75)
+          if (t < 0.75) {
+            const leadBonus = (i % 2 === 0) ? 6 : 0;
+            targetProgress = (68 + leadBonus) * (t / 0.75) + wobble * 4;
+          } else {
+            targetProgress = maxFinal * Math.pow(t, 0.95) + wobble * 3;
+          }
+        } else {
+          // Kịch bản 4: Nhóm sau đổi ngôi liên tục
+          const chaosLead = Math.sin((t * 3 + i) * Math.PI) * 6;
+          targetProgress = maxFinal * Math.pow(t, 0.9) + chaosLead + wobble * 5;
         }
-        speedRate = (nonWinnerBase + burstBoost) * microNoise;
+
+        // Đảm bảo vịt không thắng không bao giờ chạm 100% trước winner ở giây cuối
+        if (t > 0.88) {
+          targetProgress = Math.min(targetProgress, 93.5);
+        }
       }
 
-      // Smoothly advance progress based on calculated instantaneous speed rate
-      const stepProgress = (100 / totalFrames) * speedRate;
-      d.progress = Math.min(FINISH_PERCENT, d.progress + stepProgress);
-
-      // Prevent non-winners from accidentally hitting 100% before winner
-      if (i !== winnerIdx && d.progress >= 94) {
-        d.progress = 93.5 + Math.sin(frameCount * 0.1 + i) * 0.4;
-      }
+      d.progress = Math.max(0, Math.min(FINISH_PERCENT, targetProgress));
 
       const px = (d.progress / 100) * cachedTrackW;
       const py = d.baseY + bobbingY;
