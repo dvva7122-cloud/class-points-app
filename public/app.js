@@ -1605,36 +1605,36 @@ function getDuckSVG(skin, size = 42) {
               </g>`;
   }
 
-  // Premium, super cute Duck SVG seen strictly from side-profile (facing Right)
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 40" width="${size}" height="${size}">
-    <!-- Water Reflection Shadow -->
-    <ellipse cx="22" cy="37" rx="14" ry="2.5" fill="rgba(0,0,0,0.18)"/>
+  // Ultra cute, chubby rubber duck SVG (side-profile facing Right)
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 42" width="${size}" height="${size}">
+    <!-- Water Ripple Shadow -->
+    <ellipse cx="23" cy="38" rx="16" ry="3" fill="rgba(0,0,0,0.18)"/>
 
-    <!-- Duck Tail & Main Body -->
-    <path d="M6,27 C3,22 8,18 13,20 C18,22 28,21 34,26 C37,29 35,35 28,36 C20,37 11,35 6,27 Z" fill="${body}"/>
+    <!-- Chubby Round Body & Tail -->
+    <path d="M5,26 C2,19 8,15 14,17 C19,19 28,19 36,25 C40,29 37,37 29,37 C18,38 9,36 5,26 Z" fill="${body}"/>
 
-    <!-- Wing -->
-    <path d="M12,27 C16,22 24,23 26,27 C27,29 23,32 17,31 C13,30 11,28 12,27 Z" fill="${wing}" opacity="0.85"/>
+    <!-- Fluffy Chubby Wing -->
+    <path d="M11,26 C15,20 25,22 27,27 C28,31 23,34 16,33 C12,32 10,29 11,26 Z" fill="${wing}" opacity="0.88"/>
 
-    <!-- Cute Cute Chest Curve -->
-    <path d="M26,23 C30,24 35,27 34,31 C32,34 27,35 25,33 Z" fill="${body}" opacity="0.9"/>
+    <!-- Soft Round Belly Highlight -->
+    <ellipse cx="22" cy="31" rx="11" ry="5" fill="#FFFFFF" opacity="0.15"/>
 
-    <!-- Head & Neck -->
-    <circle cx="25" cy="15" r="9.5" fill="${body}"/>
+    <!-- Big Cute Round Head -->
+    <circle cx="27" cy="15" r="11" fill="${body}"/>
 
-    <!-- Cute Cute Beak (pointing Right) -->
-    <path d="M31,16 C34,14 41,15 42,18 C41,21 34,21 30,19 Z" fill="${beak}"/>
-    <path d="M31,17.5 C35,17 39,18 41.5,18.5" stroke="rgba(0,0,0,0.15)" stroke-width="0.8" fill="none"/>
+    <!-- Chubby Cute Beak -->
+    <path d="M34,16 C37,13 44,15 45,18.5 C44,22 37,22 33,19.5 Z" fill="${beak}"/>
+    <path d="M34,18 C38,17.5 42,18.5 44.5,19" stroke="rgba(0,0,0,0.12)" stroke-width="0.8" fill="none"/>
 
-    <!-- Cute Eye with Sparkle -->
-    <circle cx="28" cy="13" r="3.2" fill="${eye === '#fff' ? '#222' : eye}"/>
-    <circle cx="29" cy="12" r="1.3" fill="#FFFFFF"/>
-    <circle cx="27" cy="14" r="0.6" fill="#FFFFFF" opacity="0.8"/>
+    <!-- Extra Big Shiny Eyes (Super Cute) -->
+    <circle cx="30" cy="13" r="4" fill="${eye === '#fff' ? '#111' : eye}"/>
+    <circle cx="31.5" cy="11.5" r="1.7" fill="#FFFFFF"/>
+    <circle cx="28.8" cy="14.2" r="0.8" fill="#FFFFFF" opacity="0.9"/>
 
-    <!-- Cheek Blush -->
-    <ellipse cx="25" cy="17" rx="2.5" ry="1.5" fill="#FF7675" opacity="0.45"/>
+    <!-- Rosy Chubby Blush -->
+    <ellipse cx="26.5" cy="18" rx="3.5" ry="2" fill="#FF6B81" opacity="0.55"/>
 
-    <!-- Side Accessories Hat Layer -->
+    <!-- Side Accessories Layer -->
     ${hatSvg}
   </svg>`;
 }
@@ -1865,12 +1865,11 @@ function _runInlineRace(winnerIdx, cls) {
   let frameCount = 0;
   const FINISH_PERCENT = 100;
 
-  // 🎲 Randomly pick 1 of 4 dynamic scenarios per race match:
-  // 0: Wire-to-Wire Controlled Lead (Dẫn đầu sát nút từ đầu đến cuối, không quá xa nhóm sau)
-  // 1: Mid-Race Surge (Vươn lên dẫn đầu ở giữa chặng ~giây 3-5)
-  // 2: Late Sprint Surge (Ở nhóm giữa suốt 6s đầu, 2s cuối mới bứt tốc dữ dội)
-  // 3: Chaos & Multi-lead Swap (Đổi ngôi Top 1 liên tục, thắng sát nút)
-  const raceScenario = Math.floor(Math.random() * 4);
+  // 🎲 Randomly pick 1 of 3 natural dynamic scenarios per race match:
+  // 0: Wire-to-Wire Controlled Lead (Dẫn đầu sát nút từ đầu đến cuối, nhóm sau đuổi rất mượt)
+  // 1: Late Sprint Surge (Ở nhóm giữa suốt 6s đầu mượt mà, 2s cuối mới vươn lên dẫn đầu)
+  // 2: Chaos & Multi-lead Swap (Giằng co liên tục giữa các vịt, bứt phá sát nút)
+  const raceScenario = Math.floor(Math.random() * 3);
 
   _duckRaceDucks.forEach((d, i) => {
     d.waver = Math.random() * Math.PI * 2;
@@ -1906,34 +1905,26 @@ function _runInlineRace(winnerIdx, cls) {
 
       if (i === winnerIdx) {
         if (raceScenario === 0) {
-          // Kịch bản 1: Dẫn đầu sát nút (từ đầu tới cuối nhỉnh hơn 3-5% cực mượt)
-          const easeT = Math.sin(t * Math.PI * 0.5); // Smooth ease-out
-          targetProgress = 100 * Math.pow(easeT, 1.1) + wobble * 1.5;
+          // Kịch bản 0: Dẫn đầu sát nút (từ đầu tới cuối nhỉnh hơn 3-5% cực mượt)
+          const easeT = Math.sin(t * Math.PI * 0.5);
+          targetProgress = 100 * Math.pow(easeT, 1.08) + wobble * 1.5;
         } else if (raceScenario === 1) {
-          // Kịch bản 2: Vươn lên từ giữa chặng (Gia tốc tăng đều, không mốc giật)
-          // Dùng hàm Sine mượt chuyển dần từ nhóm 2 vọt lên Top 1
-          const smoothSurge = t + 0.12 * Math.sin(t * Math.PI * 2);
-          targetProgress = 100 * Math.pow(smoothSurge, 1.05) + wobble * 2;
-        } else if (raceScenario === 2) {
-          // Kịch bản 3: Ở nhóm giữa suốt 6s đầu, 2s cuối bứt tốc mượt (không khựng)
-          // Cubic Ease-In mượt tăng dần ở cuối: t^1.4
-          const smoothSprint = Math.pow(t, 1.32);
+          // Kịch bản 1: Ở nhóm giữa suốt 6s đầu, 2s cuối bứt tốc mượt không khựng
+          const smoothSprint = Math.pow(t, 1.3);
           targetProgress = 100 * smoothSprint + wobble * 2;
         } else {
-          // Kịch bản 4: Giằng co liên tục mượt mà
+          // Kịch bản 2: Giằng co liên tục mượt mà
           const smoothWaver = t + 0.05 * Math.sin(t * Math.PI * 3);
-          targetProgress = 100 * Math.pow(smoothWaver, 1.1) + wobble * 3;
+          targetProgress = 100 * Math.pow(smoothWaver, 1.08) + wobble * 2.5;
         }
       } else {
-        // Vịt không thắng: Tốc độ duy trì ổn định, mượt mà bám đuổi
-        const rankOffset = (i * 13 + winnerIdx * 7) % 22; // 0 - 22% gap
-        const maxFinal = 68 + rankOffset * 1.1; // 68% - 92% final position
+        // Vịt không thắng: Tốc độ duy trì mượt mà, tự nhiên bám đuổi
+        const rankOffset = (i * 13 + winnerIdx * 7) % 22;
+        const maxFinal = 68 + rankOffset * 1.1;
 
-        // Dùng Sine ease-out cho nhóm sau bơi rất đều
         const smoothLag = Math.sin(t * Math.PI * 0.5);
         targetProgress = maxFinal * Math.pow(smoothLag, 1.05) + wobble * 2.5;
 
-        // Giữ vịt không thắng luôn ở phía sau winner ở giây cuối
         if (t > 0.85) {
           targetProgress = Math.min(targetProgress, 92.8);
         }
