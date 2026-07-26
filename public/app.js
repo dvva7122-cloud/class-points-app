@@ -1,14 +1,5 @@
 'use strict';
 
-/**
- * public/app.js
- * Frontend hoàn toàn dựa trên API. Không lưu dữ liệu lớp/học sinh/điểm vào localStorage.
- * - Mật khẩu KHÔNG được kiểm tra ở đây.
- * - JWT được lưu trong sessionStorage (xóa khi đóng tab).
- * - Mọi thao tác write đều gửi JWT lên backend để xác thực.
- * - Dùng createElement / textContent thay vì innerHTML để chống XSS.
- */
-
 // ─── State ────────────────────────────────────────────────────────────────
 let appData        = [];       // [{id, name, students:[{id, name, points}]}]
 let currentClassId = null;
