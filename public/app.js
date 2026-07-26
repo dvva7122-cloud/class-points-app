@@ -1671,7 +1671,7 @@ function renderDuckRaceSection(cls) {
   const header = document.createElement('div');
   header.className = 'wheel-header';
   const title = document.createElement('h2');
-  title.textContent = '🐤 Race Duck 🐤';
+  title.textContent = '🦆 Race Duck 🦆';
   header.appendChild(title);
   section.appendChild(header);
 
@@ -1929,16 +1929,16 @@ function _runInlineRace(winnerIdx, cls) {
           targetProgress = 100 * (linearT + lateBoost) + wobble * 1.8;
 
         } else if (raceScenario === 4) {
-          // 4: Final Rocket - ngang nhau tới 78%, sau đó tăng tốc mượt dần dần về đích
-          if (t < 0.78) {
-            // Đi đều, bám sát nhóm đầu
-            targetProgress = 80 * Math.sin(t * Math.PI * 0.5) + wobble * 1.5;
+          // 4: Final Surge - bắt đầu nhỉnh lên từ 65% đường, dùng Smoothstep cực mượt
+          if (t < 0.65) {
+            // Đi đều sát nhóm đầu
+            targetProgress = 76 * Math.sin(t * Math.PI * 0.5) + wobble * 1.5;
           } else {
-            // Tăng tốc Sine mượt (không exponential để không bị giật)
-            const surgeT = (t - 0.78) / 0.22;
-            targetProgress = 80 + Math.sin(surgeT * Math.PI * 0.5) * 20;
+            // Smoothstep: chậm → tăng dần đều → chậm lại khi chạm đích (mượt nhất)
+            const surgeT = Math.min(1, (t - 0.65) / 0.35);
+            const smooth = surgeT * surgeT * (3 - 2 * surgeT);
+            targetProgress = 76 + smooth * 24;
           }
-
 
         }
 
