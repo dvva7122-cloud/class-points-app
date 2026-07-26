@@ -1508,18 +1508,26 @@ function showError(msg, title = 'Thông báo', icon = '⚠️') {
 // ══════════════════════════════════════════════════════════════════════════════
 
 const DUCK_SKINS = [
-  { body: '#FFD700', beak: '#FF8C00', eye: '#1a1a1a', hat: null,       wing: '#FFA500' },
-  { body: '#FF6B6B', beak: '#c0392b', eye: '#fff',   hat: 'crown',    wing: '#e74c3c' },
-  { body: '#74b9ff', beak: '#0984e3', eye: '#fff',   hat: null,       wing: '#0984e3' },
-  { body: '#a29bfe', beak: '#6c5ce7', eye: '#fff',   hat: 'tophat',   wing: '#6c5ce7' },
-  { body: '#55efc4', beak: '#00b894', eye: '#1a1a1a',hat: null,       wing: '#00b894' },
-  { body: '#fd79a8', beak: '#e84393', eye: '#fff',   hat: 'bow',      wing: '#e84393' },
-  { body: '#fdcb6e', beak: '#e17055', eye: '#1a1a1a',hat: 'cap',      wing: '#e17055' },
-  { body: '#dfe6e9', beak: '#b2bec3', eye: '#636e72',hat: null,       wing: '#b2bec3' },
-  { body: '#2d3436', beak: '#636e72', eye: '#FFD700',hat: 'glasses',  wing: '#636e72' },
-  { body: '#e17055', beak: '#d35400', eye: '#fff',   hat: 'tophat',   wing: '#d35400' },
-  { body: '#00cec9', beak: '#00b894', eye: '#fff',   hat: 'crown',    wing: '#00b894' },
-  { body: '#fab1a0', beak: '#e17055', eye: '#1a1a1a',hat: 'bow',      wing: '#e17055' },
+  { body: '#FFD700', beak: '#FF8C00', eye: '#1a1a1a', hat: null,        wing: '#FFA500' },
+  { body: '#FF6B6B', beak: '#c0392b', eye: '#fff',   hat: 'crown',     wing: '#e74c3c' },
+  { body: '#74b9ff', beak: '#0984e3', eye: '#fff',   hat: null,        wing: '#0984e3' },
+  { body: '#a29bfe', beak: '#6c5ce7', eye: '#fff',   hat: 'tophat',    wing: '#6c5ce7' },
+  { body: '#55efc4', beak: '#00b894', eye: '#1a1a1a',hat: 'pirate',    wing: '#00b894' },
+  { body: '#fd79a8', beak: '#e84393', eye: '#fff',   hat: 'bow',       wing: '#e84393' },
+  { body: '#fdcb6e', beak: '#e17055', eye: '#1a1a1a',hat: 'cap',       wing: '#e17055' },
+  { body: '#dfe6e9', beak: '#b2bec3', eye: '#636e72',hat: 'wizard',    wing: '#b2bec3' },
+  { body: '#2d3436', beak: '#636e72', eye: '#FFD700',hat: 'glasses',   wing: '#636e72' },
+  { body: '#e17055', beak: '#d35400', eye: '#fff',   hat: 'tophat',    wing: '#d35400' },
+  { body: '#00cec9', beak: '#00b894', eye: '#fff',   hat: 'crown',     wing: '#00b894' },
+  { body: '#fab1a0', beak: '#e17055', eye: '#1a1a1a',hat: 'headphones',wing: '#e17055' },
+  { body: '#95a5a6', beak: '#7f8c8d', eye: '#1a1a1a',hat: 'viking',    wing: '#7f8c8d' },
+  { body: '#f39c12', beak: '#d35400', eye: '#fff',   hat: 'ninja',     wing: '#e67e22' },
+  { body: '#16a085', beak: '#16a085', eye: '#FFD700',hat: 'detective', wing: '#1abc9c' },
+  { body: '#8e44ad', beak: '#9b59b6', eye: '#fff',   hat: 'chef',      wing: '#9b59b6' },
+  { body: '#27ae60', beak: '#2ecc71', eye: '#1a1a1a',hat: 'cap',       wing: '#2ecc71' },
+  { body: '#e74c3c', beak: '#c0392b', eye: '#FFD700',hat: 'crown',     wing: '#c0392b' },
+  { body: '#34495e', beak: '#2c3e50', eye: '#fff',   hat: 'pirate',    wing: '#2c3e50' },
+  { body: '#d35400', beak: '#e67e22', eye: '#fff',   hat: 'wizard',    wing: '#e67e22' },
 ];
 
 function getDuckSVG(skin, size = 42) {
@@ -1544,6 +1552,30 @@ function getDuckSVG(skin, size = 42) {
                <line x1="20" y1="22" x2="22" y2="22" stroke="#FFD700" stroke-width="1.2"/>
                <line x1="12" y1="22" x2="10" y2="21" stroke="#FFD700" stroke-width="1.2"/>
                <line x1="30" y1="22" x2="32" y2="21" stroke="#FFD700" stroke-width="1.2"/>`;
+  } else if (hat === 'pirate') {
+    hatSvg = `<path d="M8,15 Q20,6 32,15 L28,11 Q20,8 12,11 Z" fill="#1a1a1a"/>
+               <circle cx="20" cy="11" r="2" fill="#e74c3c"/>`;
+  } else if (hat === 'wizard') {
+    hatSvg = `<polygon points="20,2 11,15 29,15" fill="#6c5ce7"/>
+               <ellipse cx="20" cy="15" rx="11" ry="3" fill="#4834d4"/>
+               <polygon points="20,6 21,9 24,9 22,11 23,14 20,12 17,14 18,11 16,9 19,9" fill="#FFD700" transform="scale(0.4) translate(30,10)"/>`;
+  } else if (hat === 'headphones') {
+    hatSvg = `<path d="M12,18 A9,9 0 0,1 28,18" fill="none" stroke="#e74c3c" stroke-width="2.5"/>
+               <rect x="10" y="15" width="4" height="7" rx="2" fill="#333"/>
+               <rect x="26" y="15" width="4" height="7" rx="2" fill="#333"/>`;
+  } else if (hat === 'viking') {
+    hatSvg = `<path d="M11,15 Q20,9 29,15 Z" fill="#7f8c8d"/>
+               <path d="M11,15 Q7,8 5,10" fill="none" stroke="#fff" stroke-width="2"/>
+               <path d="M29,15 Q33,8 35,10" fill="none" stroke="#fff" stroke-width="2"/>`;
+  } else if (hat === 'ninja') {
+    hatSvg = `<rect x="10" y="11" width="20" height="6" rx="2" fill="#2d3436"/>
+               <rect x="27" y="13" width="6" height="3" rx="1" fill="#e74c3c"/>`;
+  } else if (hat === 'detective') {
+    hatSvg = `<ellipse cx="20" cy="14" rx="12" ry="4" fill="#6e5773"/>
+               <path d="M13,14 Q20,7 27,14 Z" fill="#6e5773"/>`;
+  } else if (hat === 'chef') {
+    hatSvg = `<path d="M13,14 C10,10 14,5 18,7 C20,4 24,5 25,8 C29,7 31,11 27,14 Z" fill="#ffffff" stroke="#ccc" stroke-width="0.5"/>
+               <rect x="14" y="13" width="12" height="3" fill="#ffffff"/>`;
   }
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="${size}" height="${size}">
     <ellipse cx="20" cy="36" rx="13" ry="3" fill="rgba(0,0,0,0.15)"/>
@@ -1897,6 +1929,33 @@ function _onInlineDuckWin(duck, cls) {
   _duckActiveStudents = _duckActiveStudents.filter(s => s.id !== duck.student.id);
   _duckPendingWinners.push(duck.student);
 
+  // Show "Finish / Claim Winner" button in center overlay first so user can inspect the final positions
+  const centerOverlay = document.getElementById('duck-center-overlay');
+  const startBtn = document.getElementById('duck-inline-start-btn');
+
+  if (centerOverlay && startBtn) {
+    centerOverlay.style.display = 'flex';
+    startBtn.style.display = 'block';
+    startBtn.innerHTML = '🏁 FINISH';
+    startBtn.style.background = 'linear-gradient(135deg, #FF416C, #FF4B2B)';
+    startBtn.style.boxShadow = '0 8px 25px rgba(255, 75, 43, 0.6)';
+
+    startBtn.onclick = () => {
+      // Restore start button style for next race
+      startBtn.innerHTML = '🚀 BẮT ĐẦU ĐUA';
+      startBtn.style.background = 'linear-gradient(135deg, #FFD700, #FF8C00)';
+      startBtn.style.boxShadow = '0 8px 25px rgba(0,0,0,0.4)';
+      startBtn.onclick = () => _startInlineDuckRace(cls);
+
+      // Trigger the celebration popup!
+      _showDuckWinnerModal(duck, cls);
+    };
+  } else {
+    _showDuckWinnerModal(duck, cls);
+  }
+}
+
+function _showDuckWinnerModal(duck, cls) {
   const modal = document.getElementById('wheel-winner-modal');
   const nameEl = document.getElementById('wheel-winner-name');
 
@@ -1911,9 +1970,6 @@ function _onInlineDuckWin(duck, cls) {
         modal.classList.remove('show');
         stopConfetti();
 
-        const centerOverlay = document.getElementById('duck-center-overlay');
-        if (centerOverlay) centerOverlay.style.display = 'flex';
-
         const lakeArena = document.getElementById('duck-lake-arena');
         if (lakeArena) _buildLakeDucks(_duckActiveStudents, lakeArena);
         _renderDuckPending(cls);
@@ -1921,8 +1977,6 @@ function _onInlineDuckWin(duck, cls) {
     }
   } else {
     _renderDuckPending(cls);
-    const centerOverlay = document.getElementById('duck-center-overlay');
-    if (centerOverlay) centerOverlay.style.display = 'flex';
     const lakeArena = document.getElementById('duck-lake-arena');
     if (lakeArena) _buildLakeDucks(_duckActiveStudents, lakeArena);
   }
