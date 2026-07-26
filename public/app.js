@@ -1785,16 +1785,11 @@ function _runInlineRace(winnerIdx, cls) {
   let frameCount = 0;
   const FINISH_PERCENT = 100;
 
+  // Initialize random speed multipliers and wobble phases for dramatic pacing
   _duckRaceDucks.forEach((d, i) => {
     d.waver = Math.random() * Math.PI * 2;
     d.graphicEl.classList.add('waddling');
-
-    if (i === winnerIdx) {
-      d.baseRate = FINISH_PERCENT / totalFrames;
-    } else {
-      const endTarget = 60 + Math.random() * 32;
-      d.baseRate = endTarget / totalFrames;
-    }
+    d.speedSeed = 0.8 + Math.random() * 0.4;
   });
 
   let raceWon = false;
@@ -1807,20 +1802,51 @@ function _runInlineRace(winnerIdx, cls) {
       const trackEl = document.getElementById('duck-lake-track');
       const trackWidth = trackEl ? trackEl.offsetWidth : 0;
       if (!trackWidth || trackWidth <= 200) { _duckRaceAnimFrame = requestAnimationFrame(animate); return; }
-      // Width of container is 140px. Distance to right finish line (right:70px)
       cachedTrackW = Math.max(50, trackWidth - 210);
     }
 
     frameCount++;
+    const t = frameCount / totalFrames; // Time progress from 0.0 to 1.0
 
     _duckRaceDucks.forEach((d, i) => {
       if (d.finished) return;
 
       d.waver += 0.12;
-      const wobble = 1 + 0.28 * Math.sin(d.waver + i);
+      const wobble = 0.1 * Math.sin(d.waver * 2 + i);
       const bobbingY = 3 * Math.cos(d.waver * 1.5);
 
-      d.progress = Math.min(FINISH_PERCENT, d.progress + d.baseRate * wobble);
+      let targetProgress = 0;
+
+      if (i === winnerIdx) {
+        // Winner progress curve: Starts slightly behind/middle, stays close, then surges past at t > 0.7
+        if (t < 0.5) {
+          // 0-50%: Starts moderate (reaches ~40%)
+          targetProgress = 40 * Math.pow(t / 0.5, 1.1) + wobble * 5;
+        } else if (t < 0.75) {
+          // 50-75%: Stays in top group around 70-75%
+          const subT = (t - 0.5) / 0.25;
+          targetProgress = 40 + subT * 32 + wobble * 4;
+        } else {
+          // 75-100%: Dramatic sprint to 100%!
+          const subT = (t - 0.75) / 0.25;
+          targetProgress = 72 + Math.pow(subT, 1.4) * 28;
+        }
+      } else {
+        // Non-winners: Have fake early leads or steady pace, but cap out between 65% - 94%
+        const maxFinal = 65 + (i * 17 + winnerIdx * 7) % 29;
+        
+        // Add random burst for non-winners during mid-race to create drama
+        const midLeadBurst = (i % 2 === 0) ? Math.sin(t * Math.PI) * 12 : 0;
+        
+        targetProgress = maxFinal * Math.pow(t, 0.9) + midLeadBurst + wobble * 6;
+        
+        // Ensure non-winners don't cross finish line early or beat winner near the end
+        if (t > 0.85) {
+          targetProgress = Math.min(targetProgress, 93);
+        }
+      }
+
+      d.progress = Math.max(0, Math.min(FINISH_PERCENT, targetProgress));
 
       const px = (d.progress / 100) * cachedTrackW;
       const py = d.baseY + bobbingY;
@@ -1832,7 +1858,7 @@ function _runInlineRace(winnerIdx, cls) {
         raceWon = true;
         d.finished = true;
         d.progress = FINISH_PERCENT;
-        d.el.style.left = (10 + cachedTrackW) + 'px';
+        d.el.style.left = (cachedTrackW) + 'px';
         d.graphicEl.classList.remove('waddling');
         d.graphicEl.classList.add('winner-dance');
         _onInlineDuckWin(d, cls);
