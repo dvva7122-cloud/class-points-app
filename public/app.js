@@ -1909,9 +1909,9 @@ function _runInlineRace(winnerIdx, cls) {
           const easeT = Math.sin(t * Math.PI * 0.5);
           targetProgress = 100 * Math.pow(easeT, 1.08) + wobble * 1.5;
         } else if (raceScenario === 1) {
-          // Kịch bản 1: Ở nhóm giữa suốt 6s đầu, 2s cuối bứt tốc mượt không khựng
-          const smoothSprint = Math.pow(t, 1.3);
-          targetProgress = 100 * smoothSprint + wobble * 2;
+          // Kịch bản 1: Vươn lên từ giữa chặng (Gia tốc tăng đều, không mốc giật)
+          const smoothSurge = t + 0.12 * Math.sin(t * Math.PI * 2);
+          targetProgress = 100 * Math.pow(smoothSurge, 1.05) + wobble * 2;
         } else {
           // Kịch bản 2: Giằng co liên tục mượt mà
           const smoothWaver = t + 0.05 * Math.sin(t * Math.PI * 3);
