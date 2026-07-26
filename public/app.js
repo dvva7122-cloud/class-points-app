@@ -1533,96 +1533,108 @@ const DUCK_SKINS = [
 function getDuckSVG(skin, size = 42) {
   const { body, beak, eye, hat, wing } = skin;
   let hatSvg = '';
+  
   if (hat === 'crown') {
-    // Crown tilted slightly forward over head
-    hatSvg = `<g transform="translate(14, 2) rotate(-8 20 10)">
-               <polygon points="2,10 6,2 10,8 14,2 18,10" fill="#FFD700" stroke="#FFA500" stroke-width="0.5"/>
-               <rect x="1" y="9" width="18" height="3" rx="1" fill="#FFD700"/>
+    hatSvg = `<g transform="translate(18, 0) rotate(-5)">
+               <polygon points="0,9 4,2 8,7 12,2 16,9" fill="#FFD700" stroke="#E67E22" stroke-width="0.8"/>
+               <rect x="-1" y="8.5" width="18" height="2.5" rx="1" fill="#FFA500"/>
+               <circle cx="4" cy="2" r="1" fill="#E74C3C"/>
+               <circle cx="12" cy="2" r="1" fill="#3498DB"/>
               </g>`;
   } else if (hat === 'tophat') {
-    // Tophat angled on side head
-    hatSvg = `<g transform="translate(13, 2) rotate(-10 20 10)">
-               <rect x="4" y="2" width="12" height="10" rx="1" fill="#1a1a1a"/>
-               <rect x="0" y="11" width="20" height="3" rx="1" fill="#1a1a1a"/>
-               <rect x="4" y="9" width="12" height="2" fill="#e74c3c"/>
+    hatSvg = `<g transform="translate(16, 0) rotate(-6)">
+               <rect x="4" y="1" width="11" height="9" rx="1" fill="#2D3436"/>
+               <rect x="1" y="9" width="17" height="2.5" rx="1" fill="#1E272C"/>
+               <rect x="4" y="7.5" width="11" height="1.8" fill="#E74C3C"/>
               </g>`;
   } else if (hat === 'bow') {
-    // Cute bow placed near back of head
-    hatSvg = `<g transform="translate(12, 8) rotate(-15 15 10)">
-               <path d="M0,5 Q5,0 10,5 Q5,3 0,5 Z" fill="#FF6B9D"/>
-               <path d="M10,5 Q15,0 20,5 Q15,3 10,5 Z" fill="#FF6B9D"/>
-               <circle cx="10" cy="4.5" r="2.2" fill="#FF6B9D"/>
+    hatSvg = `<g transform="translate(13, 6) rotate(-10)">
+               <path d="M0,4 Q4,0 8,4 Q4,2 0,4 Z" fill="#FF6B9D"/>
+               <path d="M8,4 Q12,0 16,4 Q12,2 8,4 Z" fill="#FF6B9D"/>
+               <circle cx="8" cy="3.5" r="2" fill="#E84393"/>
               </g>`;
   } else if (hat === 'cap') {
-    // Baseball cap with visor pointing RIGHT (forward in swimming direction)
-    hatSvg = `<g transform="translate(12, 5)">
-               <path d="M1,11 A9,8 0 0,1 17,11 Z" fill="#e74c3c"/>
-               <rect x="14" y="9" width="10" height="3" rx="1.5" fill="#c0392b" transform="rotate(8 14 9)"/>
+    hatSvg = `<g transform="translate(16, 3) rotate(2)">
+               <path d="M0,9 A7,6 0 0,1 14,9 Z" fill="#E74C3C"/>
+               <path d="M12,8 Q18,8 21,10 Q16,11 12,9 Z" fill="#C0392B"/>
               </g>`;
   } else if (hat === 'glasses') {
-    // Monocle / Cool Sunglasses seen from side profile on eye & beak
-    hatSvg = `<g transform="translate(19, 11)">
-               <ellipse cx="6" cy="4" rx="4.5" ry="3.5" fill="rgba(0,0,0,0.75)" stroke="#FFD700" stroke-width="1"/>
-               <line x1="1.5" y1="4" x2="-2" y2="4" stroke="#FFD700" stroke-width="1"/>
-               <line x1="10.5" y1="4" x2="13" y2="5" stroke="#FFD700" stroke-width="1"/>
+    hatSvg = `<g transform="translate(23, 11)">
+               <ellipse cx="4" cy="4" rx="4.5" ry="3.5" fill="rgba(20,20,20,0.85)" stroke="#FFD700" stroke-width="1.2"/>
+               <line x1="0" y1="4" x2="-4" y2="3" stroke="#FFD700" stroke-width="1.2"/>
+               <line x1="8.5" y1="4" x2="11" y2="5" stroke="#FFD700" stroke-width="1.2"/>
               </g>`;
   } else if (hat === 'pirate') {
-    // Pirate hat with skull/feather on side
-    hatSvg = `<g transform="translate(10, 3) rotate(-5 20 10)">
-               <path d="M0,12 Q10,2 22,12 L18,9 Q10,6 2,9 Z" fill="#1a1a1a"/>
-               <circle cx="11" cy="8" r="1.5" fill="#fff"/>
-               <path d="M2,10 Q-3,2 3,0" stroke="#e74c3c" stroke-width="2" fill="none"/>
+    hatSvg = `<g transform="translate(12, 1) rotate(-4)">
+               <path d="M0,10 Q10,1 22,10 L18,8 Q10,5 2,8 Z" fill="#2D3436"/>
+               <circle cx="10" cy="6" r="1.5" fill="#FFF"/>
+               <path d="M3,8 Q-2,1 3,-1" stroke="#E74C3C" stroke-width="2" fill="none" stroke-linecap="round"/>
               </g>`;
   } else if (hat === 'wizard') {
-    // Wizard hat leaning back
-    hatSvg = `<g transform="translate(10, 1) rotate(-12 18 10)">
-               <polygon points="12,0 4,14 20,14" fill="#6c5ce7"/>
-               <ellipse cx="12" cy="14" rx="10" ry="3" fill="#4834d4"/>
-               <polygon points="12,4 13,6 15,6 13.5,7.5 14,10 12,8.5 10,10 10.5,7.5 9,6 11,6" fill="#FFD700"/>
+    hatSvg = `<g transform="translate(13, -1) rotate(-8)">
+               <polygon points="10,0 2,13 18,13" fill="#6C5CE7"/>
+               <ellipse cx="10" cy="13" rx="9" ry="2.5" fill="#4834D4"/>
+               <polygon points="10,4 11,6 13,6 11.5,7.5 12,9.5 10,8.5 8,9.5 8.5,7.5 7,6 9,6" fill="#FFD700"/>
               </g>`;
   } else if (hat === 'headphones') {
-    // Side profile headphone over ear/eye area
-    hatSvg = `<g transform="translate(14, 8) rotate(-10 20 15)">
-               <path d="M2,10 A8,8 0 0,1 18,10" fill="none" stroke="#e74c3c" stroke-width="2.5"/>
-               <rect x="7" y="7" width="5" height="8" rx="2" fill="#2d3436" stroke="#e74c3c" stroke-width="1"/>
+    hatSvg = `<g transform="translate(17, 6) rotate(-8)">
+               <path d="M1,8 A8,8 0 0,1 15,8" fill="none" stroke="#E74C3C" stroke-width="2.5" stroke-linecap="round"/>
+               <rect x="11" y="6" width="5" height="8" rx="2" fill="#2D3436" stroke="#E74C3C" stroke-width="1"/>
               </g>`;
   } else if (hat === 'viking') {
-    // Side profile Viking helmet with one prominent horn pointing up
-    hatSvg = `<g transform="translate(12, 4) rotate(-5 20 10)">
-               <path d="M2,11 Q10,5 18,11 Z" fill="#7f8c8d"/>
-               <rect x="2" y="10" width="16" height="2" fill="#95a5a6"/>
-               <path d="M15,9 Q20,2 22,1" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+    hatSvg = `<g transform="translate(15, 2) rotate(-4)">
+               <path d="M1,9 Q8,4 15,9 Z" fill="#7F8C8D"/>
+               <rect x="1" y="8" width="14" height="2" fill="#95A5A6"/>
+               <path d="M13,8 Q17,2 19,1" fill="none" stroke="#FFF" stroke-width="2.5" stroke-linecap="round"/>
               </g>`;
   } else if (hat === 'ninja') {
-    // Ninja headband with flowing tail behind head
-    hatSvg = `<g transform="translate(13, 9)">
-               <rect x="1" y="3" width="15" height="4" rx="1" fill="#2d3436"/>
-               <rect x="4" y="3" width="9" height="4" fill="#e74c3c"/>
-               <path d="M1,5 Q-4,8 -6,13" fill="none" stroke="#e74c3c" stroke-width="2"/>
+    hatSvg = `<g transform="translate(16, 7)">
+               <rect x="0" y="2" width="13" height="3.5" rx="1" fill="#2D3436"/>
+               <rect x="3" y="2" width="7" height="3.5" fill="#E74C3C"/>
+               <path d="M0,4 Q-4,7 -5,11" fill="none" stroke="#E74C3C" stroke-width="2"/>
               </g>`;
   } else if (hat === 'detective') {
-    // Detective Sherlock hat side view
-    hatSvg = `<g transform="translate(10, 4) rotate(-8 20 10)">
-               <path d="M2,11 Q11,3 20,11 Z" fill="#6e5773"/>
-               <ellipse cx="11" cy="11" rx="11" ry="3" fill="#5c3d46"/>
+    hatSvg = `<g transform="translate(13, 2) rotate(-6)">
+               <path d="M2,9 Q10,2 18,9 Z" fill="#6E5773"/>
+               <ellipse cx="10" cy="9" rx="10" ry="2.5" fill="#5C3D46"/>
               </g>`;
   } else if (hat === 'chef') {
-    // Chef hat side view
-    hatSvg = `<g transform="translate(12, 1) rotate(-8 20 10)">
-               <path d="M3,11 C1,6 5,1 10,3 C12,0 16,1 17,4 C20,3 22,7 18,11 Z" fill="#ffffff" stroke="#ddd" stroke-width="0.8"/>
-               <rect x="4" y="10" width="14" height="3" fill="#ffffff" stroke="#ccc" stroke-width="0.5"/>
+    hatSvg = `<g transform="translate(15, -1) rotate(-6)">
+               <path d="M2,10 C0,5 4,1 9,2 C11,-1 15,0 16,3 C19,2 21,6 17,10 Z" fill="#FFFFFF" stroke="#DDD" stroke-width="0.8"/>
+               <rect x="3" y="9" width="13" height="2.5" fill="#FFFFFF" stroke="#CCC" stroke-width="0.5"/>
               </g>`;
   }
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="${size}" height="${size}">
-    <ellipse cx="20" cy="36" rx="13" ry="3" fill="rgba(0,0,0,0.15)"/>
-    <ellipse cx="20" cy="28" rx="13" ry="10" fill="${body}"/>
-    <ellipse cx="25" cy="29" rx="7" ry="5" fill="${wing}" opacity="0.7" transform="rotate(-15 25 29)"/>
-    <circle cx="20" cy="17" r="9" fill="${body}"/>
-    <ellipse cx="29" cy="18" rx="5" ry="3" fill="${beak}" transform="rotate(-10 29 18)"/>
-    <circle cx="30" cy="17" r="0.8" fill="${wing}" opacity="0.5"/>
-    <circle cx="23" cy="14" r="3" fill="${eye === '#fff' ? 'white' : eye}"/>
-    <circle cx="24" cy="13.5" r="1.5" fill="#111"/>
-    <circle cx="24.6" cy="13" r="0.5" fill="white" opacity="0.8"/>
+
+  // Premium, super cute Duck SVG seen strictly from side-profile (facing Right)
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 40" width="${size}" height="${size}">
+    <!-- Water Reflection Shadow -->
+    <ellipse cx="22" cy="37" rx="14" ry="2.5" fill="rgba(0,0,0,0.18)"/>
+
+    <!-- Duck Tail & Main Body -->
+    <path d="M6,27 C3,22 8,18 13,20 C18,22 28,21 34,26 C37,29 35,35 28,36 C20,37 11,35 6,27 Z" fill="${body}"/>
+
+    <!-- Wing -->
+    <path d="M12,27 C16,22 24,23 26,27 C27,29 23,32 17,31 C13,30 11,28 12,27 Z" fill="${wing}" opacity="0.85"/>
+
+    <!-- Cute Cute Chest Curve -->
+    <path d="M26,23 C30,24 35,27 34,31 C32,34 27,35 25,33 Z" fill="${body}" opacity="0.9"/>
+
+    <!-- Head & Neck -->
+    <circle cx="25" cy="15" r="9.5" fill="${body}"/>
+
+    <!-- Cute Cute Beak (pointing Right) -->
+    <path d="M31,16 C34,14 41,15 42,18 C41,21 34,21 30,19 Z" fill="${beak}"/>
+    <path d="M31,17.5 C35,17 39,18 41.5,18.5" stroke="rgba(0,0,0,0.15)" stroke-width="0.8" fill="none"/>
+
+    <!-- Cute Eye with Sparkle -->
+    <circle cx="28" cy="13" r="3.2" fill="${eye === '#fff' ? '#222' : eye}"/>
+    <circle cx="29" cy="12" r="1.3" fill="#FFFFFF"/>
+    <circle cx="27" cy="14" r="0.6" fill="#FFFFFF" opacity="0.8"/>
+
+    <!-- Cheek Blush -->
+    <ellipse cx="25" cy="17" rx="2.5" ry="1.5" fill="#FF7675" opacity="0.45"/>
+
+    <!-- Side Accessories Hat Layer -->
     ${hatSvg}
   </svg>`;
 }
@@ -1894,67 +1906,36 @@ function _runInlineRace(winnerIdx, cls) {
 
       if (i === winnerIdx) {
         if (raceScenario === 0) {
-          // Kịch bản 1: Dẫn đầu từ đầu đến cuối nhưng SÁT NÚT (không xa nhóm sau)
-          // Tiến độ winner luôn nhỉnh hơn top nhóm sau khoảng 3% - 6%
-          targetProgress = 100 * Math.pow(t, 0.92) + wobble * 2;
+          // Kịch bản 1: Dẫn đầu sát nút (từ đầu tới cuối nhỉnh hơn 3-5% cực mượt)
+          const easeT = Math.sin(t * Math.PI * 0.5); // Smooth ease-out
+          targetProgress = 100 * Math.pow(easeT, 1.1) + wobble * 1.5;
         } else if (raceScenario === 1) {
-          // Kịch bản 2: Vươn lên dẫn đầu từ giữa chặng (t ~ 0.4 -> 0.6)
-          if (t < 0.4) {
-            targetProgress = 36 * (t / 0.4) + wobble * 3; // Nằm nhóm giữa
-          } else {
-            const subT = (t - 0.4) / 0.6;
-            targetProgress = 36 + Math.pow(subT, 0.88) * 64; // Bứt lên dẫn đầu
-          }
+          // Kịch bản 2: Vươn lên từ giữa chặng (Gia tốc tăng đều, không mốc giật)
+          // Dùng hàm Sine mượt chuyển dần từ nhóm 2 vọt lên Top 1
+          const smoothSurge = t + 0.12 * Math.sin(t * Math.PI * 2);
+          targetProgress = 100 * Math.pow(smoothSurge, 1.05) + wobble * 2;
         } else if (raceScenario === 2) {
-          // Kịch bản 3: Nằm ở NHÓM GIỮA suốt 6s đầu (t < 0.75), 2s CUỐI mới bứt tốc vượt lên!
-          if (t < 0.75) {
-            // Duy trì ở nhóm giữa (khoảng 60-65% tiến độ)
-            const subT = t / 0.75;
-            targetProgress = 62 * Math.pow(subT, 1.0) + wobble * 4;
-          } else {
-            // 2s cuối (75% -> 100%): Bứt tốc dữ dội về đích!
-            const subT = (t - 0.75) / 0.25;
-            targetProgress = 62 + Math.pow(subT, 1.35) * 38;
-          }
+          // Kịch bản 3: Ở nhóm giữa suốt 6s đầu, 2s cuối bứt tốc mượt (không khựng)
+          // Cubic Ease-In mượt tăng dần ở cuối: t^1.4
+          const smoothSprint = Math.pow(t, 1.32);
+          targetProgress = 100 * smoothSprint + wobble * 2;
         } else {
-          // Kịch bản 4: Giằng co liên tục, bứt tốc ở 1.5s cuối
-          if (t < 0.8) {
-            targetProgress = 72 * (t / 0.8) + wobble * 5;
-          } else {
-            const subT = (t - 0.8) / 0.2;
-            targetProgress = 72 + Math.pow(subT, 1.2) * 28;
-          }
+          // Kịch bản 4: Giằng co liên tục mượt mà
+          const smoothWaver = t + 0.05 * Math.sin(t * Math.PI * 3);
+          targetProgress = 100 * Math.pow(smoothWaver, 1.1) + wobble * 3;
         }
       } else {
-        // Vịt không thắng: Tính toán dựa trên kịch bản để tạo sự cạnh tranh sát sao
-        const rankOffset = (i * 13 + winnerIdx * 7) % 25; // 0 - 24% gap
-        const maxFinal = 65 + rankOffset * 1.1; // 65% - 92.5% final position
+        // Vịt không thắng: Tốc độ duy trì ổn định, mượt mà bám đuổi
+        const rankOffset = (i * 13 + winnerIdx * 7) % 22; // 0 - 22% gap
+        const maxFinal = 68 + rankOffset * 1.1; // 68% - 92% final position
 
-        if (raceScenario === 0) {
-          // Kịch bản 1: Nhóm sau đuổi theo RẤT SÁT (chỉ kém winner 3 - 6%)
-          const chaseMax = Math.min(94, maxFinal);
-          targetProgress = (chaseMax) * Math.pow(t, 0.93) + wobble * 3;
-        } else if (raceScenario === 1) {
-          // Kịch bản 2: Vịt khác dẫn trước ở 4s đầu
-          const earlyLead = (i % 3 === 0) ? Math.sin(t * Math.PI) * 8 : 0;
-          targetProgress = maxFinal * Math.pow(t, 0.9) + earlyLead + wobble * 4;
-        } else if (raceScenario === 2) {
-          // Kịch bản 3: Vịt khác dẫn đầu suốt 6s đầu (t < 0.75)
-          if (t < 0.75) {
-            const leadBonus = (i % 2 === 0) ? 6 : 0;
-            targetProgress = (68 + leadBonus) * (t / 0.75) + wobble * 4;
-          } else {
-            targetProgress = maxFinal * Math.pow(t, 0.95) + wobble * 3;
-          }
-        } else {
-          // Kịch bản 4: Nhóm sau đổi ngôi liên tục
-          const chaosLead = Math.sin((t * 3 + i) * Math.PI) * 6;
-          targetProgress = maxFinal * Math.pow(t, 0.9) + chaosLead + wobble * 5;
-        }
+        // Dùng Sine ease-out cho nhóm sau bơi rất đều
+        const smoothLag = Math.sin(t * Math.PI * 0.5);
+        targetProgress = maxFinal * Math.pow(smoothLag, 1.05) + wobble * 2.5;
 
-        // Đảm bảo vịt không thắng không bao giờ chạm 100% trước winner ở giây cuối
-        if (t > 0.88) {
-          targetProgress = Math.min(targetProgress, 93.5);
+        // Giữ vịt không thắng luôn ở phía sau winner ở giây cuối
+        if (t > 0.85) {
+          targetProgress = Math.min(targetProgress, 92.8);
         }
       }
 
