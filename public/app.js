@@ -250,8 +250,12 @@ function renderCurrentClass() {
     p.style.cssText = 'text-align:center;width:100%;color:#888;';
     gridEl.appendChild(p);
   } else {
-    const maxPts = Math.max(...cls.students.map(s => s.points));
-    cls.students.forEach(student => renderStudentCard(student, cls.id, maxPts));
+    const allPts = cls.students.map(s => s.points);
+    const maxPts = Math.max(...allPts);
+    const allSame = allPts.every(p => p === allPts[0]);
+    // If all students have the same score, set maxPts to -1 so nobody gets the crown
+    const effectiveMax = allSame ? -1 : maxPts;
+    cls.students.forEach(student => renderStudentCard(student, cls.id, effectiveMax));
   }
   
   renderSeatingChart(cls);
