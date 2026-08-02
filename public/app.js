@@ -1516,6 +1516,21 @@ function setupListeners() {
   // Student actions
   document.getElementById('add-student-btn').addEventListener('click', doAddStudent);
   document.getElementById('excel-upload').addEventListener('change', handleExcelUpload);
+  document.getElementById('excel-template-btn').addEventListener('click', () => {
+    // Generate a template using the XLSX library already loaded
+    const headers = [["Họ và tên học sinh", "Ngày sinh (Không bắt buộc, ví dụ: 20/11/2012)"]];
+    const data = [
+      ["Nguyễn Văn A", "15/05/2012"],
+      ["Trần Thị B", "20/11/2012"],
+      ["Lê Văn C", ""]
+    ];
+    const ws = XLSX.utils.aoa_to_sheet(headers.concat(data));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Danh sach hoc sinh");
+    
+    // Trigger browser download
+    XLSX.writeFile(wb, "Mau_nhap_hoc_sinh.xlsx");
+  });
 
   // Title
   document.getElementById('edit-title-btn').addEventListener('click', doEditTitle);
