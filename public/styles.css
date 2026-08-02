@@ -2123,6 +2123,44 @@ body:not(.is-editing) #add-student-container {
     color: #fff;
 }
 
+/* ── Canvas Editor Anti-Flicker (Touch TV / External Display Fix) ── */
+.editor-canvas-container-gpu {
+    /* Force GPU compositing layer to prevent white-flash flicker on touch TVs */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    /* Smooth touch scrolling without scroll-induced repaints */
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+}
+
+/* Prevent canvas elements from triggering full-page repaint on touch */
+#image-editor-canvas,
+#image-editor-modal .canvas-container canvas {
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    /* Prevent browser from hijacking touch events for scrolling while drawing */
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* Prevent the editor modal itself from causing page-level repaints */
+#image-editor-modal {
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: transform;
+    isolation: isolate;
+}
+
+
+
 /* ── Events Section Image Hover ── */
 .event-card img {
     cursor: pointer;

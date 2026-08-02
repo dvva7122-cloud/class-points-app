@@ -346,8 +346,23 @@ function openImageEditor(imageUrl, onSave) {
       width: origW,
       height: origH,
       backgroundColor: '#ffffff',
-      enableRetinaScaling: true
+      enableRetinaScaling: false, // Prevents GPU buffer flickering on 4K Touch TV displays
+      renderOnAddRemove: true,
+      stateful: false // Disables heavy internal object state tracking per touch stroke
     });
+
+    // GPU Hardware Acceleration fix for Touch TVs
+    if (_fabricCanvas.upperCanvasEl) {
+      _fabricCanvas.upperCanvasEl.style.transform = 'translateZ(0)';
+      _fabricCanvas.upperCanvasEl.style.willChange = 'transform';
+      _fabricCanvas.upperCanvasEl.style.backfaceVisibility = 'hidden';
+      _fabricCanvas.upperCanvasEl.style.touchAction = 'none';
+    }
+    if (_fabricCanvas.lowerCanvasEl) {
+      _fabricCanvas.lowerCanvasEl.style.transform = 'translateZ(0)';
+      _fabricCanvas.lowerCanvasEl.style.willChange = 'transform';
+      _fabricCanvas.lowerCanvasEl.style.backfaceVisibility = 'hidden';
+    }
 
     // Load as background at full 1:1 quality (no scaling)
     fabric.Image.fromURL(imageUrl, (img) => {
@@ -358,9 +373,29 @@ function openImageEditor(imageUrl, onSave) {
       saveEditorHistory(); // Save initial state
     }, { crossOrigin: 'Anonymous' });
 
-    _fabricCanvas.on('object:added', () => { _editorHasChanges = true; saveEditorHistory(); });
-    _fabricCanvas.on('object:modified', () => { _editorHasChanges = true; saveEditorHistory(); });
-    _fabricCanvas.on('object:removed', () => { _editorHasChanges = true; saveEditorHistory(); });
+    // Debounced history save to prevent lag during rapid touch stroke additions
+    let historyDebounceTimer = null;
+    const debouncedSaveHistory = () => {
+      _editorHasChanges = true;
+      if (historyDebounceTimer) clearTimeout(historyDebounceTimer);
+      historyDebounceTimer = setTimeout(() => {
+        saveEditorHistory();
+      }, 300);
+    };
+
+    _fabricCanvas.on('object:added', debouncedSaveHistory);
+    _fabricCanvas.on('object:modified', debouncedSaveHistory);
+    _fabricCanvas.on('object:removed', debouncedSaveHistory);
+
+    // Disable object selection while free drawing for smooth touch performance
+    _fabricCanvas.on('mouse:down', () => {
+      if (_fabricCanvas.isDrawingMode) {
+        _fabricCanvas.skipTargetFind = true;
+      }
+    });
+    _fabricCanvas.on('mouse:up', () => {
+      _fabricCanvas.skipTargetFind = false;
+    });
     
     // Disable interaction for non-admin (view only)
     if (!isAdmin) {
@@ -600,11 +635,20 @@ function showEmojiPicker(color) {
 
 function closeImageEditor(skipConfirm) {
   if (!skipConfirm && _editorHasChanges && isAdmin) {
+    // Boost confirm modal z-index ABOVE image editor modal so it appears on top
+    const alertModal = document.getElementById('custom-alert-modal');
+    if (alertModal) {
+      alertModal.style.zIndex = '11000';
+    }
     showConfirmModal(
       'Bạn muốn lưu trước khi thoát?',
       'Các thay đổi chưa được lưu sẽ bị mất nếu bạn thoát.',
-      () => { saveImageEditor(); },
       () => {
+        if (alertModal) alertModal.style.zIndex = '';
+        saveImageEditor();
+      },
+      () => {
+        if (alertModal) alertModal.style.zIndex = '';
         _editorHasChanges = false;
         closeImageEditor(true);
       },
