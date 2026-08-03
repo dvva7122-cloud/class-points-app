@@ -1750,29 +1750,32 @@ function getDuckSVG(skin, size = 42) {
     <!-- Water Ripple Shadow -->
     <ellipse cx="23" cy="38" rx="16" ry="3" fill="rgba(0,0,0,0.18)"/>
 
-    <!-- Chubby Round Body & Tail -->
-    <path d="M5,26 C2,19 8,15 14,17 C19,19 28,19 36,25 C40,29 37,37 29,37 C18,38 9,36 5,26 Z" fill="${body}"/>
+    <!-- Chubby Round Body & Tail (Pear-shaped body, cute tail pointing up) -->
+    <path d="M 5,28 C 3,21 10,17 15,19 C 18,16 23,17 27,21 C 32,23 37,22 41,27 C 43,30 38,38 30,38 C 17,39 8,36 5,28 Z" fill="${body}"/>
+    
+    <!-- Cute Tail Feather Tip Overlay -->
+    <path d="M 5,28 C 1,22 5,16 9,21 Z" fill="${wing}" opacity="0.9"/>
 
     <!-- Fluffy Chubby Wing -->
-    <path d="M11,26 C15,20 25,22 27,27 C28,31 23,34 16,33 C12,32 10,29 11,26 Z" fill="${wing}" opacity="0.88"/>
+    <path d="M12,27 C16,21 24,23 26,28 C27,32 22,35 16,34 C12,33 11,30 12,27 Z" fill="${wing}" opacity="0.95"/>
 
     <!-- Soft Round Belly Highlight -->
-    <ellipse cx="22" cy="31" rx="11" ry="5" fill="#FFFFFF" opacity="0.15"/>
+    <ellipse cx="23" cy="32" rx="10" ry="4" fill="#FFFFFF" opacity="0.25"/>
 
     <!-- Big Cute Round Head -->
-    <circle cx="27" cy="15" r="11" fill="${body}"/>
+    <circle cx="28" cy="14" r="10.5" fill="${body}"/>
 
-    <!-- Chubby Cute Beak -->
-    <path d="M34,16 C37,13 44,15 45,18.5 C44,22 37,22 33,19.5 Z" fill="${beak}"/>
-    <path d="M34,18 C38,17.5 42,18.5 44.5,19" stroke="rgba(0,0,0,0.12)" stroke-width="0.8" fill="none"/>
+    <!-- Chubby Cute Beak (Rounded duck bill) -->
+    <path d="M35.5,15 C39,12.5 45.5,14 45.5,17.5 C45.5,20.5 39,21 34.5,18 Z" fill="${beak}"/>
+    <path d="M36,17.2 C39,16.5 43,17.5 45,17.8" stroke="rgba(0,0,0,0.15)" stroke-width="1.2" fill="none" stroke-linecap="round"/>
 
-    <!-- Extra Big Shiny Eyes (Super Cute) -->
-    <circle cx="30" cy="13" r="4" fill="${eye === '#fff' ? '#111' : eye}"/>
-    <circle cx="31.5" cy="11.5" r="1.7" fill="#FFFFFF"/>
-    <circle cx="28.8" cy="14.2" r="0.8" fill="#FFFFFF" opacity="0.9"/>
+    <!-- Extra Big Shiny Eyes (Super Cute Chibi Style) -->
+    <circle cx="31" cy="12" r="3.2" fill="#1e272c"/>
+    <circle cx="32.2" cy="10.8" r="1.3" fill="#FFFFFF"/>
+    <circle cx="30.2" cy="13.2" r="0.6" fill="#FFFFFF" opacity="0.95"/>
 
-    <!-- Rosy Chubby Blush -->
-    <ellipse cx="26.5" cy="18" rx="3.5" ry="2" fill="#FF6B81" opacity="0.55"/>
+    <!-- Rosy Chubby Blush (Cute Pink Cheek) -->
+    <ellipse cx="28.5" cy="17.5" rx="3.5" ry="2.2" fill="#FF8DA1" opacity="0.75"/>
 
     <!-- Side Accessories Layer -->
     ${hatSvg}
