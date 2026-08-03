@@ -805,7 +805,7 @@ function renderEvents(cls) {
         if (e.target.closest('.btn-delete-event')) return;
         openImageEditor(evt.imageUrl, (newDataUrl) => {
           evt.imageUrl = newDataUrl;
-          img.src = newDataUrl;
+          img.src = newDataUrl; // Cập nhật trực tiếp ảnh trên DOM mà không vẽ lại cả trang
           doSaveEventImage(cls.id, evt.id, newDataUrl);
         });
       });
@@ -912,6 +912,7 @@ function renderStudentCard(student, classId, maxPts) {
   }
 
   const card = createEl('div', {
+    id: `student-card-${student.id}`,
     className: `student-card ${themeState.useFrames ? 'with-frame' : ''} ${isTop ? 'is-top' : ''} ${isBirthday ? 'is-birthday' : ''}`,
   });
   card.dataset.studentId = student.id;
@@ -931,7 +932,7 @@ function renderStudentCard(student, classId, maxPts) {
   card.appendChild(absLayer);
 
   // Tầng 1: Khu vực Biểu tượng
-  const iconsContainer = createEl('div', { className: 'icons-container' });
+  const iconsContainer = createEl('div', { className: 'icons-container student-icons-container' });
   if (isTop) {
     const crown = createEl('span', { className: 'crown-icon', text: '👑', title: 'Người cao điểm nhất' });
     iconsContainer.appendChild(crown);
@@ -1060,8 +1061,8 @@ function doUpdatePoints(classId, studentId, change) {
         const d = document.getElementById(`points-${studentId}`);
         if (d) d.querySelector('.point-val').textContent = res.points;
       }
-      // Cập nhật crown
-      renderCurrentClass();
+      // Cập nhật crown trực tiếp trên DOM mà không vẽ lại cả trang (chống nháy)
+      updateCrowns(cls);
     } catch (err) {
       if (err.message !== 'Unauthorized') showError(err.message);
       // Rollback điểm về giá trị server nếu thất bại
@@ -1069,6 +1070,42 @@ function doUpdatePoints(classId, studentId, change) {
       renderCurrentClass();
     }
   }, 800);
+}
+
+// Cập nhật biểu tượng vương miện và hiệu ứng card mà KHÔNG làm nháy trang (No DOM rebuild)
+function updateCrowns(cls) {
+  if (!cls || !cls.students) return;
+  const allPts = cls.students.map(s => s.points);
+  const maxPts = Math.max(...allPts);
+  const allSame = allPts.every(p => p === allPts[0]);
+  const effectiveMax = allSame ? -1 : maxPts;
+
+  cls.students.forEach(s => {
+    const card = document.getElementById(`student-card-${s.id}`);
+    if (!card) return;
+    const isTop = effectiveMax > 0 && s.points === effectiveMax;
+    
+    // Highlight top student card
+    if (isTop) {
+      card.classList.add('is-top');
+    } else {
+      card.classList.remove('is-top');
+    }
+
+    // Toggle crown icon in icons container
+    const iconsContainer = card.querySelector('.student-icons-container');
+    if (iconsContainer) {
+      let crown = iconsContainer.querySelector('.crown-icon');
+      if (isTop) {
+        if (!crown) {
+          crown = createEl('span', { className: 'crown-icon', text: '👑', title: 'Người cao điểm nhất' });
+          iconsContainer.appendChild(crown);
+        }
+      } else {
+        if (crown) crown.remove();
+      }
+    }
+  });
 }
 
 
