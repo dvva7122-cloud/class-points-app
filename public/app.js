@@ -3121,3 +3121,44 @@ function renderSeatingChart(cls) {
   layoutWrapper.appendChild(canvas);
   container.appendChild(layoutWrapper);
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🛡️ Anti-Flicker Optimization for Touch TVs / External Displays
+// Dynamically disables heavy backdrop-filter blur during scroll & touch events
+// to prevent GPU-bound white screen flashing on external monitors.
+// ═══════════════════════════════════════════════════════════════════════════════
+(function initAntiFlicker() {
+  let scrollTimer = null;
+  let touchTimer = null;
+
+  // --- Scroll: disable blur while scrolling ---
+  window.addEventListener('scroll', function() {
+    if (!document.body.classList.contains('is-scrolling')) {
+      document.body.classList.add('is-scrolling');
+    }
+    if (scrollTimer) clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(function() {
+      document.body.classList.remove('is-scrolling');
+    }, 150); // Re-enable blur 150ms after scroll stops
+  }, { passive: true });
+
+  // --- Touch: disable blur while touching ---
+  window.addEventListener('touchstart', function() {
+    document.body.classList.add('is-touching');
+    if (touchTimer) clearTimeout(touchTimer);
+  }, { passive: true });
+
+  window.addEventListener('touchmove', function() {
+    if (!document.body.classList.contains('is-touching')) {
+      document.body.classList.add('is-touching');
+    }
+    if (touchTimer) clearTimeout(touchTimer);
+  }, { passive: true });
+
+  window.addEventListener('touchend', function() {
+    if (touchTimer) clearTimeout(touchTimer);
+    touchTimer = setTimeout(function() {
+      document.body.classList.remove('is-touching');
+    }, 200); // Re-enable blur 200ms after touch ends
+  }, { passive: true });
+})();

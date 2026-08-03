@@ -82,9 +82,17 @@ body {
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
-    /* Tắt bôi đen text toàn trang – hết con trỏ I-beam không cần thiết */
+    /* Tắt bôi đen text toàn trang */
     user-select: none;
     -webkit-user-select: none;
+    
+    /* Tăng tốc phần cứng để chống nháy màn hình trên Tivi cảm ứng / màn chiếu */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    -webkit-overflow-scrolling: touch;
 }
 
 body::before {
@@ -2158,6 +2166,25 @@ body:not(.is-editing) #add-student-container {
     will-change: transform;
     isolation: isolate;
 }
+
+/* ── Fallback for scroll and touch (Disables backdrop-filter blur dynamically on scroll/touch to prevent GPU-bound white screen flashing) ── */
+body.is-scrolling *,
+body.is-touching * {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    /* Maintain semi-transparent backgrounds without heavy blur computations */
+}
+
+/* Force hardware accelerated layouts on large components */
+.main-content,
+.wheel-section,
+.student-grid,
+.class-info,
+.classroom-grid {
+    transform: translateZ(0);
+    will-change: transform;
+}
+
 
 
 
