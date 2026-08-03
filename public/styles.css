@@ -257,7 +257,6 @@ body.custom-bg-active .app-background {
     justify-content: center;
     box-shadow: var(--shadow-sm);
     
-    -webkit-
 }
 
 .admin-toggle:hover,
@@ -310,7 +309,6 @@ body.custom-bg-active .app-background {
     box-shadow: 0 8px 20px rgba(31, 41, 55, 0.08);
     transition: var(--transition);
     
-    -webkit-
 }
 
 .tab-btn:hover {
@@ -370,7 +368,6 @@ body.custom-bg-active .app-background {
         0 28px 70px rgba(31, 41, 55, 0.16),
         inset 0 1px 0 rgba(255, 255, 255, 0.85);
     
-    -webkit-
     overflow: hidden;
 }
 
@@ -767,7 +764,6 @@ body.theme-christmas .student-card.with-frame {
     transition: var(--transition);
     transform-origin: bottom right;
     
-    -webkit-
 }
 
 .conversion-table:hover {
@@ -855,8 +851,6 @@ body.theme-christmas .student-card.with-frame {
     justify-content: center;
     align-items: center;
     background: rgba(20, 24, 30, 0.42);
-    
-    -webkit-
     /* Ép GPU layer riêng cho modal để không gây nháy màn hình khi xuất hình Tivi */
     transform: translateZ(0);
     -webkit-transform: translateZ(0);
