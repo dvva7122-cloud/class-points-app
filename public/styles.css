@@ -64,10 +64,13 @@ body.theme-halloween {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+    /* Tắt hoàn toàn lớp nháy trắng tap-highlight của trình duyệt khi chạm trên Tivi cảm ứng */
+    -webkit-tap-highlight-color: transparent !important;
 }
 
 html {
     scroll-behavior: smooth;
+    touch-action: manipulation;
 }
 
 body {
@@ -111,6 +114,7 @@ input,
 select,
 textarea {
     font: inherit;
+    touch-action: manipulation;
 }
 
 input,
@@ -118,6 +122,8 @@ textarea {
     user-select: text !important;
     -webkit-user-select: text !important;
     cursor: text;
+    /* Tắt transition trên focus để không kích hoạt GPU repaint gây nháy */
+    transition: border-color 0.1s ease, background-color 0.1s ease !important;
 }
 
 button {
@@ -851,6 +857,11 @@ body.theme-christmas .student-card.with-frame {
     background: rgba(20, 24, 30, 0.42);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
+    /* Ép GPU layer riêng cho modal để không gây nháy màn hình khi xuất hình Tivi */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: transform;
+    isolation: isolate;
 }
 
 .modal.show {
@@ -868,6 +879,9 @@ body.theme-christmas .student-card.with-frame {
     border-radius: 24px;
     background: rgba(255, 255, 255, 0.94);
     color: var(--text-main);
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: transform;
     box-shadow: 0 30px 80px rgba(20, 24, 30, 0.24);
     backdrop-filter: blur(24px);
 }
