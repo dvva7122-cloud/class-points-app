@@ -89,12 +89,7 @@ body {
     user-select: none;
     -webkit-user-select: none;
     
-    /* Tăng tốc phần cứng để chống nháy màn hình trên Tivi cảm ứng / màn chiếu */
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
-    will-change: transform;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
+    /* Chống nháy trên Tivi cảm ứng (KHÔNG dùng transform ở body vì sẽ phá vỡ position:fixed của modal) */
     -webkit-overflow-scrolling: touch;
 }
 
