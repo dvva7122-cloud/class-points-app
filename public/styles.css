@@ -754,11 +754,10 @@ body.theme-christmas .student-card.with-frame {
     z-index: 100;
     border: 1px solid rgba(255, 255, 255, 0.72);
     border-radius: 22px;
-    background: rgba(255, 255, 255, 0.84);
+    background: #ffffff; /* Dùng nền trắng đục hoàn toàn để không nhìn thấy nội dung đằng sau */
     box-shadow: 0 20px 52px rgba(31, 41, 55, 0.18);
     transition: var(--transition);
     transform-origin: bottom right;
-    
 }
 
 .conversion-table:hover {
