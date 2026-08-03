@@ -256,8 +256,8 @@ body.custom-bg-active .app-background {
     align-items: center;
     justify-content: center;
     box-shadow: var(--shadow-sm);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
+    
+    -webkit-
 }
 
 .admin-toggle:hover,
@@ -309,8 +309,8 @@ body.custom-bg-active .app-background {
     cursor: pointer;
     box-shadow: 0 8px 20px rgba(31, 41, 55, 0.08);
     transition: var(--transition);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    
+    -webkit-
 }
 
 .tab-btn:hover {
@@ -347,7 +347,7 @@ body.custom-bg-active .app-background {
     cursor: pointer;
     transition: var(--transition);
     box-shadow: var(--shadow-xs);
-    backdrop-filter: blur(12px);
+    
 }
 
 .add-class-btn:hover {
@@ -369,8 +369,8 @@ body.custom-bg-active .app-background {
     box-shadow:
         0 28px 70px rgba(31, 41, 55, 0.16),
         inset 0 1px 0 rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(24px) saturate(1.08);
-    -webkit-backdrop-filter: blur(24px) saturate(1.08);
+    
+    -webkit-
     overflow: hidden;
 }
 
@@ -729,7 +729,7 @@ body.theme-christmas .student-card.with-frame {
     align-items: center;
     gap: 8px;
     box-shadow: var(--shadow-sm);
-    backdrop-filter: blur(14px);
+    
 }
 
 .add-student-btn:hover,
@@ -766,8 +766,8 @@ body.theme-christmas .student-card.with-frame {
     box-shadow: 0 20px 52px rgba(31, 41, 55, 0.18);
     transition: var(--transition);
     transform-origin: bottom right;
-    backdrop-filter: blur(22px) saturate(1.1);
-    -webkit-backdrop-filter: blur(22px) saturate(1.1);
+    
+    -webkit-
 }
 
 .conversion-table:hover {
@@ -855,8 +855,8 @@ body.theme-christmas .student-card.with-frame {
     justify-content: center;
     align-items: center;
     background: rgba(20, 24, 30, 0.42);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    
+    -webkit-
     /* Ép GPU layer riêng cho modal để không gây nháy màn hình khi xuất hình Tivi */
     transform: translateZ(0);
     -webkit-transform: translateZ(0);
@@ -883,7 +883,7 @@ body.theme-christmas .student-card.with-frame {
     -webkit-transform: translateZ(0);
     will-change: transform;
     box-shadow: 0 30px 80px rgba(20, 24, 30, 0.24);
-    backdrop-filter: blur(24px);
+    
 }
 
 .close-modal {
@@ -2181,13 +2181,8 @@ body:not(.is-editing) #add-student-container {
     isolation: isolate;
 }
 
-/* ── Fallback for scroll and touch (Disables backdrop-filter blur dynamically on scroll/touch to prevent GPU-bound white screen flashing) ── */
-body.is-scrolling *,
-body.is-touching * {
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    /* Maintain semi-transparent backgrounds without heavy blur computations */
-}
+/* ── Hardware Accelerated layouts on large components ── */
+
 
 /* Force hardware accelerated layouts on large components */
 .main-content,
