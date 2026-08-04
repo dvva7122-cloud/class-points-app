@@ -1435,11 +1435,14 @@ function updateAdminUI() {
   const toggleBtn      = document.getElementById('admin-toggle');
   const editModeToggle = document.getElementById('edit-mode-toggle');
 
+  const conversionTable = document.getElementById('conversion-table');
+
   if (isAdmin) {
     document.body.classList.add('is-admin');
     toggleBtn.classList.add('unlocked');
     toggleBtn.innerHTML = '<i class="fa-solid fa-lock-open"></i>';
     editModeToggle.style.display = 'inline-flex';
+    if (conversionTable) conversionTable.style.display = 'block';
 
     if (isEditingMode) {
       document.body.classList.add('is-editing');
@@ -1458,6 +1461,7 @@ function updateAdminUI() {
     toggleBtn.innerHTML = '<i class="fa-solid fa-lock"></i>';
     editModeToggle.style.display = 'none';
     isEditingMode = false;
+    if (conversionTable) conversionTable.style.display = 'none';
   }
 }
 
