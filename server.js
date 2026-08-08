@@ -510,7 +510,8 @@ app.post('/api/classes/:classId/students/:studentId/verify-password', async (req
     if (!student) return res.status(404).json({ error: 'Không tìm thấy học sinh.' });
     if (!student.passwordHash) return res.status(400).json({ error: 'Học sinh chưa được thiết lập mật khẩu (cần có Mã HS + Ngày sinh).' });
 
-    const match = await bcrypt.compare(password, student.passwordHash);
+    // So sánh mật khẩu (chuyển toàn bộ về chữ thường để không phân biệt hoa/thường)
+    const match = await bcrypt.compare(password.toLowerCase(), student.passwordHash);
     if (!match) {
       await new Promise(r => setTimeout(r, 300)); // Chống brute-force
       return res.status(401).json({ error: 'Mật khẩu không đúng.' });
