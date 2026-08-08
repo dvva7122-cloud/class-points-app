@@ -341,10 +341,17 @@ app.post('/api/classes/:classId/students', requireAdmin, async (req, res) => {
   if (!validName) return res.status(400).json({ error: 'Tên học sinh không hợp lệ.' });
 
   const dob = typeof req.body.dob === 'string' ? req.body.dob.trim() : null;
+  const code = typeof req.body.code === 'string' ? req.body.code.trim() : null;
 
   try {
     const classesColl = db.getClassesCollection();
-    const newStudent = { id: generateId('s'), name: validName, dob: dob, points: 0, created_at: Date.now() };
+    const newStudent = { id: generateId('s'), name: validName, code: code, dob: dob, points: 0, created_at: Date.now() };
+
+    // Tự động tạo passwordHash từ mã HS + ngày sinh (nếu có cả 2)
+    if (code && dob) {
+      const rawPassword = code.toLowerCase() + dob.replace(/\//g, '');
+      newStudent.passwordHash = await bcrypt.hash(rawPassword, 10);
+    }
     
     const result = await classesColl.updateOne(
       { id: classId },
@@ -377,11 +384,19 @@ app.post('/api/classes/:classId/students/bulk', requireAdmin, async (req, res) =
     
     const validName = validateName(rawName);
     if (!validName) continue;
+    const rawCode = (typeof raw === 'object' && raw.code) ? String(raw.code).trim() : null;
+    let passwordHash = null;
+    if (rawCode && rawDob) {
+      const rawPassword = rawCode.toLowerCase() + rawDob.replace(/\//g, '');
+      passwordHash = await bcrypt.hash(rawPassword, 10);
+    }
     newStudents.push({
       id: generateId('s'),
       name: validName,
+      code: rawCode,
       dob: rawDob,
       points: 0,
+      passwordHash: passwordHash,
       created_at: Date.now()
     });
   }
@@ -409,33 +424,49 @@ app.post('/api/classes/:classId/students/bulk', requireAdmin, async (req, res) =
 app.patch('/api/classes/:classId/students/:studentId', requireAdmin, async (req, res) => {
   const { classId, studentId } = req.params;
   
-  const updateFields = {};
-  if (req.body.name !== undefined) {
-    const validName = validateName(req.body.name);
-    if (!validName) return res.status(400).json({ error: 'Tên học sinh không hợp lệ.' });
-    updateFields['students.$.name'] = validName;
-  }
-  if (req.body.dob !== undefined) {
-    updateFields['students.$.dob'] = req.body.dob ? String(req.body.dob).trim() : null;
-  }
-  
-  if (Object.keys(updateFields).length === 0) {
-    return res.status(400).json({ error: 'Không có dữ liệu cập nhật.' });
-  }
-
   try {
     const classesColl = db.getClassesCollection();
-    const result = await classesColl.findOneAndUpdate(
+    const cls = await classesColl.findOne({ id: classId });
+    if (!cls) return res.status(404).json({ error: 'Không tìm thấy lớp.' });
+    
+    const student = cls.students.find(s => s.id === studentId);
+    if (!student) return res.status(404).json({ error: 'Không tìm thấy học sinh.' });
+
+    let updated = false;
+    if (req.body.name !== undefined) {
+      const validName = validateName(req.body.name);
+      if (!validName) return res.status(400).json({ error: 'Tên học sinh không hợp lệ.' });
+      student.name = validName;
+      updated = true;
+    }
+    if (req.body.dob !== undefined) {
+      student.dob = req.body.dob ? String(req.body.dob).trim() : null;
+      updated = true;
+    }
+    if (req.body.code !== undefined) {
+      student.code = req.body.code ? String(req.body.code).trim() : null;
+      updated = true;
+    }
+    
+    if (!updated) {
+      return res.status(400).json({ error: 'Không có dữ liệu cập nhật.' });
+    }
+
+    // Re-generate password hash if both code and dob exist
+    if (student.code && student.dob) {
+      const rawPassword = student.code.toLowerCase() + student.dob.replace(/\//g, '');
+      student.passwordHash = await bcrypt.hash(rawPassword, 10);
+    } else {
+      student.passwordHash = null;
+    }
+
+    await classesColl.updateOne(
       { id: classId, 'students.id': studentId },
-      { $set: updateFields },
-      { returnDocument: 'after' }
+      { $set: { 'students.$': student } }
     );
 
-    if (!result) return res.status(404).json({ error: 'Không tìm thấy học sinh hoặc lớp.' });
-    
-    const updatedStudent = result.students.find(s => s.id === studentId);
     broadcast({ type: 'DATA_CHANGED' });
-    res.json(updatedStudent);
+    res.json(student);
   } catch (err) {
     res.status(500).json({ error: 'Lỗi server' });
   }
@@ -457,6 +488,35 @@ app.delete('/api/classes/:classId/students/:studentId', requireAdmin, async (req
     
     broadcast({ type: 'DATA_CHANGED' });
     res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Lỗi server' });
+  }
+});
+
+// POST /api/classes/:classId/students/:studentId/verify-password  (public) - Xác thực mật khẩu học sinh
+app.post('/api/classes/:classId/students/:studentId/verify-password', async (req, res) => {
+  const { classId, studentId } = req.params;
+  const { password } = req.body;
+  if (typeof password !== 'string' || !password) {
+    return res.status(400).json({ error: 'Vui lòng nhập mật khẩu.' });
+  }
+
+  try {
+    const classesColl = db.getClassesCollection();
+    const cls = await classesColl.findOne({ id: classId });
+    if (!cls) return res.status(404).json({ error: 'Không tìm thấy lớp.' });
+
+    const student = cls.students.find(s => s.id === studentId);
+    if (!student) return res.status(404).json({ error: 'Không tìm thấy học sinh.' });
+    if (!student.passwordHash) return res.status(400).json({ error: 'Học sinh chưa được thiết lập mật khẩu (cần có Mã HS + Ngày sinh).' });
+
+    const match = await bcrypt.compare(password, student.passwordHash);
+    if (!match) {
+      await new Promise(r => setTimeout(r, 300)); // Chống brute-force
+      return res.status(401).json({ error: 'Mật khẩu không đúng.' });
+    }
+
+    res.json({ success: true, studentName: student.name });
   } catch (err) {
     res.status(500).json({ error: 'Lỗi server' });
   }

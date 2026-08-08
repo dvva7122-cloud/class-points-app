@@ -50,8 +50,8 @@ async function api(method, path, body) {
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
 
-  // Login route: do not treat wrong password as session expired
-  if ((res.status === 401 || res.status === 403) && path !== '/api/admin/login') {
+  // Bỏ qua lỗi 401/403 (không tính là hết hạn session) đối với API đăng nhập và API xác thực mật khẩu
+  if ((res.status === 401 || res.status === 403) && path !== '/api/admin/login' && !path.includes('/verify-password')) {
     handleSessionExpired();
     throw new Error('Unauthorized');
   }
