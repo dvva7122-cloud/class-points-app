@@ -6,6 +6,26 @@ let currentClassId = null;
 let isAdmin        = false;
 let isEditingMode  = false;
 
+async function doStudentPrivatePopup(classId, student) {
+  const res = await showCustomPrompt(`Khóa bảo mật: ${student.name}`, [
+    { key: 'password', label: 'Nhập mật khẩu (Mã HS + Ngày sinh)', type: 'password' }
+  ]);
+  if (!res || !res.password) return;
+
+  try {
+    const verifyRes = await api('POST', `/api/classes/${classId}/students/${student.id}/verify-password`, { password: res.password });
+    if (verifyRes.success) {
+      const modal = document.getElementById('student-popup-modal');
+      document.getElementById('student-popup-title').textContent = `🎒 Khu vực riêng của ${student.name}`;
+      modal.classList.add('show');
+      
+      const closeBtn = document.getElementById('student-popup-close');
+      closeBtn.onclick = () => modal.classList.remove('show');
+    }
+  } catch (err) {
+    showError(err.message);
+  }
+}
 
 // ─── Token helpers ────────────────────────────────────────────────────────
 function getToken() {
@@ -999,6 +1019,13 @@ function renderStudentCard(student, classId, maxPts) {
 
   card.appendChild(pointsRow);
 
+  // Click handler cho thẻ học sinh -> Mở hộp bí mật (trừ khi click vào input hoặc các nút thao tác)
+  card.addEventListener('click', (e) => {
+    // Bỏ qua nếu click vào các thành phần thao tác
+    if (e.target.closest('button') || e.target.closest('.points-display') || e.target.tagName === 'INPUT') return;
+    doStudentPrivatePopup(classId, student);
+  });
+
   // Nút +/- (hiện khi is-admin, không cần is-editing)
   const actionRow = createEl('div', { className: 'action-buttons admin-only' });
 
@@ -1215,13 +1242,14 @@ async function doDeleteStudent(classId, studentId, name) {
 
 async function doAddStudent() {
   const res = await showCustomPrompt('Thêm học sinh mới', [
+    { key: 'code', label: 'Mã học sinh', placeholder: 'Ví dụ: HS001' },
     { key: 'name', label: 'Tên học sinh' },
-    { key: 'dob', label: 'Ngày sinh (Ví dụ: 15/08)', placeholder: 'Để trống nếu không rõ' }
+    { key: 'dob', label: 'Ngày sinh (DD/MM/YYYY)', placeholder: 'Ví dụ: 15/05/2012' }
   ]);
   if (!res || !res.name) return;
 
   try {
-    const newStudent = await api('POST', `/api/classes/${currentClassId}/students`, { name: res.name, dob: res.dob });
+    const newStudent = await api('POST', `/api/classes/${currentClassId}/students`, { name: res.name, dob: res.dob, code: res.code });
     const cls  = appData.find(c => c.id === currentClassId);
     if (cls) cls.students.push(newStudent);
     renderCurrentClass();
@@ -1338,9 +1366,10 @@ async function handleExcelUpload(e) {
         return;
       }
 
-      // Tìm cột tên và cột ngày sinh
-      let nameCol = 0;
+      // Tìm cột tên, cột ngày sinh và cột mã học sinh
+      let nameCol = -1;
       let dobCol = -1;
+      let codeCol = -1;
       const header = rows[0];
       for (let i = 0; i < header.length; i++) {
         const h = String(header[i] || '').toLowerCase();
@@ -1350,7 +1379,12 @@ async function handleExcelUpload(e) {
         if (h.includes('sinh') || h.includes('dob') || h.includes('birthday')) {
           dobCol = i;
         }
+        if (h.includes('mã') || h.includes('code') || h.includes('id')) {
+          codeCol = i;
+        }
       }
+      // Nếu không tìm thấy cột tên, thử cột đầu tiên hoặc cột thứ hai
+      if (nameCol === -1) nameCol = codeCol !== -1 ? 1 : 0;
 
       const studentsToImport = [];
       for (let i = 1; i < rows.length; i++) {
@@ -1359,6 +1393,9 @@ async function handleExcelUpload(e) {
           const studentObj = { name: String(val).trim() };
           if (dobCol !== -1 && rows[i][dobCol]) {
             studentObj.dob = String(rows[i][dobCol]).trim();
+          }
+          if (codeCol !== -1 && rows[i][codeCol]) {
+            studentObj.code = String(rows[i][codeCol]).trim();
           }
           studentsToImport.push(studentObj);
         }
@@ -1563,13 +1600,15 @@ function setupListeners() {
   document.getElementById('excel-upload').addEventListener('change', handleExcelUpload);
   document.getElementById('excel-template-btn').addEventListener('click', () => {
     // Generate a template using the XLSX library already loaded
-    const headers = [["Họ và tên học sinh", "Ngày sinh (Không bắt buộc, ví dụ: 20/11/2012)"]];
+    const headers = [["Mã học sinh", "Họ và tên học sinh", "Ngày sinh (DD/MM/YYYY)"]];
     const data = [
-      ["Nguyễn Văn A", "15/05/2012"],
-      ["Trần Thị B", "20/11/2012"],
-      ["Lê Văn C", ""]
+      ["HS001", "Nguyễn Văn A", "15/05/2012"],
+      ["HS002", "Trần Thị B", "20/11/2012"],
+      ["HS003", "Lê Văn C", ""]
     ];
     const ws = XLSX.utils.aoa_to_sheet(headers.concat(data));
+    // Set column widths
+    ws['!cols'] = [{ wch: 14 }, { wch: 28 }, { wch: 22 }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Danh sach hoc sinh");
     
