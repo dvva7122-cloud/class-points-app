@@ -1206,16 +1206,18 @@ async function doEditStudentName(classId, studentId, currentName) {
   const student = cls && cls.students.find(s => s.id === studentId);
   
   const res = await showCustomPrompt('Sửa thông tin học sinh', [
+    { key: 'code', label: 'Mã học sinh', value: student ? (student.code || '') : '' },
     { key: 'name', label: 'Tên học sinh', value: student ? student.name : currentName },
     { key: 'dob', label: 'Ngày sinh (Ví dụ: 15/08)', value: student ? (student.dob || '') : '', placeholder: 'DD/MM hoặc DD/MM/YYYY' }
   ]);
   if (!res || !res.name) return;
   
   try {
-    const patchRes = await api('PATCH', `/api/classes/${classId}/students/${studentId}`, { name: res.name, dob: res.dob });
+    const patchRes = await api('PATCH', `/api/classes/${classId}/students/${studentId}`, { name: res.name, dob: res.dob, code: res.code });
     if (student) {
       student.name = patchRes.name;
       student.dob = patchRes.dob;
+      student.code = patchRes.code;
     }
     renderCurrentClass();
   } catch (err) {
