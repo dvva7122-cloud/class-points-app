@@ -59,13 +59,13 @@ function renderGradeReport(container, student, grades, points, classId) {
     toolbar.className = 'grade-admin-toolbar';
 
     const importBtn = document.createElement('button');
-    importBtn.className = 'btn-grade-action';
+    importBtn.className = 'btn-grade-action btn-import-excel';
     importBtn.innerHTML = '<i class="fa-solid fa-file-excel"></i> Import điểm từ Excel';
     importBtn.onclick = () => doImportGradesExcel(classId);
     toolbar.appendChild(importBtn);
 
     const templateBtn = document.createElement('button');
-    templateBtn.className = 'btn-grade-action';
+    templateBtn.className = 'btn-grade-action btn-download-template';
     templateBtn.innerHTML = '<i class="fa-solid fa-download"></i> Tải file mẫu điểm';
     templateBtn.onclick = () => doDownloadGradeTemplate(classId);
     toolbar.appendChild(templateBtn);
@@ -75,6 +75,20 @@ function renderGradeReport(container, student, grades, points, classId) {
 
   const report = document.createElement('div');
   report.className = 'grade-report';
+
+  // Tính trước trung bình năm học để hiển thị bên trái
+  const hk1Data = grades && grades.hk1 ? grades.hk1 : null;
+  const hk2Data = grades && grades.hk2 ? grades.hk2 : null;
+  const avgHk1 = calcSemesterAvg(hk1Data);
+  const avgHk2 = calcSemesterAvg(hk2Data);
+  let yearlyAvg = null;
+  if (avgHk1 !== null && avgHk2 !== null) {
+      yearlyAvg = Math.round(((avgHk1 + avgHk2 * 2) / 3) * 100) / 100;
+  } else if (avgHk2 !== null) {
+      yearlyAvg = avgHk2;
+  } else if (avgHk1 !== null) {
+      yearlyAvg = avgHk1;
+  }
 
   // === LEFT: Thông tin học sinh ===
   const left = document.createElement('div');
@@ -86,28 +100,28 @@ function renderGradeReport(container, student, grades, points, classId) {
   left.appendChild(nameEl);
 
   const pointsEl = document.createElement('div');
-  pointsEl.className = 'grade-report-points-fancy';
-  pointsEl.innerHTML = `
-    <div class="points-circle"><i class="fa-solid fa-star"></i></div>
-    <div class="points-text">
-       <span class="pts-val">+${points}</span>
-       <span class="pts-lbl">Điểm cam 🍊</span>
-    </div>
-  `;
+  pointsEl.className = 'grade-report-points-simple';
+  pointsEl.innerHTML = `<span class="pts-val">${points}</span><span class="pts-emoji">🍊</span>`;
   left.appendChild(pointsEl);
+
+  const yearlyBox = document.createElement('div');
+  yearlyBox.className = 'yearly-box-compact';
+  yearlyBox.innerHTML = `
+    <div class="yearly-trophy"><i class="fa-solid fa-trophy"></i></div>
+    <div class="yearly-title">TRUNG BÌNH NĂM</div>
+    <div class="yearly-score">${yearlyAvg !== null ? yearlyAvg.toFixed(2) : '—'}</div>
+  `;
+  left.appendChild(yearlyBox);
 
   report.appendChild(left);
 
-  // === MIDDLE: Bảng điểm 2 học kỳ ===
+  // === RIGHT/MIDDLE: Bảng điểm 2 học kỳ ===
   const middle = document.createElement('div');
   middle.className = 'grade-report-middle';
 
-  let avgHk1 = null;
-  let avgHk2 = null;
-
   const semesters = [
-    { key: 'hk1', label: 'HỌC KỲ I', icon: '📘' },
-    { key: 'hk2', label: 'HỌC KỲ II', icon: '📗' }
+    { key: 'hk1', label: 'HỌC KỲ I', icon: '📘', headerClass: 'sem-hk1' },
+    { key: 'hk2', label: 'HỌC KỲ II', icon: '📗', headerClass: 'sem-hk2' }
   ];
 
   semesters.forEach(sem => {
@@ -117,7 +131,7 @@ function renderGradeReport(container, student, grades, points, classId) {
 
     // Header
     const header = document.createElement('div');
-    header.className = 'semester-header';
+    header.className = `semester-header ${sem.headerClass}`;
     header.innerHTML = `<span class="sem-icon">${sem.icon}</span> ${sem.label}`;
     section.appendChild(header);
 
@@ -206,14 +220,9 @@ function renderGradeReport(container, student, grades, points, classId) {
     const tdAvg = document.createElement('td');
     tdAvg.className = 'td-avg';
     const avg = calcSemesterAvg(semData);
-    if (sem.key === 'hk1') avgHk1 = avg;
-    if (sem.key === 'hk2') avgHk2 = avg;
     tdAvg.textContent = avg !== null ? avg.toFixed(2) : '—';
     tr.appendChild(tdAvg);
 
-    tbody.appendChild(tr);
-    table.appendChild(tbody);
-    section.appendChild(table);
     tbody.appendChild(tr);
     table.appendChild(tbody);
     section.appendChild(table);
@@ -221,28 +230,6 @@ function renderGradeReport(container, student, grades, points, classId) {
   });
 
   report.appendChild(middle);
-
-  // === RIGHT: Tổng kết năm học ===
-  const right = document.createElement('div');
-  right.className = 'grade-report-right-panel';
-  
-  let yearlyAvg = null;
-  if (avgHk1 !== null && avgHk2 !== null) {
-      yearlyAvg = Math.round(((avgHk1 + avgHk2 * 2) / 3) * 100) / 100;
-  } else if (avgHk2 !== null) {
-      yearlyAvg = avgHk2;
-  } else if (avgHk1 !== null) {
-      yearlyAvg = avgHk1;
-  }
-
-  right.innerHTML = `
-    <div class="yearly-box">
-      <div class="yearly-trophy"><i class="fa-solid fa-trophy"></i></div>
-      <div class="yearly-title">TRUNG BÌNH<br>NĂM HỌC</div>
-      <div class="yearly-score">${yearlyAvg !== null ? yearlyAvg.toFixed(2) : '—'}</div>
-    </div>
-  `;
-  report.appendChild(right);
   container.appendChild(report);
 }
 
