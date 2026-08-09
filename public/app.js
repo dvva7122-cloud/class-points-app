@@ -3474,6 +3474,20 @@ function renderSeatingChart(cls) {
   bb.innerHTML = '<span class="bb-text">BẢNG VIẾT</span>';
   canvas.appendChild(bb);
 
+  // Cây cảnh góc trái
+  const plantL = document.createElement('div');
+  plantL.className = 'classroom-plant';
+  plantL.style.cssText = 'left: 18px; top: 60px;';
+  plantL.innerHTML = '<div class="plant-leaves">🌿</div><div class="plant-pot"></div>';
+  canvas.appendChild(plantL);
+
+  // Cây cảnh góc phải
+  const plantR = document.createElement('div');
+  plantR.className = 'classroom-plant';
+  plantR.style.cssText = 'right: 18px; top: 60px;';
+  plantR.innerHTML = '<div class="plant-leaves">🌱</div><div class="plant-pot"></div>';
+  canvas.appendChild(plantR);
+
   
 
   // Ve ban
@@ -3552,10 +3566,10 @@ function renderSeatingChart(cls) {
             }
           } else {
             seat.studentId = null;
-            seatEl.textContent = 'Trống';
+            seatEl.innerHTML = '<div class="empty-seat-circle">+</div><div>Trống</div>';
           }
         } else {
-          seatEl.textContent = 'Trống';
+          seatEl.innerHTML = '<div class="empty-seat-circle">+</div><div>Trống</div>';
         }
 
         if (isEditingSeatingChart) {
