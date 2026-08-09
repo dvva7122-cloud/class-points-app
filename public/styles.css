@@ -2354,45 +2354,102 @@ body:not(.is-editing) #add-student-container {
     line-height: 1.3;
 }
 
-.grade-report-points {
+.grade-report-points-fancy {
     display: flex;
     align-items: center;
-    gap: 6px;
-    background: #FFF7ED;
-    border: 1.5px solid #FDBA74;
+    gap: 12px;
+    background: linear-gradient(135deg, #DCFCE7 0%, #BBF7D0 100%);
+    border: 1.5px solid #86EFAC;
     border-radius: 12px;
-    padding: 8px 14px;
+    padding: 10px 14px;
+    width: 100%;
 }
 
-.grade-report-points .pts-val {
-    font-size: 1.6rem;
-    font-weight: 900;
-    color: #F57C00;
-}
-
-.grade-report-points .pts-emoji {
-    font-size: 1.4rem;
-}
-
-.grade-report-info-row {
+.grade-report-points-fancy .points-circle {
+    width: 36px;
+    height: 36px;
+    background: #22C55E;
+    border-radius: 50%;
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 0.82rem;
-    color: #64748B;
+    justify-content: center;
+    color: #fff;
+    font-size: 1.2rem;
+    box-shadow: 0 4px 6px -1px rgba(34, 197, 94, 0.3);
 }
 
-.grade-report-info-row i {
-    font-size: 0.9rem;
-    color: #94A3B8;
+.grade-report-points-fancy .points-text {
+    display: flex;
+    flex-direction: column;
 }
 
-.grade-report-right {
+.grade-report-points-fancy .pts-val {
+    font-size: 1.15rem;
+    font-weight: 900;
+    color: #166534;
+    line-height: 1.1;
+}
+
+.grade-report-points-fancy .pts-lbl {
+    font-size: 0.75rem;
+    color: #15803D;
+    font-weight: 600;
+}
+
+.grade-report-middle {
     flex: 1;
     min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 16px;
+}
+
+.grade-report-right-panel {
+    flex: 0 0 160px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.yearly-box {
+    background: #FFF8E1;
+    border: 2px dashed #FDE047;
+    border-radius: 20px;
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+}
+
+.yearly-trophy {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, #FEF08A 0%, #FACC15 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 2rem;
+    box-shadow: 0 8px 16px -4px rgba(250, 204, 21, 0.4);
+    margin-bottom: 8px;
+}
+
+.yearly-title {
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: #854D0E;
+    line-height: 1.3;
+}
+
+.yearly-score {
+    font-size: 2.8rem;
+    font-weight: 900;
+    color: #D97706;
+    line-height: 1;
+    text-shadow: 0 2px 4px rgba(217, 119, 6, 0.15);
 }
 
 .semester-section {
@@ -2479,8 +2536,6 @@ body:not(.is-editing) #add-student-container {
     cursor: pointer;
     transition: background 0.15s, box-shadow 0.15s;
     border-radius: 6px;
-    min-width: 42px;
-    display: inline-block;
 }
 
 .grade-cell-editable:hover {
