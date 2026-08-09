@@ -1733,7 +1733,8 @@ body:not(.is-editing) #add-student-container {
     overflow-x: auto;
     padding-bottom: 10px;
     width: 100%;
-    justify-content: center;
+    /* Use safe center if possible, fallback to flex-start so it doesn't cutoff on small screens */
+    justify-content: flex-start; 
 }
 
 /* ── Panel học sinh chưa xếp chỗ ── */
@@ -1817,6 +1818,24 @@ body:not(.is-editing) #add-student-container {
         0 0 0 3px #C4956A,
         0 20px 60px rgba(0,0,0,0.15),
         inset 0 0 60px rgba(0,0,0,0.04);
+}
+
+.classroom-canvas.editing-mode {
+    background-image:
+        repeating-linear-gradient(
+            0deg,
+            rgba(180,130,80,0.2) 0px,
+            rgba(180,130,80,0.2) 1px,
+            transparent 1px,
+            transparent 48px
+        ),
+        repeating-linear-gradient(
+            90deg,
+            rgba(180,130,80,0.15) 0px,
+            rgba(180,130,80,0.15) 1px,
+            transparent 1px,
+            transparent 48px
+        );
 }
 
 /* Pseudo-element cho tường trên (ceiling shadow) */

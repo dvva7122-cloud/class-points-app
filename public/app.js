@@ -3466,29 +3466,13 @@ function renderSeatingChart(cls) {
 
   // Canvas
   const canvas = document.createElement('div');
-  canvas.className = 'classroom-canvas';
+  canvas.className = 'classroom-canvas' + (isEditingSeatingChart ? ' editing-mode' : '');
 
   // Bảng đen
   const bb = document.createElement('div');
   bb.className = 'blackboard';
   bb.innerHTML = '<span class="bb-text">BẢNG VIẾT</span>';
   canvas.appendChild(bb);
-
-  // Cây cảnh góc trái
-  const plantL = document.createElement('div');
-  plantL.className = 'classroom-plant';
-  plantL.style.cssText = 'left: 18px; top: 60px;';
-  plantL.innerHTML = '<div class="plant-leaves">🌿</div><div class="plant-pot"></div>';
-  canvas.appendChild(plantL);
-
-  // Cây cảnh góc phải
-  const plantR = document.createElement('div');
-  plantR.className = 'classroom-plant';
-  plantR.style.cssText = 'right: 18px; top: 60px;';
-  plantR.innerHTML = '<div class="plant-leaves">🌱</div><div class="plant-pot"></div>';
-  canvas.appendChild(plantR);
-
-  
 
   // Ve ban
   currentChartData.desks.forEach(desk => {
