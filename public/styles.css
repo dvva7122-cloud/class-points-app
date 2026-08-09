@@ -1733,7 +1733,9 @@ body:not(.is-editing) #add-student-container {
     overflow-x: auto;
     padding-bottom: 10px;
     width: 100%;
-    /* Use safe center if possible, fallback to flex-start so it doesn't cutoff on small screens */
+    justify-content: center; 
+}
+.seating-layout-wrapper.editing {
     justify-content: flex-start; 
 }
 

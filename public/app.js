@@ -3418,7 +3418,7 @@ function renderSeatingChart(cls) {
   container.appendChild(header);
 
   const layoutWrapper = document.createElement('div');
-  layoutWrapper.className = 'seating-layout-wrapper';
+  layoutWrapper.className = 'seating-layout-wrapper' + (isEditingSeatingChart ? ' editing' : '');
 
   // Panel học sinh chưa xếp chỗ
   const panel = document.createElement('div');
