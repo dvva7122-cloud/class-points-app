@@ -2398,19 +2398,6 @@ body:not(.is-editing) #add-student-container {
     overflow: hidden;
 }
 
-.yearly-box-compact::before, .yearly-box-compact::after {
-    content: '';
-    position: absolute;
-    width: 6px;
-    height: 6px;
-    background: #60A5FA;
-    border-radius: 2px;
-    transform: rotate(45deg);
-}
-
-.yearly-box-compact::before { top: 15px; left: 20px; }
-.yearly-box-compact::after { top: 30px; right: 20px; background: #F87171; }
-
 .yearly-box-compact .yearly-trophy {
     font-size: 3rem;
     color: #FBBF24;
@@ -2440,26 +2427,10 @@ body:not(.is-editing) #add-student-container {
     display: inline-block;
     color: #1E3A8A;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
-    font-weight: 900;
+    letter-spacing: 1px;
+    font-weight: 800;
     font-size: 1.6rem;
-    margin: 0 16px;
-}
-
-.grade-report-title-wrap i {
-    color: #93C5FD;
-    font-size: 1.4rem;
-    position: absolute;
-    top: 5px;
-}
-
-.grade-report-title-wrap .icon-left {
-    left: -35px;
-}
-
-.grade-report-title-wrap .icon-right {
-    right: -35px;
-    transform: scaleX(-1);
+    margin: 0;
 }
 
 .grade-report-title-wrap .dots-under {

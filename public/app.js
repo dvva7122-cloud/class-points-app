@@ -48,13 +48,13 @@ function calcSemesterAvg(sem) {
 
 function renderGradeReport(container, student, grades, points, classId) {
   container.innerHTML = `
-    <div class="grade-report-title-wrap">
-        <i class="fa-solid fa-wheat-awn icon-left"></i>
-        <h3>BẢNG ĐIỂM HỌC SINH</h3>
-        <i class="fa-solid fa-wheat-awn icon-right"></i>
-        <div class="dots-under">
-           <span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span>
-        </div>
+    <div style="width: 100%; display: flex; justify-content: center;">
+      <div class="grade-report-title-wrap">
+          <h3>BẢNG ĐIỂM HỌC SINH</h3>
+          <div class="dots-under">
+             <span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span>
+          </div>
+      </div>
     </div>
   `;
 
