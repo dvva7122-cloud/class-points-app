@@ -16,16 +16,407 @@ async function doStudentPrivatePopup(classId, student) {
     const verifyRes = await api('POST', `/api/classes/${classId}/students/${student.id}/verify-password`, { password: res.password });
     if (verifyRes.success) {
       const modal = document.getElementById('student-popup-modal');
-      document.getElementById('student-popup-title').textContent = `🎒 Khu vực riêng của ${student.name}`;
+      const body  = document.getElementById('student-popup-body');
+      const grades = verifyRes.grades;
+      const points = verifyRes.points;
+
+      renderGradeReport(body, student, grades, points, classId);
+
       modal.classList.add('show');
-      
-      const closeBtn = document.getElementById('student-popup-close');
-      closeBtn.onclick = () => modal.classList.remove('show');
+      document.getElementById('student-popup-close').onclick = () => modal.classList.remove('show');
     }
   } catch (err) {
     showError(err.message);
   }
 }
+
+// Tính trung bình học kỳ: (Tổng HS1 + HS2×2 + HS3×3) / (n + 2 + 3)
+function calcSemesterAvg(sem) {
+  if (!sem) return null;
+  const hs1Scores = (sem.hs1 || []).filter(v => v !== null && v !== undefined);
+  const hs2 = sem.hs2;
+  const hs3 = sem.hs3;
+  if (hs1Scores.length === 0 && hs2 === null && hs3 === null) return null;
+
+  let totalWeight = 0, totalScore = 0;
+  hs1Scores.forEach(v => { totalScore += v * 1; totalWeight += 1; });
+  if (hs2 !== null && hs2 !== undefined) { totalScore += hs2 * 2; totalWeight += 2; }
+  if (hs3 !== null && hs3 !== undefined) { totalScore += hs3 * 3; totalWeight += 3; }
+  if (totalWeight === 0) return null;
+  return Math.round((totalScore / totalWeight) * 100) / 100;
+}
+
+function renderGradeReport(container, student, grades, points, classId) {
+  container.innerHTML = '';
+
+  // Admin toolbar (nếu đang là admin)
+  if (isAdmin) {
+    const toolbar = document.createElement('div');
+    toolbar.className = 'grade-admin-toolbar';
+
+    const importBtn = document.createElement('button');
+    importBtn.className = 'btn-grade-action';
+    importBtn.innerHTML = '<i class="fa-solid fa-file-excel"></i> Import điểm từ Excel';
+    importBtn.onclick = () => doImportGradesExcel(classId);
+    toolbar.appendChild(importBtn);
+
+    const templateBtn = document.createElement('button');
+    templateBtn.className = 'btn-grade-action';
+    templateBtn.innerHTML = '<i class="fa-solid fa-download"></i> Tải file mẫu điểm';
+    templateBtn.onclick = () => doDownloadGradeTemplate(classId);
+    toolbar.appendChild(templateBtn);
+
+    container.appendChild(toolbar);
+  }
+
+  const report = document.createElement('div');
+  report.className = 'grade-report';
+
+  // === LEFT: Thông tin học sinh ===
+  const left = document.createElement('div');
+  left.className = 'grade-report-left';
+
+  const nameEl = document.createElement('div');
+  nameEl.className = 'grade-report-name';
+  nameEl.textContent = student.name;
+  left.appendChild(nameEl);
+
+  const pointsEl = document.createElement('div');
+  pointsEl.className = 'grade-report-points';
+  pointsEl.innerHTML = `<span class="pts-val">${points}</span><span class="pts-emoji">🍊</span>`;
+  left.appendChild(pointsEl);
+
+  if (student.code) {
+    const codeRow = document.createElement('div');
+    codeRow.className = 'grade-report-info-row';
+    codeRow.innerHTML = `<i class="fa-solid fa-id-badge"></i> ${student.code}`;
+    left.appendChild(codeRow);
+  }
+
+  if (student.dob) {
+    const dobRow = document.createElement('div');
+    dobRow.className = 'grade-report-info-row';
+    dobRow.innerHTML = `<i class="fa-solid fa-cake-candles"></i> ${student.dob}`;
+    left.appendChild(dobRow);
+  }
+
+  report.appendChild(left);
+
+  // === RIGHT: Bảng điểm 2 học kỳ ===
+  const right = document.createElement('div');
+  right.className = 'grade-report-right';
+
+  const semesters = [
+    { key: 'hk1', label: 'HỌC KỲ I', icon: '📘' },
+    { key: 'hk2', label: 'HỌC KỲ II', icon: '📗' }
+  ];
+
+  semesters.forEach(sem => {
+    const semData = (grades && grades[sem.key]) || { hs1: [null, null, null, null], hs2: null, hs3: null };
+    const section = document.createElement('div');
+    section.className = 'semester-section';
+
+    // Header
+    const header = document.createElement('div');
+    header.className = 'semester-header';
+    header.innerHTML = `<span class="sem-icon">${sem.icon}</span> ${sem.label}`;
+    section.appendChild(header);
+
+    // Table
+    const table = document.createElement('table');
+    table.className = 'grade-table';
+
+    // Thead — 2 rows
+    const thead = document.createElement('thead');
+
+    // Row 1: group headers
+    const tr1 = document.createElement('tr');
+    const th1_hs1 = document.createElement('th');
+    th1_hs1.className = 'col-group-header';
+    th1_hs1.colSpan = 4;
+    th1_hs1.textContent = 'ĐIỂM HỆ SỐ 1';
+    tr1.appendChild(th1_hs1);
+
+    const th1_hs2 = document.createElement('th');
+    th1_hs2.className = 'col-group-header';
+    th1_hs2.rowSpan = 2;
+    th1_hs2.innerHTML = 'ĐIỂM HỆ SỐ 2<br><small>(Thi giữa kì)</small>';
+    tr1.appendChild(th1_hs2);
+
+    const th1_hs3 = document.createElement('th');
+    th1_hs3.className = 'col-group-header';
+    th1_hs3.rowSpan = 2;
+    th1_hs3.innerHTML = 'ĐIỂM HỆ SỐ 3<br><small>(Thi cuối kì)</small>';
+    tr1.appendChild(th1_hs3);
+
+    const th1_avg = document.createElement('th');
+    th1_avg.className = 'col-group-header';
+    th1_avg.rowSpan = 2;
+    th1_avg.innerHTML = 'ĐIỂM TRUNG BÌNH<br>HỌC KỲ';
+    tr1.appendChild(th1_avg);
+
+    thead.appendChild(tr1);
+
+    // Row 2: sub headers for HS1
+    const tr2 = document.createElement('tr');
+    for (let i = 1; i <= 4; i++) {
+      const th = document.createElement('th');
+      th.textContent = `Điểm ${i}`;
+      tr2.appendChild(th);
+    }
+    thead.appendChild(tr2);
+
+    table.appendChild(thead);
+
+    // Tbody
+    const tbody = document.createElement('tbody');
+    const tr = document.createElement('tr');
+
+    // 4 cột HS1
+    for (let i = 0; i < 4; i++) {
+      const td = document.createElement('td');
+      const val = semData.hs1 ? semData.hs1[i] : null;
+      renderGradeCell(td, val, isAdmin, (newVal) => {
+        if (!grades[sem.key]) grades[sem.key] = { hs1: [null, null, null, null], hs2: null, hs3: null };
+        if (!grades[sem.key].hs1) grades[sem.key].hs1 = [null, null, null, null];
+        grades[sem.key].hs1[i] = newVal;
+        saveGradesAndRefresh(classId, student, grades, container, points);
+      });
+      tr.appendChild(td);
+    }
+
+    // HS2
+    const tdHs2 = document.createElement('td');
+    renderGradeCell(tdHs2, semData.hs2, isAdmin, (newVal) => {
+      if (!grades[sem.key]) grades[sem.key] = { hs1: [null, null, null, null], hs2: null, hs3: null };
+      grades[sem.key].hs2 = newVal;
+      saveGradesAndRefresh(classId, student, grades, container, points);
+    });
+    tr.appendChild(tdHs2);
+
+    // HS3
+    const tdHs3 = document.createElement('td');
+    renderGradeCell(tdHs3, semData.hs3, isAdmin, (newVal) => {
+      if (!grades[sem.key]) grades[sem.key] = { hs1: [null, null, null, null], hs2: null, hs3: null };
+      grades[sem.key].hs3 = newVal;
+      saveGradesAndRefresh(classId, student, grades, container, points);
+    });
+    tr.appendChild(tdHs3);
+
+    // TB
+    const tdAvg = document.createElement('td');
+    tdAvg.className = 'td-avg';
+    const avg = calcSemesterAvg(semData);
+    tdAvg.textContent = avg !== null ? avg.toFixed(2) : '—';
+    tr.appendChild(tdAvg);
+
+    tbody.appendChild(tr);
+    table.appendChild(tbody);
+    section.appendChild(table);
+    right.appendChild(section);
+  });
+
+  report.appendChild(right);
+  container.appendChild(report);
+}
+
+function renderGradeCell(td, value, editable, onSave) {
+  if (value !== null && value !== undefined) {
+    td.textContent = value;
+  } else {
+    td.textContent = '—';
+    td.classList.add('td-empty');
+  }
+
+  if (editable) {
+    td.classList.add('grade-cell-editable');
+    td.addEventListener('click', () => {
+      const currentVal = value;
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.step = '0.1';
+      input.min = '0';
+      input.max = '10';
+      input.className = 'grade-cell-input';
+      input.value = currentVal !== null && currentVal !== undefined ? currentVal : '';
+      
+      td.textContent = '';
+      td.classList.remove('td-empty');
+      td.appendChild(input);
+      input.focus();
+      input.select();
+
+      const apply = () => {
+        const raw = input.value.trim();
+        let newVal = null;
+        if (raw !== '') {
+          const n = parseFloat(raw);
+          if (!isNaN(n) && n >= 0 && n <= 10) {
+            newVal = Math.round(n * 100) / 100;
+          }
+        }
+        onSave(newVal);
+      };
+
+      input.addEventListener('blur', apply);
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+        if (e.key === 'Escape') {
+          // Revert
+          td.textContent = currentVal !== null && currentVal !== undefined ? currentVal : '—';
+          if (currentVal === null || currentVal === undefined) td.classList.add('td-empty');
+        }
+      });
+    });
+  }
+}
+
+async function saveGradesAndRefresh(classId, student, grades, container, points) {
+  try {
+    await api('PATCH', `/api/classes/${classId}/students/${student.id}/grades`, { grades });
+    renderGradeReport(container, student, grades, points, classId);
+  } catch (err) {
+    if (err.message !== 'Unauthorized') showError(err.message);
+  }
+}
+
+// Import điểm từ Excel (Admin)
+function doImportGradesExcel(classId) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.xlsx,.xls';
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async function(evt) {
+      try {
+        const wb = XLSX.read(evt.target.result, { type: 'binary' });
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+        if (!rows || rows.length < 2) {
+          showError('File Excel trống hoặc không đọc được.');
+          return;
+        }
+
+        const header = rows[0];
+        // Tìm cột mã HS và cột tên
+        let codeCol = -1, nameCol = -1;
+        for (let i = 0; i < header.length; i++) {
+          const h = String(header[i] || '').toLowerCase();
+          if (h.includes('mã') || h.includes('code')) codeCol = i;
+          if (h.includes('tên') || h.includes('name') || h.includes('họ')) nameCol = i;
+        }
+        if (nameCol === -1) nameCol = codeCol !== -1 ? 1 : 0;
+
+        // Tìm các cột điểm theo header: HK1 Điểm 1..4, HK1 Giữa kì, HK1 Cuối kì, HK2 tương tự
+        const gradeColNames = [
+          'hk1 điểm 1', 'hk1 điểm 2', 'hk1 điểm 3', 'hk1 điểm 4',
+          'hk1 giữa kì', 'hk1 cuối kì',
+          'hk2 điểm 1', 'hk2 điểm 2', 'hk2 điểm 3', 'hk2 điểm 4',
+          'hk2 giữa kì', 'hk2 cuối kì'
+        ];
+        const gradeCols = gradeColNames.map(name => {
+          for (let i = 0; i < header.length; i++) {
+            if (String(header[i] || '').toLowerCase().trim() === name) return i;
+          }
+          return -1;
+        });
+
+        const studentsGrades = [];
+        for (let i = 1; i < rows.length; i++) {
+          const row = rows[i];
+          const code = codeCol !== -1 && row[codeCol] ? String(row[codeCol]).trim() : null;
+          const name = row[nameCol] ? String(row[nameCol]).trim() : null;
+          if (!code && !name) continue;
+
+          const g = (idx) => {
+            if (idx === -1 || row[idx] === undefined || row[idx] === null || row[idx] === '') return null;
+            const n = parseFloat(row[idx]);
+            return (!isNaN(n) && n >= 0 && n <= 10) ? Math.round(n * 100) / 100 : null;
+          };
+
+          studentsGrades.push({
+            code, name,
+            grades: {
+              hk1: {
+                hs1: [g(gradeCols[0]), g(gradeCols[1]), g(gradeCols[2]), g(gradeCols[3])],
+                hs2: g(gradeCols[4]),
+                hs3: g(gradeCols[5])
+              },
+              hk2: {
+                hs1: [g(gradeCols[6]), g(gradeCols[7]), g(gradeCols[8]), g(gradeCols[9])],
+                hs2: g(gradeCols[10]),
+                hs3: g(gradeCols[11])
+              }
+            }
+          });
+        }
+
+        if (studentsGrades.length === 0) {
+          showError('Không tìm thấy dữ liệu điểm trong file.');
+          return;
+        }
+
+        const res = await api('POST', `/api/classes/${classId}/import-grades`, { studentsGrades });
+        alert(`✅ Đã cập nhật điểm cho ${res.updated} học sinh!`);
+        // Reload nếu popup đang mở
+        await loadAllData();
+        renderCurrentClass();
+      } catch (err) {
+        if (err.message !== 'Unauthorized') showError('Lỗi import: ' + err.message);
+      }
+    };
+    reader.readAsBinaryString(file);
+  };
+  input.click();
+}
+
+// Tải file mẫu Excel điểm
+function doDownloadGradeTemplate(classId) {
+  const cls = appData.find(c => c.id === classId);
+  const headers = [
+    'Mã học sinh', 'Họ và tên',
+    'HK1 Điểm 1', 'HK1 Điểm 2', 'HK1 Điểm 3', 'HK1 Điểm 4',
+    'HK1 Giữa kì', 'HK1 Cuối kì',
+    'HK2 Điểm 1', 'HK2 Điểm 2', 'HK2 Điểm 3', 'HK2 Điểm 4',
+    'HK2 Giữa kì', 'HK2 Cuối kì'
+  ];
+
+  const data = [];
+  if (cls && cls.students) {
+    cls.students.forEach(s => {
+      const g = s.grades || { hk1: { hs1: [null,null,null,null], hs2: null, hs3: null }, hk2: { hs1: [null,null,null,null], hs2: null, hs3: null } };
+      data.push([
+        s.code || '', s.name,
+        ...(g.hk1.hs1 || [null,null,null,null]),
+        g.hk1.hs2, g.hk1.hs3,
+        ...(g.hk2.hs1 || [null,null,null,null]),
+        g.hk2.hs2, g.hk2.hs3
+      ]);
+    });
+  }
+
+  // Thêm dòng mẫu nếu lớp rỗng
+  if (data.length === 0) {
+    data.push(['HS001', 'Nguyễn Văn A', 8.5, 9.0, 7.5, 8.0, 8.5, 9.0, 8.0, 8.5, 9.0, 8.5, 8.5, 9.5]);
+  }
+
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
+  ws['!cols'] = [
+    { wch: 14 }, { wch: 24 },
+    { wch: 11 }, { wch: 11 }, { wch: 11 }, { wch: 11 },
+    { wch: 13 }, { wch: 13 },
+    { wch: 11 }, { wch: 11 }, { wch: 11 }, { wch: 11 },
+    { wch: 13 }, { wch: 13 }
+  ];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Bang diem');
+  XLSX.writeFile(wb, 'Mau_nhap_diem.xlsx');
+}
+
 
 // ─── Token helpers ────────────────────────────────────────────────────────
 function getToken() {

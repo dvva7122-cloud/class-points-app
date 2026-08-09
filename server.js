@@ -79,6 +79,37 @@ function generateId(prefix = '') {
   return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
+function emptyGrades() {
+  return {
+    hk1: { hs1: [null, null, null, null], hs2: null, hs3: null },
+    hk2: { hs1: [null, null, null, null], hs2: null, hs3: null }
+  };
+}
+
+function validateGradeValue(v) {
+  if (v === null || v === undefined || v === '') return null;
+  const n = parseFloat(v);
+  if (isNaN(n) || n < 0 || n > 10) return null;
+  return Math.round(n * 100) / 100; // tối đa 2 chữ số thập phân
+}
+
+function sanitizeGrades(raw) {
+  const g = emptyGrades();
+  if (!raw || typeof raw !== 'object') return g;
+  for (const hk of ['hk1', 'hk2']) {
+    if (raw[hk] && typeof raw[hk] === 'object') {
+      if (Array.isArray(raw[hk].hs1)) {
+        for (let i = 0; i < 4; i++) {
+          g[hk].hs1[i] = validateGradeValue(raw[hk].hs1[i]);
+        }
+      }
+      g[hk].hs2 = validateGradeValue(raw[hk].hs2);
+      g[hk].hs3 = validateGradeValue(raw[hk].hs3);
+    }
+  }
+  return g;
+}
+
 let clients = [];
 
 function broadcast(data) {
@@ -390,6 +421,8 @@ app.post('/api/classes/:classId/students/bulk', requireAdmin, async (req, res) =
       const rawPassword = rawCode.toLowerCase() + rawDob.replace(/\//g, '');
       passwordHash = await bcrypt.hash(rawPassword, 10);
     }
+    // Parse grades nếu có
+    const rawGrades = (typeof raw === 'object' && raw.grades) ? sanitizeGrades(raw.grades) : emptyGrades();
     newStudents.push({
       id: generateId('s'),
       name: validName,
@@ -397,6 +430,7 @@ app.post('/api/classes/:classId/students/bulk', requireAdmin, async (req, res) =
       dob: rawDob,
       points: 0,
       passwordHash: passwordHash,
+      grades: rawGrades,
       created_at: Date.now()
     });
   }
@@ -517,7 +551,69 @@ app.post('/api/classes/:classId/students/:studentId/verify-password', async (req
       return res.status(401).json({ error: 'Mật khẩu không đúng.' });
     }
 
-    res.json({ success: true, studentName: student.name });
+    res.json({ success: true, studentName: student.name, grades: student.grades || emptyGrades(), points: student.points });
+  } catch (err) {
+    res.status(500).json({ error: 'Lỗi server' });
+  }
+});
+
+// PATCH /api/classes/:classId/students/:studentId/grades  (admin) - Cập nhật điểm học sinh
+app.patch('/api/classes/:classId/students/:studentId/grades', requireAdmin, async (req, res) => {
+  const { classId, studentId } = req.params;
+  const grades = sanitizeGrades(req.body.grades);
+
+  try {
+    const classesColl = db.getClassesCollection();
+    const result = await classesColl.findOneAndUpdate(
+      { id: classId, 'students.id': studentId },
+      { $set: { 'students.$.grades': grades } },
+      { returnDocument: 'after' }
+    );
+
+    if (!result) return res.status(404).json({ error: 'Không tìm thấy học sinh hoặc lớp.' });
+    
+    const updatedStudent = result.students.find(s => s.id === studentId);
+    broadcast({ type: 'DATA_CHANGED' });
+    res.json({ success: true, grades: updatedStudent.grades });
+  } catch (err) {
+    res.status(500).json({ error: 'Lỗi server' });
+  }
+});
+
+// POST /api/classes/:classId/import-grades  (admin) - Import điểm hàng loạt từ Excel
+app.post('/api/classes/:classId/import-grades', requireAdmin, async (req, res) => {
+  const { classId } = req.params;
+  const { studentsGrades } = req.body; // [ { code/name, grades: {...} } ]
+  if (!Array.isArray(studentsGrades) || studentsGrades.length === 0) {
+    return res.status(400).json({ error: 'Dữ liệu điểm không hợp lệ.' });
+  }
+
+  try {
+    const classesColl = db.getClassesCollection();
+    const cls = await classesColl.findOne({ id: classId });
+    if (!cls) return res.status(404).json({ error: 'Không tìm thấy lớp.' });
+
+    let updated = 0;
+    for (const item of studentsGrades) {
+      // Tìm học sinh theo mã (ưu tiên) hoặc tên
+      let student = null;
+      if (item.code) {
+        student = cls.students.find(s => s.code && s.code.toLowerCase() === String(item.code).toLowerCase().trim());
+      }
+      if (!student && item.name) {
+        const searchName = String(item.name).trim().toLowerCase();
+        student = cls.students.find(s => s.name.toLowerCase() === searchName);
+      }
+      if (!student) continue;
+
+      student.grades = sanitizeGrades(item.grades);
+      updated++;
+    }
+
+    // Lưu toàn bộ lớp
+    await classesColl.updateOne({ id: classId }, { $set: { students: cls.students } });
+    broadcast({ type: 'DATA_CHANGED' });
+    res.json({ success: true, updated });
   } catch (err) {
     res.status(500).json({ error: 'Lỗi server' });
   }
