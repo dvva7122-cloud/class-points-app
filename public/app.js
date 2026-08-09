@@ -48,8 +48,13 @@ function calcSemesterAvg(sem) {
 
 function renderGradeReport(container, student, grades, points, classId) {
   container.innerHTML = `
-    <div style="text-align: center; margin-bottom: 20px;">
-        <h3 style="display: inline-block; padding: 8px 24px; border: 2px solid #3B82F6; border-radius: 20px; color: #1E3A8A; background: #EFF6FF; text-transform: uppercase; letter-spacing: 1px; font-weight: 800;">Bảng Điểm Học Sinh</h3>
+    <div class="grade-report-title-wrap">
+        <i class="fa-solid fa-wheat-awn icon-left"></i>
+        <h3>BẢNG ĐIỂM HỌC SINH</h3>
+        <i class="fa-solid fa-wheat-awn icon-right"></i>
+        <div class="dots-under">
+           <span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span>
+        </div>
     </div>
   `;
 
@@ -417,7 +422,20 @@ function doDownloadGradeTemplate(classId) {
     data.push(['HS001', 'Nguyễn Văn A', 8.5, 9.0, 7.5, 8.0, 8.5, 9.0, 8.0, 8.5, 9.0, 8.5, 8.5, 9.5]);
   }
 
+  const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
+  
+  // Thử thêm màu sắc cơ bản cho header nếu thư viện hỗ trợ style
+  for (let c = 0; c < 14; c++) {
+    const cellRef = XLSX.utils.encode_cell({ r: 0, c: c });
+    if (!ws[cellRef]) continue;
+    ws[cellRef].s = {
+      font: { bold: true, color: { rgb: "FFFFFF" } },
+      fill: { fgColor: { rgb: c < 2 ? "475569" : (c < 8 ? "3B82F6" : "10B981") } },
+      alignment: { horizontal: "center" }
+    };
+  }
+
   ws['!cols'] = [
     { wch: 14 }, { wch: 24 },
     { wch: 11 }, { wch: 11 }, { wch: 11 }, { wch: 11 },
@@ -425,7 +443,6 @@ function doDownloadGradeTemplate(classId) {
     { wch: 11 }, { wch: 11 }, { wch: 11 }, { wch: 11 },
     { wch: 13 }, { wch: 13 }
   ];
-  const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Bang diem');
   XLSX.writeFile(wb, 'Mau_nhap_diem.xlsx');
 }
