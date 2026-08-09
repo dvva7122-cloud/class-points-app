@@ -2528,14 +2528,14 @@ body:not(.is-editing) #add-student-container {
 }
 
 .grade-table thead th {
-    background: #F1F5F9;
-    color: #475569;
+    background: #F8FAFC;
+    color: #334155;
     font-weight: 700;
-    padding: 8px 6px;
+    padding: 10px 6px;
     text-align: center;
-    border-bottom: 1.5px solid #E2E8F0;
-    border-right: 1px solid #E2E8F0;
-    font-size: 0.78rem;
+    border-bottom: 2px solid #CBD5E1;
+    border-right: 1.5px solid #CBD5E1;
+    font-size: 0.8rem;
     line-height: 1.3;
 }
 
@@ -2544,23 +2544,31 @@ body:not(.is-editing) #add-student-container {
 }
 
 .grade-table thead th.col-group-header {
-    background: #F8FAFC;
+    background: #F1F5F9;
     font-weight: 800;
-    color: #334155;
-    border-bottom: 1px solid #E2E8F0;
+    color: #1E293B;
+    border-bottom: 1.5px solid #CBD5E1;
 }
 
 .grade-table tbody td {
-    padding: 10px 6px;
+    padding: 12px 6px;
     text-align: center;
-    border-right: 1px solid #E2E8F0;
+    border-right: 1.5px solid #CBD5E1;
+    border-bottom: 1px solid #E2E8F0;
     font-weight: 700;
     color: #1E293B;
-    font-size: 1rem;
 }
 
 .grade-table tbody td:last-child {
     border-right: none;
+}
+
+.grade-table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.grade-table tbody tr:hover {
+    background-color: #F8FAFC;
 }
 
 .grade-table tbody td.td-avg {
@@ -2571,7 +2579,7 @@ body:not(.is-editing) #add-student-container {
 }
 
 .grade-table tbody td.td-empty {
-    color: #CBD5E1;
+    color: #94A3B8;
     font-weight: 400;
     font-style: italic;
 }
