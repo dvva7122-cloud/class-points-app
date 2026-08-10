@@ -2211,28 +2211,57 @@ function getDuckSVG(skin, size = 42) {
               </g>`;
   }
 
-  // Ultra cute, chubby rubber duck SVG (side-profile facing Right)
+  // Ultra cute, chubby 3D rubber duck SVG (side-profile facing Right)
+  const bodyId = skin.body.replace('#','');
+  const beakId = skin.beak.replace('#','');
+  const wingId = skin.wing.replace('#','');
+  
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 42" width="${size}" height="${size}">
+    <defs>
+      <radialGradient id="bodyShine_${bodyId}" cx="40%" cy="20%" r="70%">
+        <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.9"/>
+        <stop offset="25%" stop-color="${skin.body}" stop-opacity="1"/>
+        <stop offset="85%" stop-color="#000000" stop-opacity="0.2"/>
+        <stop offset="100%" stop-color="#000000" stop-opacity="0.5"/>
+      </radialGradient>
+      <radialGradient id="headShine_${bodyId}" cx="35%" cy="25%" r="65%">
+        <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.95"/>
+        <stop offset="25%" stop-color="${skin.body}" stop-opacity="1"/>
+        <stop offset="85%" stop-color="#000000" stop-opacity="0.15"/>
+        <stop offset="100%" stop-color="#000000" stop-opacity="0.4"/>
+      </radialGradient>
+      <radialGradient id="beakShine_${beakId}" cx="40%" cy="20%" r="65%">
+        <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.8"/>
+        <stop offset="35%" stop-color="${skin.beak}" stop-opacity="1"/>
+        <stop offset="100%" stop-color="#000000" stop-opacity="0.3"/>
+      </radialGradient>
+      <linearGradient id="wingShine_${wingId}" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.5"/>
+        <stop offset="40%" stop-color="${skin.wing}" stop-opacity="1"/>
+        <stop offset="100%" stop-color="#000000" stop-opacity="0.3"/>
+      </linearGradient>
+    </defs>
+    
     <!-- Water Ripple Shadow -->
     <ellipse cx="23" cy="38" rx="16" ry="3" fill="rgba(0,0,0,0.18)"/>
 
     <!-- Chubby Round Body & Tail (Pear-shaped body, cute tail pointing up) -->
-    <path d="M 5,28 C 3,21 10,17 15,19 C 18,16 23,17 27,21 C 32,23 37,22 41,27 C 43,30 38,38 30,38 C 17,39 8,36 5,28 Z" fill="${body}"/>
+    <path d="M 5,28 C 3,21 10,17 15,19 C 18,16 23,17 27,21 C 32,23 37,22 41,27 C 43,30 38,38 30,38 C 17,39 8,36 5,28 Z" fill="url(#bodyShine_${bodyId})"/>
     
     <!-- Cute Tail Feather Tip Overlay -->
-    <path d="M 5,28 C 1,22 5,16 9,21 Z" fill="${wing}" opacity="0.9"/>
+    <path d="M 5,28 C 1,22 5,16 9,21 Z" fill="url(#wingShine_${wingId})" opacity="0.9"/>
 
     <!-- Fluffy Chubby Wing -->
-    <path d="M12,27 C16,21 24,23 26,28 C27,32 22,35 16,34 C12,33 11,30 12,27 Z" fill="${wing}" opacity="0.95"/>
+    <path d="M12,27 C16,21 24,23 26,28 C27,32 22,35 16,34 C12,33 11,30 12,27 Z" fill="url(#wingShine_${wingId})"/>
 
     <!-- Soft Round Belly Highlight -->
-    <ellipse cx="23" cy="32" rx="10" ry="4" fill="#FFFFFF" opacity="0.25"/>
+    <ellipse cx="25" cy="32" rx="7" ry="3" fill="#FFFFFF" opacity="0.2"/>
 
     <!-- Big Cute Round Head -->
-    <circle cx="28" cy="14" r="10.5" fill="${body}"/>
+    <circle cx="28" cy="14" r="10.5" fill="url(#headShine_${bodyId})"/>
 
     <!-- Chubby Cute Beak (Rounded duck bill) -->
-    <path d="M35.5,15 C39,12.5 45.5,14 45.5,17.5 C45.5,20.5 39,21 34.5,18 Z" fill="${beak}"/>
+    <path d="M35.5,15 C39,12.5 45.5,14 45.5,17.5 C45.5,20.5 39,21 34.5,18 Z" fill="url(#beakShine_${beakId})"/>
     <path d="M36,17.2 C39,16.5 43,17.5 45,17.8" stroke="rgba(0,0,0,0.15)" stroke-width="1.2" fill="none" stroke-linecap="round"/>
 
     <!-- Extra Big Shiny Eyes (Super Cute Chibi Style) -->
