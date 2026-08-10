@@ -2218,63 +2218,66 @@ function getDuckSVG(skin, size = 42) {
   
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 42" width="${size}" height="${size}">
     <defs>
-      <radialGradient id="bodyShine_${bodyId}" cx="35%" cy="25%" r="70%">
-        <!-- Soft bright highlight -->
+      <!-- Base 3D Gradients -->
+      <radialGradient id="bodyGrad_${bodyId}" cx="35%" cy="20%" r="75%">
+        <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.75"/>
+        <stop offset="25%" stop-color="${skin.body}" stop-opacity="1"/>
+        <stop offset="70%" stop-color="${skin.body}" stop-opacity="1"/>
+        <stop offset="100%" stop-color="#000000" stop-opacity="0.3"/>
+      </radialGradient>
+      
+      <radialGradient id="headGrad_${bodyId}" cx="30%" cy="25%" r="70%">
         <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.8"/>
-        <!-- Pure base color -->
-        <stop offset="40%" stop-color="${skin.body}" stop-opacity="1"/>
-        <!-- Soft darker edge instead of harsh black -->
+        <stop offset="30%" stop-color="${skin.body}" stop-opacity="1"/>
+        <stop offset="75%" stop-color="${skin.body}" stop-opacity="1"/>
         <stop offset="100%" stop-color="#000000" stop-opacity="0.25"/>
       </radialGradient>
-      <radialGradient id="headShine_${bodyId}" cx="30%" cy="20%" r="65%">
-        <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.85"/>
-        <stop offset="40%" stop-color="${skin.body}" stop-opacity="1"/>
-        <stop offset="100%" stop-color="#000000" stop-opacity="0.2"/>
+
+      <radialGradient id="beakGrad_${beakId}" cx="30%" cy="20%" r="65%">
+        <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.7"/>
+        <stop offset="30%" stop-color="${skin.beak}" stop-opacity="1"/>
+        <stop offset="100%" stop-color="#000000" stop-opacity="0.3"/>
       </radialGradient>
-      <radialGradient id="beakShine_${beakId}" cx="30%" cy="20%" r="65%">
-        <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.75"/>
-        <stop offset="45%" stop-color="${skin.beak}" stop-opacity="1"/>
-        <stop offset="100%" stop-color="#000000" stop-opacity="0.2"/>
-      </radialGradient>
-      <linearGradient id="wingShine_${wingId}" x1="0%" y1="0%" x2="20%" y2="100%">
-        <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.5"/>
-        <stop offset="50%" stop-color="${skin.wing}" stop-opacity="1"/>
-        <stop offset="100%" stop-color="#000000" stop-opacity="0.2"/>
-      </linearGradient>
-      <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
-        <feDropShadow dx="0" dy="2" stdDeviation="1.5" flood-color="#000" flood-opacity="0.2"/>
+
+      <filter id="shadow">
+        <feDropShadow dx="0" dy="1.5" stdDeviation="1" flood-color="#000" flood-opacity="0.15"/>
       </filter>
     </defs>
     
     <!-- Water Ripple Shadow -->
-    <ellipse cx="23" cy="38" rx="16" ry="3" fill="rgba(0,0,0,0.18)"/>
+    <ellipse cx="23" cy="38" rx="15" ry="2.5" fill="rgba(0,0,0,0.12)"/>
 
-    <!-- Chubby Round Body & Tail -->
-    <path d="M 5,28 C 3,21 10,17 15,19 C 18,16 23,17 27,21 C 32,23 37,22 41,27 C 43,30 38,38 30,38 C 17,39 8,36 5,28 Z" fill="url(#bodyShine_${bodyId})"/>
+    <!-- Body Shape (Chubby, smooth, tail curves up) -->
+    <path d="M 8 31 C 3 23, 13 18, 22 18 C 32 18, 40 23, 40 31 C 40 37, 20 40, 8 31 Z" fill="url(#bodyGrad_${bodyId})"/>
     
-    <!-- Cute Tail Feather Tip Overlay -->
-    <path d="M 5,28 C 1,22 5,16 9,21 Z" fill="url(#wingShine_${wingId})" opacity="0.95"/>
+    <!-- Wing with Drop Shadow (Simple, distinct shape) -->
+    <path d="M 16 23 C 22 23, 27 26, 25 30 C 23 33, 14 29, 16 23 Z" fill="url(#bodyGrad_${bodyId})" filter="url(#shadow)"/>
 
-    <!-- Fluffy Chubby Wing with shadow -->
-    <path d="M12,27 C16,21 24,23 26,28 C27,32 22,35 16,34 C12,33 11,30 12,27 Z" fill="url(#wingShine_${wingId})" filter="url(#dropShadow)"/>
+    <!-- Neck Ambient Occlusion (Smooth join) -->
+    <ellipse cx="28" cy="23" rx="7" ry="2" fill="rgba(0,0,0,0.15)"/>
 
-    <!-- Soft Round Belly Highlight -->
-    <ellipse cx="25" cy="33" rx="8" ry="3.5" fill="#FFFFFF" opacity="0.25"/>
+    <!-- Head Shape (Large, 55-65% height, round) -->
+    <circle cx="29" cy="15" r="9.5" fill="url(#headGrad_${bodyId})"/>
 
-    <!-- Big Cute Round Head -->
-    <circle cx="28" cy="14" r="10.5" fill="url(#headShine_${bodyId})" filter="url(#dropShadow)"/>
+    <!-- Beak Ambient Occlusion -->
+    <ellipse cx="38" cy="19.5" rx="2.5" ry="1" fill="rgba(0,0,0,0.15)"/>
 
-    <!-- Chubby Cute Beak (Rounded duck bill) -->
-    <path d="M35.5,15 C39,12.5 45.5,14 45.5,17.5 C45.5,20.5 39,21 34.5,18 Z" fill="url(#beakShine_${beakId})"/>
-    <path d="M36,17.2 C39,16.5 43,17.5 45,17.8" stroke="rgba(0,0,0,0.15)" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+    <!-- Lower Beak (Separated) -->
+    <path d="M 37.5 18 C 42 19, 44 21, 41 22 C 39 22, 36.5 20, 36.5 19 Z" fill="url(#beakGrad_${beakId})"/>
+    
+    <!-- Upper Beak (Larger, rounded) -->
+    <path d="M 38 15 C 44 14.5, 46 16.5, 46 18 C 46 19, 41 20, 38 19 Z" fill="url(#beakGrad_${beakId})"/>
 
-    <!-- Extra Big Shiny Eyes (Super Cute Chibi Style) -->
-    <circle cx="31" cy="12" r="3.2" fill="#1e272c"/>
-    <circle cx="32.2" cy="10.8" r="1.3" fill="#FFFFFF"/>
-    <circle cx="30.2" cy="13.2" r="0.6" fill="#FFFFFF" opacity="0.95"/>
+    <!-- Eyelid (subtle crease for expression) -->
+    <path d="M 31 10 Q 33.5 9.5 36 11" stroke="rgba(0,0,0,0.15)" stroke-width="0.8" fill="none" stroke-linecap="round"/>
 
-    <!-- Rosy Chubby Blush (Cute Pink Cheek) -->
-    <ellipse cx="28.5" cy="17.5" rx="3.5" ry="2.2" fill="#FF8DA1" opacity="0.75"/>
+    <!-- Eye (Large black, double highlight) -->
+    <circle cx="33.5" cy="13.5" r="2.8" fill="#111"/>
+    <circle cx="34.5" cy="12.5" r="0.8" fill="#FFF"/>
+    <circle cx="32.2" cy="14.8" r="0.4" fill="#FFF"/>
+
+    <!-- Cheek (Small soft oval blush) -->
+    <ellipse cx="28" cy="18" rx="2.2" ry="1.5" fill="#FF8DA1" opacity="0.6"/>
 
     <!-- Side Accessories Layer -->
     ${hatSvg}
