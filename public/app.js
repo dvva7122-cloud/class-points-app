@@ -2136,152 +2136,193 @@ const DUCK_SKINS = [
   { body: '#d35400', beak: '#e67e22', eye: '#fff',   hat: 'wizard',    wing: '#e67e22' },
 ];
 
-function getDuckSVG(skin, size = 42) {
-  const { body, beak, eye, hat, wing } = skin;
-  let hatSvg = '';
-  
+function getDuckSVG(skin, size) {
+  size = size || 52;
+  var body = skin.body, beak = skin.beak, hat = skin.hat;
+  // Gradient ID unique per skin
+  var gid = (body + beak).replace(/#/g, '').substring(0, 10);
+
+  // ── COORDINATE SYSTEM (viewBox "0 0 52 46") ──────────────────────
+  // Head center:  (22, 14) r=10
+  // Body:         chubby oval ~(6..38, 17..41)
+  // Eye:          (25.5, 12.5)
+  // Beak attach:  right of head x=32, y=13-19
+  // Hat anchor:   top of head (22, 4)
+  // ─────────────────────────────────────────────────────────────────
+
+  var hatSvg = '';
+
   if (hat === 'crown') {
-    hatSvg = `<g transform="translate(18, 0) rotate(-5)">
-               <polygon points="0,9 4,2 8,7 12,2 16,9" fill="#FFD700" stroke="#E67E22" stroke-width="0.8"/>
-               <rect x="-1" y="8.5" width="18" height="2.5" rx="1" fill="#FFA500"/>
-               <circle cx="4" cy="2" r="1" fill="#E74C3C"/>
-               <circle cx="12" cy="2" r="1" fill="#3498DB"/>
-              </g>`;
+    hatSvg = '<g transform="translate(13,-3)">'
+      + '<rect x="0" y="8" width="18" height="3" rx="1.2" fill="#FFA500"/>'
+      + '<polygon points="2,8 4.5,1 9,5.5 13.5,1 16,8" fill="#FFD700" stroke="#E67E22" stroke-width="0.5"/>'
+      + '<circle cx="4.5" cy="1.8" r="1.1" fill="#E74C3C"/>'
+      + '<circle cx="9" cy="5.5" r="0.8" fill="#fff"/>'
+      + '<circle cx="13.5" cy="1.8" r="1.1" fill="#3498DB"/>'
+      + '</g>';
+
   } else if (hat === 'tophat') {
-    hatSvg = `<g transform="translate(16, 0) rotate(-6)">
-               <rect x="4" y="1" width="11" height="9" rx="1" fill="#2D3436"/>
-               <rect x="1" y="9" width="17" height="2.5" rx="1" fill="#1E272C"/>
-               <rect x="4" y="7.5" width="11" height="1.8" fill="#E74C3C"/>
-              </g>`;
-  } else if (hat === 'bow') {
-    hatSvg = `<g transform="translate(13, 6) rotate(-10)">
-               <path d="M0,4 Q4,0 8,4 Q4,2 0,4 Z" fill="#FF6B9D"/>
-               <path d="M8,4 Q12,0 16,4 Q12,2 8,4 Z" fill="#FF6B9D"/>
-               <circle cx="8" cy="3.5" r="2" fill="#E84393"/>
-              </g>`;
-  } else if (hat === 'cap') {
-    hatSvg = `<g transform="translate(16, 3) rotate(2)">
-               <path d="M0,9 A7,6 0 0,1 14,9 Z" fill="#E74C3C"/>
-               <path d="M12,8 Q18,8 21,10 Q16,11 12,9 Z" fill="#C0392B"/>
-              </g>`;
-  } else if (hat === 'glasses') {
-    hatSvg = `<g transform="translate(23, 11)">
-               <ellipse cx="4" cy="4" rx="4.5" ry="3.5" fill="rgba(20,20,20,0.85)" stroke="#FFD700" stroke-width="1.2"/>
-               <line x1="0" y1="4" x2="-4" y2="3" stroke="#FFD700" stroke-width="1.2"/>
-               <line x1="8.5" y1="4" x2="11" y2="5" stroke="#FFD700" stroke-width="1.2"/>
-              </g>`;
-  } else if (hat === 'pirate') {
-    hatSvg = `<g transform="translate(12, 1) rotate(-4)">
-               <path d="M0,10 Q10,1 22,10 L18,8 Q10,5 2,8 Z" fill="#2D3436"/>
-               <circle cx="10" cy="6" r="1.5" fill="#FFF"/>
-               <path d="M3,8 Q-2,1 3,-1" stroke="#E74C3C" stroke-width="2" fill="none" stroke-linecap="round"/>
-              </g>`;
+    hatSvg = '<g transform="translate(13,-5)">'
+      + '<rect x="1" y="2" width="15" height="11" rx="1" fill="#2D3436"/>'
+      + '<rect x="-1" y="12.5" width="19" height="2.8" rx="1.2" fill="#1E272C"/>'
+      + '<rect x="1" y="9.5" width="15" height="2.2" fill="#E74C3C"/>'
+      + '</g>';
+
   } else if (hat === 'wizard') {
-    hatSvg = `<g transform="translate(13, -1) rotate(-8)">
-               <polygon points="10,0 2,13 18,13" fill="#6C5CE7"/>
-               <ellipse cx="10" cy="13" rx="9" ry="2.5" fill="#4834D4"/>
-               <polygon points="10,4 11,6 13,6 11.5,7.5 12,9.5 10,8.5 8,9.5 8.5,7.5 7,6 9,6" fill="#FFD700"/>
-              </g>`;
+    hatSvg = '<g transform="translate(11,-10)">'
+      + '<polygon points="11,0 2,17 20,17" fill="#6C5CE7"/>'
+      + '<ellipse cx="11" cy="17" rx="10" ry="2.5" fill="#4834D4"/>'
+      + '<polygon points="11,5 12.2,8.5 16,8.5 13,10.5 14,14 11,12 8,14 9,10.5 6,8.5 9.8,8.5" fill="#FFD700"/>'
+      + '</g>';
+
+  } else if (hat === 'cap') {
+    hatSvg = '<g transform="translate(11,4)">'
+      + '<path d="M0,10 A11,8.5 0 0,1 22,10 Z" fill="#E74C3C"/>'
+      + '<rect x="0" y="9.2" width="22" height="2" rx="0.5" fill="#C0392B"/>'
+      + '<path d="M20,9 Q27,8 29,11 Q23,13.5 20,10.5 Z" fill="#C0392B"/>'
+      + '</g>';
+
+  } else if (hat === 'bow') {
+    hatSvg = '<g transform="translate(19,1)">'
+      + '<path d="M0,5.5 Q5.5,0 11,5.5 Q5.5,3 0,5.5 Z" fill="#FF6B9D"/>'
+      + '<path d="M11,5.5 Q16.5,0 22,5.5 Q16.5,3 11,5.5 Z" fill="#FF6B9D"/>'
+      + '<circle cx="11" cy="4.5" r="2.5" fill="#E84393"/>'
+      + '</g>';
+
+  } else if (hat === 'glasses') {
+    hatSvg = '<g transform="translate(17,9)">'
+      + '<ellipse cx="8.5" cy="3.5" rx="5.5" ry="4" fill="rgba(10,10,10,0.72)" stroke="#FFD700" stroke-width="1.1"/>'
+      + '<line x1="3" y1="3.5" x2="-1" y2="4.2" stroke="#FFD700" stroke-width="1.1"/>'
+      + '<line x1="14" y1="3.5" x2="19" y2="5" stroke="#FFD700" stroke-width="1.1"/>'
+      + '</g>';
+
+  } else if (hat === 'pirate') {
+    hatSvg = '<g transform="translate(9,-3)">'
+      + '<path d="M1,12 Q13,0 25,12 L21,10 Q13,6 5,10 Z" fill="#2D3436"/>'
+      + '<circle cx="13" cy="7" r="2" fill="#FFF"/>'
+      + '<path d="M10.5,6 L15.5,8 M10.5,8 L15.5,6" stroke="#2D3436" stroke-width="0.8"/>'
+      + '<path d="M4,11 Q0,5 4,1" stroke="#E74C3C" stroke-width="2.5" fill="none" stroke-linecap="round"/>'
+      + '</g>';
+
   } else if (hat === 'headphones') {
-    hatSvg = `<g transform="translate(17, 6) rotate(-8)">
-               <path d="M1,8 A8,8 0 0,1 15,8" fill="none" stroke="#E74C3C" stroke-width="2.5" stroke-linecap="round"/>
-               <rect x="11" y="6" width="5" height="8" rx="2" fill="#2D3436" stroke="#E74C3C" stroke-width="1"/>
-              </g>`;
+    hatSvg = '<g transform="translate(11,4)">'
+      + '<path d="M0,10 A11,11 0 0,1 22,10" fill="none" stroke="#E74C3C" stroke-width="2.5" stroke-linecap="round"/>'
+      + '<rect x="17" y="8" width="6.5" height="10" rx="2.5" fill="#2D3436" stroke="#E74C3C" stroke-width="1"/>'
+      + '<rect x="-1.5" y="8" width="5" height="8" rx="2.5" fill="#2D3436" stroke="#E74C3C" stroke-width="1"/>'
+      + '</g>';
+
   } else if (hat === 'viking') {
-    hatSvg = `<g transform="translate(15, 2) rotate(-4)">
-               <path d="M1,9 Q8,4 15,9 Z" fill="#7F8C8D"/>
-               <rect x="1" y="8" width="14" height="2" fill="#95A5A6"/>
-               <path d="M13,8 Q17,2 19,1" fill="none" stroke="#FFF" stroke-width="2.5" stroke-linecap="round"/>
-              </g>`;
+    hatSvg = '<g transform="translate(10,-1)">'
+      + '<path d="M0,11 Q11,3 22,11 Z" fill="#7F8C8D"/>'
+      + '<rect x="0" y="10" width="22" height="2.8" rx="1.2" fill="#95A5A6"/>'
+      + '<path d="M20,10 Q26,4 28,0" fill="none" stroke="#DDD" stroke-width="2.8" stroke-linecap="round"/>'
+      + '<path d="M2,10 Q-3,4 -4,0" fill="none" stroke="#DDD" stroke-width="2.8" stroke-linecap="round"/>'
+      + '</g>';
+
   } else if (hat === 'ninja') {
-    hatSvg = `<g transform="translate(16, 7)">
-               <rect x="0" y="2" width="13" height="3.5" rx="1" fill="#2D3436"/>
-               <rect x="3" y="2" width="7" height="3.5" fill="#E74C3C"/>
-               <path d="M0,4 Q-4,7 -5,11" fill="none" stroke="#E74C3C" stroke-width="2"/>
-              </g>`;
+    hatSvg = '<g transform="translate(12,7)">'
+      + '<rect x="0" y="0" width="20" height="5" rx="2.2" fill="#2D3436"/>'
+      + '<rect x="4" y="0" width="11" height="5" fill="#E74C3C"/>'
+      + '<path d="M18,2.5 Q23,6 22,12" fill="none" stroke="#E74C3C" stroke-width="2.2" stroke-linecap="round"/>'
+      + '</g>';
+
   } else if (hat === 'detective') {
-    hatSvg = `<g transform="translate(13, 2) rotate(-6)">
-               <path d="M2,9 Q10,2 18,9 Z" fill="#6E5773"/>
-               <ellipse cx="10" cy="9" rx="10" ry="2.5" fill="#5C3D46"/>
-              </g>`;
+    hatSvg = '<g transform="translate(9,-3)">'
+      + '<path d="M1,12 Q13,2 25,12 Z" fill="#6E5773"/>'
+      + '<ellipse cx="13" cy="12" rx="13.5" ry="3.2" fill="#5C3D46"/>'
+      + '</g>';
+
   } else if (hat === 'chef') {
-    hatSvg = `<g transform="translate(15, -1) rotate(-6)">
-               <path d="M2,10 C0,5 4,1 9,2 C11,-1 15,0 16,3 C19,2 21,6 17,10 Z" fill="#FFFFFF" stroke="#DDD" stroke-width="0.8"/>
-               <rect x="3" y="9" width="13" height="2.5" fill="#FFFFFF" stroke="#CCC" stroke-width="0.5"/>
-              </g>`;
+    hatSvg = '<g transform="translate(11,-10)">'
+      + '<path d="M2,13 C0,7 4,1.5 9,3.5 C10,-1 16,0 18,3.5 C22,2 24,8 21,13 Z" fill="#FFF" stroke="#DDD" stroke-width="0.8"/>'
+      + '<rect x="3" y="12" width="17" height="3" rx="1.2" fill="#FFF" stroke="#CCC" stroke-width="0.6"/>'
+      + '</g>';
   }
 
-  // Ultra cute, chubby 3D rubber duck SVG (side-profile facing Right)
-  const bodyId = skin.body.replace('#','');
-  const beakId = skin.beak.replace('#','');
-  const wingId = skin.wing.replace('#','');
-  
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 42" width="${size}" height="${size}">
-    <defs>
-      <!-- Base 3D Gradients -->
-      <radialGradient id="bodyGrad_${bodyId}" cx="35%" cy="20%" r="75%">
-        <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.75"/>
-        <stop offset="25%" stop-color="${skin.body}" stop-opacity="1"/>
-        <stop offset="70%" stop-color="${skin.body}" stop-opacity="1"/>
-        <stop offset="100%" stop-color="#000000" stop-opacity="0.3"/>
-      </radialGradient>
-      
-      <radialGradient id="headGrad_${bodyId}" cx="30%" cy="25%" r="70%">
-        <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.8"/>
-        <stop offset="30%" stop-color="${skin.body}" stop-opacity="1"/>
-        <stop offset="75%" stop-color="${skin.body}" stop-opacity="1"/>
-        <stop offset="100%" stop-color="#000000" stop-opacity="0.25"/>
-      </radialGradient>
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 46" width="' + size + '" height="' + size + '">'
+    + '<defs>'
+    + '<radialGradient id="bG' + gid + '" cx="38%" cy="26%" r="70%">'
+    +   '<stop offset="0%"   stop-color="#fff"  stop-opacity="0.72"/>'
+    +   '<stop offset="28%"  stop-color="' + body + '" stop-opacity="1"/>'
+    +   '<stop offset="72%"  stop-color="' + body + '" stop-opacity="1"/>'
+    +   '<stop offset="100%" stop-color="#000"  stop-opacity="0.26"/>'
+    + '</radialGradient>'
+    + '<radialGradient id="hG' + gid + '" cx="32%" cy="22%" r="68%">'
+    +   '<stop offset="0%"   stop-color="#fff"  stop-opacity="0.8"/>'
+    +   '<stop offset="28%"  stop-color="' + body + '" stop-opacity="1"/>'
+    +   '<stop offset="72%"  stop-color="' + body + '" stop-opacity="1"/>'
+    +   '<stop offset="100%" stop-color="#000"  stop-opacity="0.22"/>'
+    + '</radialGradient>'
+    + '<radialGradient id="kG' + gid + '" cx="28%" cy="20%" r="62%">'
+    +   '<stop offset="0%"   stop-color="#fff"  stop-opacity="0.65"/>'
+    +   '<stop offset="35%"  stop-color="' + beak + '" stop-opacity="1"/>'
+    +   '<stop offset="100%" stop-color="#000"  stop-opacity="0.28"/>'
+    + '</radialGradient>'
+    + '<radialGradient id="wG' + gid + '" cx="40%" cy="25%" r="65%">'
+    +   '<stop offset="0%"   stop-color="#fff"  stop-opacity="0.42"/>'
+    +   '<stop offset="32%"  stop-color="' + body + '" stop-opacity="1"/>'
+    +   '<stop offset="100%" stop-color="#000"  stop-opacity="0.34"/>'
+    + '</radialGradient>'
+    + '<radialGradient id="bl' + gid + '" cx="50%" cy="38%" r="62%">'
+    +   '<stop offset="0%"   stop-color="#fff" stop-opacity="0.28"/>'
+    +   '<stop offset="100%" stop-color="#fff" stop-opacity="0"/>'
+    + '</radialGradient>'
+    + '<filter id="ao' + gid + '"><feGaussianBlur stdDeviation="1.1"/></filter>'
+    + '<filter id="sd' + gid + '" x="-20%" y="-20%" width="140%" height="140%">'
+    +   '<feDropShadow dx="0" dy="1" stdDeviation="0.8" flood-color="#000" flood-opacity="0.17"/>'
+    + '</filter>'
+    + '</defs>'
 
-      <radialGradient id="beakGrad_${beakId}" cx="30%" cy="20%" r="65%">
-        <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.7"/>
-        <stop offset="30%" stop-color="${skin.beak}" stop-opacity="1"/>
-        <stop offset="100%" stop-color="#000000" stop-opacity="0.3"/>
-      </radialGradient>
+    // Ground shadow
+    + '<ellipse cx="20" cy="44" rx="13" ry="1.8" fill="rgba(0,0,0,0.11)"/>'
 
-      <filter id="shadow">
-        <feDropShadow dx="0" dy="1.5" stdDeviation="1" flood-color="#000" flood-opacity="0.15"/>
-      </filter>
-    </defs>
-    
-    <!-- Water Ripple Shadow -->
-    <ellipse cx="23" cy="38" rx="15" ry="2.5" fill="rgba(0,0,0,0.12)"/>
+    // Tail
+    + '<path d="M 5,29 C 1,23 3,17 7,21 C 8,24 7,27 6,30 Z" fill="url(#bG' + gid + ')"/>'
 
-    <!-- Body Shape (Chubby, smooth, tail curves up) -->
-    <path d="M 8 31 C 3 23, 13 18, 22 18 C 32 18, 40 23, 40 31 C 40 37, 20 40, 8 31 Z" fill="url(#bodyGrad_${bodyId})"/>
-    
-    <!-- Wing with Drop Shadow (Simple, distinct shape) -->
-    <path d="M 16 23 C 22 23, 27 26, 25 30 C 23 33, 14 29, 16 23 Z" fill="url(#bodyGrad_${bodyId})" filter="url(#shadow)"/>
+    // Body
+    + '<path d="M 6,30 C 4,22 12,17 22,17 C 34,17 38,23 37,31 C 36,38 22,41 10,38 C 6,36 6,33 6,30 Z" fill="url(#bG' + gid + ')"/>'
 
-    <!-- Neck Ambient Occlusion (Smooth join) -->
-    <ellipse cx="28" cy="23" rx="7" ry="2" fill="rgba(0,0,0,0.15)"/>
+    // Belly highlight
+    + '<ellipse cx="22" cy="32" rx="11" ry="5.5" fill="url(#bl' + gid + ')"/>'
 
-    <!-- Head Shape (Large, 55-65% height, round) -->
-    <circle cx="29" cy="15" r="9.5" fill="url(#headGrad_${bodyId})"/>
+    // Wing AO
+    + '<ellipse cx="20" cy="28" rx="9" ry="3.8" fill="rgba(0,0,0,0.12)" filter="url(#ao' + gid + ')"/>'
+    // Wing
+    + '<ellipse cx="20" cy="27" rx="9" ry="4.2" fill="url(#wG' + gid + ')" filter="url(#sd' + gid + ')"/>'
+    // Wing highlight streak
+    + '<ellipse cx="18" cy="25.5" rx="4.5" ry="1.5" fill="#fff" opacity="0.18"/>'
 
-    <!-- Beak Ambient Occlusion -->
-    <ellipse cx="38" cy="19.5" rx="2.5" ry="1" fill="rgba(0,0,0,0.15)"/>
+    // Neck AO
+    + '<ellipse cx="26" cy="23" rx="8.5" ry="2.5" fill="rgba(0,0,0,0.13)" filter="url(#ao' + gid + ')"/>'
 
-    <!-- Lower Beak (Separated) -->
-    <path d="M 37.5 18 C 42 19, 44 21, 41 22 C 39 22, 36.5 20, 36.5 19 Z" fill="url(#beakGrad_${beakId})"/>
-    
-    <!-- Upper Beak (Larger, rounded) -->
-    <path d="M 38 15 C 44 14.5, 46 16.5, 46 18 C 46 19, 41 20, 38 19 Z" fill="url(#beakGrad_${beakId})"/>
+    // Head
+    + '<circle cx="22" cy="14" r="10" fill="url(#hG' + gid + ')" filter="url(#sd' + gid + ')"/>'
+    // Rim light
+    + '<circle cx="22" cy="14" r="10" fill="none" stroke="#fff" stroke-width="1.2" stroke-opacity="0.14"/>'
 
-    <!-- Eyelid (subtle crease for expression) -->
-    <path d="M 31 10 Q 33.5 9.5 36 11" stroke="rgba(0,0,0,0.15)" stroke-width="0.8" fill="none" stroke-linecap="round"/>
+    // Beak AO
+    + '<ellipse cx="38" cy="19" rx="3.5" ry="1.2" fill="rgba(0,0,0,0.16)" filter="url(#ao' + gid + ')"/>'
+    // Upper beak
+    + '<path d="M 32,13.5 C 37,11.5 46,13 47,16 C 47,17.5 40,18.5 32,17 Z" fill="url(#kG' + gid + ')"/>'
+    // Lower beak
+    + '<path d="M 33,17.5 C 37,17 44,18 45,19.5 C 44,21 37,21.5 33,19.5 Z" fill="url(#kG' + gid + ')"/>'
+    // Beak divider
+    + '<path d="M 33,17.2 C 38,16.7 43,18 45,18.8" stroke="rgba(0,0,0,0.22)" stroke-width="0.7" fill="none" stroke-linecap="round"/>'
 
-    <!-- Eye (Large black, double highlight) -->
-    <circle cx="33.5" cy="13.5" r="2.8" fill="#111"/>
-    <circle cx="34.5" cy="12.5" r="0.8" fill="#FFF"/>
-    <circle cx="32.2" cy="14.8" r="0.4" fill="#FFF"/>
+    // Eyelid crease
+    + '<path d="M 22,9.2 Q 25.5,8 29,10" stroke="rgba(0,0,0,0.18)" stroke-width="0.75" fill="none" stroke-linecap="round"/>'
+    // Eye
+    + '<circle cx="25.5" cy="12.5" r="3.1" fill="#111"/>'
+    + '<circle cx="26.7" cy="11.2" r="1.05" fill="#FFF"/>'
+    + '<circle cx="24.2" cy="14" r="0.48" fill="#FFF"/>'
 
-    <!-- Cheek (Small soft oval blush) -->
-    <ellipse cx="28" cy="18" rx="2.2" ry="1.5" fill="#FF8DA1" opacity="0.6"/>
+    // Blush
+    + '<ellipse cx="20.5" cy="17" rx="2.6" ry="1.7" fill="#FF8DA1" opacity="0.52"/>'
 
-    <!-- Side Accessories Layer -->
-    ${hatSvg}
-  </svg>`;
+    // Accessories
+    + hatSvg
+    + '</svg>';
+}
 }
 
 let _duckRaceRunning = false;
