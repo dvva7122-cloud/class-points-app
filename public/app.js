@@ -2323,7 +2323,7 @@ function getDuckSVG(skin, size) {
     + hatSvg
     + '</svg>';
 }
-}
+
 
 let _duckRaceRunning = false;
 let _duckRaceAnimFrame = null;
