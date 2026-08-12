@@ -1817,9 +1817,9 @@ async function handleExcelUpload(e) {
           if (dobCol !== -1 && rows[i][dobCol]) {
             let dobVal = rows[i][dobCol];
             if (dobVal instanceof Date) {
-              const d = dobVal.getUTCDate().toString().padStart(2, '0');
-              const m = (dobVal.getUTCMonth() + 1).toString().padStart(2, '0');
-              const y = dobVal.getUTCFullYear();
+              const d = dobVal.getDate().toString().padStart(2, '0');
+              const m = (dobVal.getMonth() + 1).toString().padStart(2, '0');
+              const y = dobVal.getFullYear();
               studentObj.dob = `${d}/${m}/${y}`;
             } else {
               studentObj.dob = String(dobVal).trim();
