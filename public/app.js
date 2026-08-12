@@ -1581,17 +1581,68 @@ function showCustomPrompt(title, fields) {
     fields.forEach(field => {
       const group = createEl('div', { className: 'prompt-input-group' });
       const label = createEl('label', { text: field.label });
-      const input = createEl('input', { type: field.type || 'text' });
-      if (field.value) input.value = field.value;
-      if (field.placeholder) input.placeholder = field.placeholder;
+      
+      let input;
+      if (field.type === 'password') {
+        const wrapper = createEl('div');
+        wrapper.className = 'password-input-wrapper';
+        wrapper.style.position = 'relative';
+        wrapper.style.display = 'flex';
+        wrapper.style.alignItems = 'center';
+        wrapper.style.width = '100%';
+        
+        input = createEl('input');
+        input.type = 'password';
+        input.style.width = '100%';
+        input.style.paddingRight = '35px';
+        
+        const toggleBtn = createEl('button');
+        toggleBtn.type = 'button';
+        toggleBtn.className = 'password-toggle-btn';
+        toggleBtn.innerHTML = '<i class="fa-solid fa-eye"></i>';
+        toggleBtn.style.position = 'absolute';
+        toggleBtn.style.right = '12px';
+        toggleBtn.style.top = '50%';
+        toggleBtn.style.transform = 'translateY(-50%)';
+        toggleBtn.style.background = 'none';
+        toggleBtn.style.border = 'none';
+        toggleBtn.style.cursor = 'pointer';
+        toggleBtn.style.color = '#777';
+        toggleBtn.style.padding = '0';
+        toggleBtn.style.fontSize = '14px';
+        toggleBtn.style.zIndex = '5';
+        
+        toggleBtn.addEventListener('click', () => {
+          if (input.type === 'password') {
+            input.type = 'text';
+            toggleBtn.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
+          } else {
+            input.type = 'password';
+            toggleBtn.innerHTML = '<i class="fa-solid fa-eye"></i>';
+          }
+        });
+        
+        if (field.value) input.value = field.value;
+        if (field.placeholder) input.placeholder = field.placeholder;
+        
+        wrapper.appendChild(input);
+        wrapper.appendChild(toggleBtn);
+        group.appendChild(label);
+        group.appendChild(wrapper);
+      } else {
+        input = createEl('input');
+        input.type = field.type || 'text';
+        if (field.value) input.value = field.value;
+        if (field.placeholder) input.placeholder = field.placeholder;
+        group.appendChild(label);
+        group.appendChild(input);
+      }
       
       input.addEventListener('keydown', e => {
         if (e.key === 'Enter') submitBtn.click();
         if (e.key === 'Escape') cancelBtn.click();
       });
 
-      group.appendChild(label);
-      group.appendChild(input);
       body.appendChild(group);
       inputs.push({ key: field.key, el: input });
     });
