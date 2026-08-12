@@ -1780,9 +1780,9 @@ async function handleExcelUpload(e) {
   const reader = new FileReader();
   reader.onload = async function (evt) {
     try {
-      const wb       = XLSX.read(evt.target.result, { type: 'binary', cellDates: true });
+      const wb       = XLSX.read(evt.target.result, { type: 'binary' });
       const sheet    = wb.Sheets[wb.SheetNames[0]];
-      const rows     = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+      const rows     = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true });
 
       if (!rows || rows.length === 0) {
         alert('File Excel trống hoặc không đọc được.');
@@ -1816,10 +1816,12 @@ async function handleExcelUpload(e) {
           const studentObj = { name: String(val).trim() };
           if (dobCol !== -1 && rows[i][dobCol]) {
             let dobVal = rows[i][dobCol];
-            if (dobVal instanceof Date) {
-              const d = dobVal.getDate().toString().padStart(2, '0');
-              const m = (dobVal.getMonth() + 1).toString().padStart(2, '0');
-              const y = dobVal.getFullYear();
+            if (typeof dobVal === 'number' && dobVal > 0 && dobVal < 100000) {
+              // Excel serial date number → convert directly, no timezone issues
+              const dateInfo = XLSX.SSF.parse_date_code(dobVal);
+              const d = String(dateInfo.d).padStart(2, '0');
+              const m = String(dateInfo.m).padStart(2, '0');
+              const y = dateInfo.y;
               studentObj.dob = `${d}/${m}/${y}`;
             } else {
               studentObj.dob = String(dobVal).trim();
