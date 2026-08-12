@@ -1780,7 +1780,7 @@ async function handleExcelUpload(e) {
   const reader = new FileReader();
   reader.onload = async function (evt) {
     try {
-      const wb       = XLSX.read(evt.target.result, { type: 'binary' });
+      const wb       = XLSX.read(evt.target.result, { type: 'binary', cellDates: true });
       const sheet    = wb.Sheets[wb.SheetNames[0]];
       const rows     = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
@@ -1815,7 +1815,15 @@ async function handleExcelUpload(e) {
         if (val) {
           const studentObj = { name: String(val).trim() };
           if (dobCol !== -1 && rows[i][dobCol]) {
-            studentObj.dob = String(rows[i][dobCol]).trim();
+            let dobVal = rows[i][dobCol];
+            if (dobVal instanceof Date) {
+              const d = dobVal.getUTCDate().toString().padStart(2, '0');
+              const m = (dobVal.getUTCMonth() + 1).toString().padStart(2, '0');
+              const y = dobVal.getUTCFullYear();
+              studentObj.dob = `${d}/${m}/${y}`;
+            } else {
+              studentObj.dob = String(dobVal).trim();
+            }
           }
           if (codeCol !== -1 && rows[i][codeCol]) {
             studentObj.code = String(rows[i][codeCol]).trim();
@@ -2038,6 +2046,23 @@ function setupListeners() {
     // Trigger browser download
     XLSX.writeFile(wb, "Mau_nhap_hoc_sinh.xlsx");
   });
+
+  const deleteAllBtn = document.getElementById('delete-all-students-btn');
+  if (deleteAllBtn) {
+    deleteAllBtn.addEventListener('click', async () => {
+      if (!currentClassId) return;
+      if (confirm('Bạn có chắc chắn muốn xóa TOÀN BỘ học sinh trong lớp này? Hành động này không thể hoàn tác!')) {
+        try {
+          await api('DELETE', `/api/classes/${currentClassId}/students`);
+          alert('Đã xóa tất cả học sinh!');
+          await loadAllData();
+          renderCurrentClass();
+        } catch (err) {
+          if (err.message !== 'Unauthorized') showError(err.message);
+        }
+      }
+    });
+  }
 
   // Title
   document.getElementById('edit-title-btn').addEventListener('click', doEditTitle);

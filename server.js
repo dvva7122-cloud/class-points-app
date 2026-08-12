@@ -507,6 +507,19 @@ app.patch('/api/classes/:classId/students/:studentId', requireAdmin, async (req,
 });
 
 // DELETE /api/classes/:classId/students/:studentId  (admin)
+// DELETE /api/classes/:classId/students (admin) - Xóa tất cả học sinh
+app.delete('/api/classes/:classId/students', requireAdmin, async (req, res) => {
+  const { classId } = req.params;
+  const db = await readDB();
+  const clsIndex = db.classes.findIndex(c => c.id === classId);
+  if (clsIndex === -1) return res.status(404).json({ error: 'Không tìm thấy lớp' });
+  
+  db.classes[clsIndex].students = [];
+  await writeDB(db);
+  broadcastToClass(classId, 'students_cleared');
+  res.json({ success: true });
+});
+
 app.delete('/api/classes/:classId/students/:studentId', requireAdmin, async (req, res) => {
   const { classId, studentId } = req.params;
   
