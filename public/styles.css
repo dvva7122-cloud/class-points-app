@@ -24,7 +24,7 @@
     --shadow:       0 16px 48px rgba(15, 23, 42, 0.10);
     --shadow-hover: 0 20px 44px rgba(15, 23, 42, 0.12);
 
-    --transition: all 0.28s cubic-bezier(.2, .8, .2, 1);
+    --transition: background-color 0.2s cubic-bezier(.2, .8, .2, 1), border-color 0.2s cubic-bezier(.2, .8, .2, 1), opacity 0.2s cubic-bezier(.2, .8, .2, 1), transform 0.2s cubic-bezier(.2, .8, .2, 1), box-shadow 0.2s cubic-bezier(.2, .8, .2, 1);
     --frame-border: 1px solid #E6EAF2;
 }
 
@@ -134,7 +134,7 @@ button {
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    filter: saturate(0.74) brightness(1.05) blur(1.5px);
+    filter: saturate(0.74) brightness(1.05);
     transform: scale(1.015);
     transition: opacity 0.5s ease, filter 0.5s ease;
 }
@@ -164,7 +164,7 @@ body.theme-christmas .app-background {
 body.theme-halloween .app-background {
     background-image: url('https://img.freepik.com/free-vector/halloween-background-with-spooky-landscape_1048-11354.jpg?w=1380');
     opacity: 0.48;
-    filter: saturate(0.8) brightness(0.68) blur(1px);
+    filter: saturate(0.8) brightness(0.68);
 }
 
 body.custom-bg-active .app-background {
