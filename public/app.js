@@ -990,8 +990,14 @@ function setupEditorToolbar(origW, origH) {
       width: origW * currentZoom,
       height: origH * currentZoom
     });
-    // Update cursor based on zoom level
-    canvasContainer.style.cursor = currentZoom > 1 ? 'grab' : 'default';
+    // Sửa lỗi kẹt cuộn của CSS Flexbox: khi zoom to hơn màn hình, tắt flex center
+    if (currentZoom > 1) {
+      canvasContainer.style.display = 'block';
+      canvasContainer.style.cursor = 'grab';
+    } else {
+      canvasContainer.style.display = 'flex';
+      canvasContainer.style.cursor = 'default';
+    }
   }
 
   zoomInBtn.onclick = () => applyZoom(Math.min(currentZoom + 0.25, 5));
@@ -1021,8 +1027,9 @@ function setupEditorToolbar(origW, origH) {
     panScrollTop = canvasContainer.scrollTop;
     canvasContainer.style.cursor = 'grabbing';
     
-    // Tắt vùng chọn của Fabric
+    // Tắt vùng chọn của Fabric và ngăn chặn browser drag mặc định
     _fabricCanvas.selection = false;
+    e.preventDefault();
   }
 
   function movePan(e) {
