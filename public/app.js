@@ -1004,8 +1004,11 @@ function setupEditorToolbar(origW, origH) {
 
   // ── Drag-to-Pan (kéo ảnh sau khi zoom) ──────────────────────────────────
   _fabricCanvas.on('mouse:down', function(opt) {
-    // Chỉ kéo khi KHÔNG vẽ và click vào vùng trống (không trúng đối tượng nào)
-    if (!_fabricCanvas.isDrawingMode && !opt.target && currentZoom > 1) {
+    // Chỉ kéo khi KHÔNG vẽ và KHÔNG click vào đối tượng có thể chọn (như chữ, sticker)
+    // Nếu click vào background (selectable = false), vẫn cho phép kéo.
+    const isClickingSelectableObj = opt.target && opt.target.selectable !== false;
+    
+    if (!_fabricCanvas.isDrawingMode && !isClickingSelectableObj && currentZoom > 1) {
       this.isDragging = true;
       this.selection = false;
       const e = opt.e;
