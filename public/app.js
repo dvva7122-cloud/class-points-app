@@ -1003,48 +1003,43 @@ function setupEditorToolbar(origW, origH) {
   };
 
   // ── Drag-to-Pan (kéo ảnh sau khi zoom) ──────────────────────────────────
-  let isPanning = false;
-  let panStartX = 0, panStartY = 0;
-  let panScrollLeft = 0, panScrollTop = 0;
-
-  if (_fabricCanvas.upperCanvasEl) {
-    _fabricCanvas.upperCanvasEl.addEventListener('pointerdown', (e) => {
-      // Chỉ kéo khi không vẽ và không chọn đối tượng di chuyển được
-      const activeObj = _fabricCanvas.getActiveObject();
-      const canDrag = !_fabricCanvas.isDrawingMode && (!activeObj || activeObj.selectable === false);
-      if (!canDrag || currentZoom <= 1) return;
-
-      isPanning = true;
-      panStartX = e.clientX;
-      panStartY = e.clientY;
-      panScrollLeft = canvasContainer.scrollLeft;
-      panScrollTop = canvasContainer.scrollTop;
+  _fabricCanvas.on('mouse:down', function(opt) {
+    // Chỉ kéo khi KHÔNG vẽ và click vào vùng trống (không trúng đối tượng nào)
+    if (!_fabricCanvas.isDrawingMode && !opt.target && currentZoom > 1) {
+      this.isDragging = true;
+      this.selection = false;
+      const e = opt.e;
+      this.lastPosX = e.clientX !== undefined ? e.clientX : (e.touches ? e.touches[0].clientX : 0);
+      this.lastPosY = e.clientY !== undefined ? e.clientY : (e.touches ? e.touches[0].clientY : 0);
       canvasContainer.style.cursor = 'grabbing';
-      _fabricCanvas.selection = false;
-      _fabricCanvas.upperCanvasEl.setPointerCapture(e.pointerId);
-    });
+    }
+  });
 
-    _fabricCanvas.upperCanvasEl.addEventListener('pointermove', (e) => {
-      if (!isPanning) return;
-      const dx = e.clientX - panStartX;
-      const dy = e.clientY - panStartY;
-      canvasContainer.scrollLeft = panScrollLeft - dx;
-      canvasContainer.scrollTop = panScrollTop - dy;
-    });
+  _fabricCanvas.on('mouse:move', function(opt) {
+    if (this.isDragging) {
+      const e = opt.e;
+      const clientX = e.clientX !== undefined ? e.clientX : (e.touches ? e.touches[0].clientX : 0);
+      const clientY = e.clientY !== undefined ? e.clientY : (e.touches ? e.touches[0].clientY : 0);
+      const dx = clientX - this.lastPosX;
+      const dy = clientY - this.lastPosY;
+      
+      canvasContainer.scrollLeft -= dx;
+      canvasContainer.scrollTop -= dy;
+      
+      this.lastPosX = clientX;
+      this.lastPosY = clientY;
+    }
+  });
 
-    const stopPan = (e) => {
-      if (!isPanning) return;
-      isPanning = false;
-      canvasContainer.style.cursor = currentZoom > 1 ? 'grab' : 'default';
-      if (isAdmin && !_fabricCanvas.isDrawingMode) {
-        _fabricCanvas.selection = true;
+  _fabricCanvas.on('mouse:up', function(opt) {
+    if (this.isDragging) {
+      this.isDragging = false;
+      if (isAdmin) {
+        this.selection = true;
       }
-      try { _fabricCanvas.upperCanvasEl.releasePointerCapture(e.pointerId); } catch(err) {}
-    };
-
-    _fabricCanvas.upperCanvasEl.addEventListener('pointerup', stopPan);
-    _fabricCanvas.upperCanvasEl.addEventListener('pointercancel', stopPan);
-  }
+      canvasContainer.style.cursor = currentZoom > 1 ? 'grab' : 'default';
+    }
+  });
 
   // ── Delete/Backspace key: remove selected objects ─────────────────────────
   function handleEditorKeyDown(e) {
