@@ -899,6 +899,9 @@ function setupEditorToolbar(origW, origH) {
       _fabricCanvas.freeDrawingBrush.color = colorPicker.value;
       _fabricCanvas.freeDrawingBrush.width = 4;
       drawBtn.classList.add('active');
+      // Khi vẽ: tắt cursor grab để dùng cursor bút
+      const cc = document.getElementById('editor-canvas-container');
+      if (cc) cc.style.cursor = 'crosshair';
     } else if (mode === 'eraser') {
       _fabricCanvas.isDrawingMode = true;
       // Simulate eraser with white wide brush
@@ -906,6 +909,12 @@ function setupEditorToolbar(origW, origH) {
       _fabricCanvas.freeDrawingBrush.color = '#ffffff';
       _fabricCanvas.freeDrawingBrush.width = 22;
       if (eraserBtn) eraserBtn.classList.add('active');
+      const cc = document.getElementById('editor-canvas-container');
+      if (cc) cc.style.cursor = 'cell';
+    } else {
+      // Chế độ bình thường: trả về grab nếu đang zoom
+      const cc = document.getElementById('editor-canvas-container');
+      if (cc) cc.style.cursor = 'default';
     }
   }
 
@@ -971,28 +980,70 @@ function setupEditorToolbar(origW, origH) {
   }
 
   // Zoom — min zoom=1 (original), can only zoom IN from default
+  const canvasContainer = document.getElementById('editor-canvas-container');
   let currentZoom = 1;
-  zoomInBtn.onclick = () => {
-    currentZoom = Math.min(currentZoom + 0.25, 5);
+
+  function applyZoom(zoom) {
+    currentZoom = zoom;
     _fabricCanvas.setZoom(currentZoom);
     _fabricCanvas.setDimensions({
-      width: (origW || _fabricCanvas.width) * currentZoom,
-      height: (origH || _fabricCanvas.height) * currentZoom
+      width: origW * currentZoom,
+      height: origH * currentZoom
     });
-  };
-  zoomOutBtn.onclick = () => {
-    currentZoom = Math.max(currentZoom - 0.25, 1); // Never below 1
-    _fabricCanvas.setZoom(currentZoom);
-    _fabricCanvas.setDimensions({
-      width: (origW || _fabricCanvas.width / currentZoom) * currentZoom,
-      height: (origH || _fabricCanvas.height / currentZoom) * currentZoom
-    });
-  };
+    // Update cursor based on zoom level
+    canvasContainer.style.cursor = currentZoom > 1 ? 'grab' : 'default';
+  }
+
+  zoomInBtn.onclick = () => applyZoom(Math.min(currentZoom + 0.25, 5));
+  zoomOutBtn.onclick = () => applyZoom(Math.max(currentZoom - 0.25, 1));
   resetZoomBtn.onclick = () => {
-    currentZoom = 1;
-    _fabricCanvas.setZoom(1);
-    _fabricCanvas.setDimensions({ width: origW || _fabricCanvas.width, height: origH || _fabricCanvas.height });
+    applyZoom(1);
+    canvasContainer.scrollLeft = 0;
+    canvasContainer.scrollTop = 0;
   };
+
+  // ── Drag-to-Pan (kéo ảnh sau khi zoom) ──────────────────────────────────
+  let isPanning = false;
+  let panStartX = 0, panStartY = 0;
+  let panScrollLeft = 0, panScrollTop = 0;
+
+  _fabricCanvas.on('mouse:down', (opt) => {
+    // Chỉ kéo khi không vẽ và không chọn đối tượng di chuyển được
+    const activeObj = _fabricCanvas.getActiveObject();
+    const canDrag = !_fabricCanvas.isDrawingMode && (!activeObj || activeObj.selectable === false);
+    if (!canDrag || currentZoom <= 1) return;
+
+    isPanning = true;
+    const e = opt.e;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    panStartX = clientX;
+    panStartY = clientY;
+    panScrollLeft = canvasContainer.scrollLeft;
+    panScrollTop = canvasContainer.scrollTop;
+    canvasContainer.style.cursor = 'grabbing';
+    _fabricCanvas.selection = false;
+  });
+
+  _fabricCanvas.on('mouse:move', (opt) => {
+    if (!isPanning) return;
+    const e = opt.e;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const dx = clientX - panStartX;
+    const dy = clientY - panStartY;
+    canvasContainer.scrollLeft = panScrollLeft - dx;
+    canvasContainer.scrollTop = panScrollTop - dy;
+  });
+
+  _fabricCanvas.on('mouse:up', () => {
+    if (!isPanning) return;
+    isPanning = false;
+    canvasContainer.style.cursor = currentZoom > 1 ? 'grab' : 'default';
+    if (isAdmin && !_fabricCanvas.isDrawingMode) {
+      _fabricCanvas.selection = true;
+    }
+  });
 
   // ── Delete/Backspace key: remove selected objects ─────────────────────────
   function handleEditorKeyDown(e) {
