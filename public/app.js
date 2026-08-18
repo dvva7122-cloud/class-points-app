@@ -983,6 +983,7 @@ function setupEditorToolbar(origW, origH) {
   const canvasContainer = document.getElementById('editor-canvas-container');
   let currentZoom = 1;
 
+  // Cập nhật applyZoom để luôn khởi tạo brush (sửa lỗi Fabric không nhận sự kiện khi chưa dùng bút)
   function applyZoom(zoom) {
     currentZoom = zoom;
     _fabricCanvas.setZoom(currentZoom);
@@ -990,7 +991,13 @@ function setupEditorToolbar(origW, origH) {
       width: origW * currentZoom,
       height: origH * currentZoom
     });
-    // Sửa lỗi kẹt cuộn của CSS Flexbox: khi zoom to hơn màn hình, tắt flex center
+    
+    // Khởi tạo brush ảo để đánh thức các sự kiện chuột của Fabric
+    if (!_fabricCanvas.freeDrawingBrush) {
+      _fabricCanvas.freeDrawingBrush = new fabric.PencilBrush(_fabricCanvas);
+    }
+    
+    // Tắt flex center để tránh kẹt cuộn
     if (currentZoom > 1) {
       canvasContainer.style.display = 'block';
       canvasContainer.style.cursor = 'grab';
@@ -1008,58 +1015,46 @@ function setupEditorToolbar(origW, origH) {
     canvasContainer.scrollTop = 0;
   };
 
-  // ── Drag-to-Pan (kéo ảnh sau khi zoom) - Native DOM ──────────────────────
-  let isPanning = false;
-  let panStartX = 0, panStartY = 0;
-  let panScrollLeft = 0, panScrollTop = 0;
-
-  function startPan(e) {
-    if (_fabricCanvas.isDrawingMode || currentZoom <= 1) return;
-    
-    // Bỏ qua nếu click trúng object
-    const activeObj = _fabricCanvas.getActiveObject();
-    if (activeObj && activeObj.selectable !== false) return;
-
-    isPanning = true;
-    panStartX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-    panStartY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
-    panScrollLeft = canvasContainer.scrollLeft;
-    panScrollTop = canvasContainer.scrollTop;
-    canvasContainer.style.cursor = 'grabbing';
-    
-    // Tắt vùng chọn của Fabric và ngăn chặn browser drag mặc định
-    _fabricCanvas.selection = false;
-    e.preventDefault();
-  }
-
-  function movePan(e) {
-    if (!isPanning) return;
-    const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-    const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
-    const dx = clientX - panStartX;
-    const dy = clientY - panStartY;
-    canvasContainer.scrollLeft = panScrollLeft - dx;
-    canvasContainer.scrollTop = panScrollTop - dy;
-  }
-
-  function stopPan() {
-    if (!isPanning) return;
-    isPanning = false;
-    canvasContainer.style.cursor = currentZoom > 1 ? 'grab' : 'default';
-    if (isAdmin && !_fabricCanvas.isDrawingMode) {
-      _fabricCanvas.selection = true;
-    }
-  }
-
-  // Dùng container bọc ngoài cùng để bắt sự kiện chắc chắn nhất
-  const wrapper = document.getElementById('image-editor-modal');
-  wrapper.addEventListener('mousedown', startPan, true);
-  wrapper.addEventListener('mousemove', movePan, true);
-  window.addEventListener('mouseup', stopPan, true);
+  // ── Drag-to-Pan (kéo ảnh sau khi zoom) - Dùng chuẩn Fabric ──────────────────────
   
-  wrapper.addEventListener('touchstart', startPan, { passive: false, capture: true });
-  wrapper.addEventListener('touchmove', movePan, { passive: false, capture: true });
-  window.addEventListener('touchend', stopPan, true);
+  _fabricCanvas.on('mouse:down', function(opt) {
+    if (this.isDrawingMode || currentZoom <= 1) return;
+    
+    // Bỏ qua nếu click trúng object (chữ, sticker)
+    if (opt.target && opt.target.selectable !== false) return;
+
+    this.isDragging = true;
+    this.selection = false;
+    const e = opt.e;
+    this.lastPosX = e.clientX !== undefined ? e.clientX : (e.touches ? e.touches[0].clientX : 0);
+    this.lastPosY = e.clientY !== undefined ? e.clientY : (e.touches ? e.touches[0].clientY : 0);
+    canvasContainer.style.cursor = 'grabbing';
+  });
+
+  _fabricCanvas.on('mouse:move', function(opt) {
+    if (!this.isDragging) return;
+    const e = opt.e;
+    const clientX = e.clientX !== undefined ? e.clientX : (e.touches ? e.touches[0].clientX : 0);
+    const clientY = e.clientY !== undefined ? e.clientY : (e.touches ? e.touches[0].clientY : 0);
+    
+    const dx = clientX - this.lastPosX;
+    const dy = clientY - this.lastPosY;
+    
+    canvasContainer.scrollLeft -= dx;
+    canvasContainer.scrollTop -= dy;
+    
+    this.lastPosX = clientX;
+    this.lastPosY = clientY;
+  });
+
+  _fabricCanvas.on('mouse:up', function(opt) {
+    if (!this.isDragging) return;
+    this.isDragging = false;
+    canvasContainer.style.cursor = currentZoom > 1 ? 'grab' : 'default';
+    if (isAdmin && !this.isDrawingMode) {
+      this.selection = true;
+    }
+  });
 
   // ── Delete/Backspace key: remove selected objects ─────────────────────────
   function handleEditorKeyDown(e) {
