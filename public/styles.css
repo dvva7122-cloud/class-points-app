@@ -1378,6 +1378,7 @@ body:not(.is-editing) #add-student-container {
     font-size: 0.9rem;
     opacity: 0;
     transition: opacity 0.2s;
+    z-index: 10;
 }
 
 .event-card:hover .btn-delete-event {
@@ -1386,6 +1387,42 @@ body:not(.is-editing) #add-student-container {
 
 .btn-delete-event:hover {
     background: #D32F2F;
+    transform: scale(1.1);
+}
+
+.btn-rotate-event {
+    position: absolute;
+    top: 8px;
+    background: rgba(49, 130, 206, 0.9);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.1s;
+    z-index: 10;
+}
+
+.btn-rotate-left {
+    right: 80px;
+}
+
+.btn-rotate-right {
+    right: 44px;
+}
+
+.event-card:hover .btn-rotate-event {
+    opacity: 1;
+}
+
+.btn-rotate-event:hover {
+    background: #2b6cb0;
     transform: scale(1.1);
 }
 

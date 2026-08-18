@@ -1194,6 +1194,43 @@ function showConfirmModal(title, message, onConfirm, onCancel, confirmText = 'Đ
   existing.classList.add('show');
 }
 
+function rotateHandbookImage(classId, evt, degrees, imgElement) {
+  const tempImg = new Image();
+  tempImg.crossOrigin = 'Anonymous';
+  tempImg.onload = () => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    if (degrees === 90 || degrees === -90) {
+      canvas.width = tempImg.height;
+      canvas.height = tempImg.width;
+    } else {
+      canvas.width = tempImg.width;
+      canvas.height = tempImg.height;
+    }
+    
+    if (degrees === 90) {
+      ctx.translate(tempImg.height, 0);
+      ctx.rotate(90 * Math.PI / 180);
+    } else if (degrees === -90) {
+      ctx.translate(0, tempImg.width);
+      ctx.rotate(-90 * Math.PI / 180);
+    } else if (degrees === 180) {
+      ctx.translate(tempImg.width, tempImg.height);
+      ctx.rotate(180 * Math.PI / 180);
+    }
+    
+    ctx.drawImage(tempImg, 0, 0);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+    
+    evt.imageUrl = dataUrl;
+    imgElement.src = dataUrl;
+    
+    doSaveEventImage(classId, evt.id, dataUrl);
+  };
+  tempImg.src = evt.imageUrl;
+}
+
 function renderEvents(cls) {
   const container = document.getElementById('events-container');
   container.innerHTML = '';
@@ -1243,7 +1280,7 @@ function renderEvents(cls) {
       card.appendChild(overlay);
 
       card.addEventListener('click', (e) => {
-        if (e.target.closest('.btn-delete-event')) return;
+        if (e.target.closest('.btn-delete-event') || e.target.closest('.btn-rotate-event')) return;
         openImageEditor(evt.imageUrl, (newDataUrl) => {
           evt.imageUrl = newDataUrl;
           img.src = newDataUrl; // Cập nhật trực tiếp ảnh trên DOM mà không vẽ lại cả trang
@@ -1252,6 +1289,20 @@ function renderEvents(cls) {
       });
 
       if (isAdmin) {
+        const rotLeftBtn = createEl('button', { className: 'btn-rotate-event btn-rotate-left admin-only', title: 'Quay trái 90°' });
+        rotLeftBtn.innerHTML = '<i class="fa-solid fa-rotate-left"></i>';
+        rotLeftBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          rotateHandbookImage(cls.id, evt, -90, img);
+        });
+
+        const rotRightBtn = createEl('button', { className: 'btn-rotate-event btn-rotate-right admin-only', title: 'Quay phải 90°' });
+        rotRightBtn.innerHTML = '<i class="fa-solid fa-rotate-right"></i>';
+        rotRightBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          rotateHandbookImage(cls.id, evt, 90, img);
+        });
+
         const delBtn = createEl('button', { className: 'btn-delete-event admin-only', title: 'Xóa ảnh' });
         delBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
         delBtn.addEventListener('click', () => {
@@ -1264,6 +1315,8 @@ function renderEvents(cls) {
             'Hủy'
           );
         });
+        card.appendChild(rotLeftBtn);
+        card.appendChild(rotRightBtn);
         card.appendChild(delBtn);
       }
       grid.appendChild(card);
