@@ -1007,43 +1007,44 @@ function setupEditorToolbar(origW, origH) {
   let panStartX = 0, panStartY = 0;
   let panScrollLeft = 0, panScrollTop = 0;
 
-  _fabricCanvas.on('mouse:down', (opt) => {
-    // Chỉ kéo khi không vẽ và không chọn đối tượng di chuyển được
-    const activeObj = _fabricCanvas.getActiveObject();
-    const canDrag = !_fabricCanvas.isDrawingMode && (!activeObj || activeObj.selectable === false);
-    if (!canDrag || currentZoom <= 1) return;
+  if (_fabricCanvas.upperCanvasEl) {
+    _fabricCanvas.upperCanvasEl.addEventListener('pointerdown', (e) => {
+      // Chỉ kéo khi không vẽ và không chọn đối tượng di chuyển được
+      const activeObj = _fabricCanvas.getActiveObject();
+      const canDrag = !_fabricCanvas.isDrawingMode && (!activeObj || activeObj.selectable === false);
+      if (!canDrag || currentZoom <= 1) return;
 
-    isPanning = true;
-    const e = opt.e;
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    panStartX = clientX;
-    panStartY = clientY;
-    panScrollLeft = canvasContainer.scrollLeft;
-    panScrollTop = canvasContainer.scrollTop;
-    canvasContainer.style.cursor = 'grabbing';
-    _fabricCanvas.selection = false;
-  });
+      isPanning = true;
+      panStartX = e.clientX;
+      panStartY = e.clientY;
+      panScrollLeft = canvasContainer.scrollLeft;
+      panScrollTop = canvasContainer.scrollTop;
+      canvasContainer.style.cursor = 'grabbing';
+      _fabricCanvas.selection = false;
+      _fabricCanvas.upperCanvasEl.setPointerCapture(e.pointerId);
+    });
 
-  _fabricCanvas.on('mouse:move', (opt) => {
-    if (!isPanning) return;
-    const e = opt.e;
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    const dx = clientX - panStartX;
-    const dy = clientY - panStartY;
-    canvasContainer.scrollLeft = panScrollLeft - dx;
-    canvasContainer.scrollTop = panScrollTop - dy;
-  });
+    _fabricCanvas.upperCanvasEl.addEventListener('pointermove', (e) => {
+      if (!isPanning) return;
+      const dx = e.clientX - panStartX;
+      const dy = e.clientY - panStartY;
+      canvasContainer.scrollLeft = panScrollLeft - dx;
+      canvasContainer.scrollTop = panScrollTop - dy;
+    });
 
-  _fabricCanvas.on('mouse:up', () => {
-    if (!isPanning) return;
-    isPanning = false;
-    canvasContainer.style.cursor = currentZoom > 1 ? 'grab' : 'default';
-    if (isAdmin && !_fabricCanvas.isDrawingMode) {
-      _fabricCanvas.selection = true;
-    }
-  });
+    const stopPan = (e) => {
+      if (!isPanning) return;
+      isPanning = false;
+      canvasContainer.style.cursor = currentZoom > 1 ? 'grab' : 'default';
+      if (isAdmin && !_fabricCanvas.isDrawingMode) {
+        _fabricCanvas.selection = true;
+      }
+      try { _fabricCanvas.upperCanvasEl.releasePointerCapture(e.pointerId); } catch(err) {}
+    };
+
+    _fabricCanvas.upperCanvasEl.addEventListener('pointerup', stopPan);
+    _fabricCanvas.upperCanvasEl.addEventListener('pointercancel', stopPan);
+  }
 
   // ── Delete/Backspace key: remove selected objects ─────────────────────────
   function handleEditorKeyDown(e) {
