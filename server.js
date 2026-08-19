@@ -656,11 +656,22 @@ app.patch('/api/classes/:classId/students/:studentId/points', requireAdmin, asyn
     }
     
     let currentPoints = cls.students[0].points || 0;
+    let studentName = cls.students[0].name || 'Học sinh';
     let newPoints = currentPoints + change;
+
+    const historyEntry = {
+      studentId,
+      studentName,
+      change,
+      ts: Date.now()
+    };
 
     const result = await classesColl.findOneAndUpdate(
       { id: classId, 'students.id': studentId },
-      { $set: { 'students.$.points': newPoints } },
+      { 
+        $set: { 'students.$.points': newPoints },
+        $push: { history: historyEntry }
+      },
       { returnDocument: 'after' }
     );
 

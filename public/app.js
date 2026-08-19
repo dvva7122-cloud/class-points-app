@@ -1586,14 +1586,10 @@ function renderStudentCard(student, classId, maxPts) {
 // Lưu thay đổi điểm đang chờ gửi (chưa sync với server)
 const pendingPointsChange = {}; // { studentId: { classId, change, timer } }
 
-// ─── Lịch sử điểm (localStorage) ────────────────────────────────────────
+// ─── Lịch sử điểm (Server-synced) ────────────────────────────────────────
 
-function _historyKey(classId) {
-  return `pointHistory_${classId}`;
-}
-
-function _todayStr() {
-  const now = new Date();
+function _todayStr(timestamp) {
+  const now = timestamp ? new Date(timestamp) : new Date();
   const d = String(now.getDate()).padStart(2, '0');
   const m = String(now.getMonth() + 1).padStart(2, '0');
   const y = now.getFullYear();
@@ -1601,18 +1597,18 @@ function _todayStr() {
 }
 
 function saveToHistory(classId, studentName, change) {
-  const key = _historyKey(classId);
-  let entries = [];
-  try { entries = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
+  const cls = appData.find(c => c.id === classId);
+  if (!cls) return;
+  if (!cls.history) cls.history = [];
 
-  // Giữ lại 2 tuần = 14 ngày gần nhất
-  const cutoff = Date.now() - 14 * 24 * 60 * 60 * 1000;
-  entries = entries.filter(e => e.ts >= cutoff);
+  // Thêm optimistic vào đầu mảng local để render ngay
+  cls.history.push({
+    studentId: 'optimistic', // Dùng tạm
+    studentName: studentName,
+    change: change,
+    ts: Date.now()
+  });
 
-  entries.unshift({ date: _todayStr(), name: studentName, change, ts: Date.now() });
-  localStorage.setItem(key, JSON.stringify(entries));
-
-  // Cập nhật panel ngay nếu đang hiện
   renderHistoryPanel(classId);
 }
 
@@ -1620,13 +1616,15 @@ function renderHistoryPanel(classId) {
   const content = document.getElementById('history-content');
   if (!content) return;
 
-  const key = _historyKey(classId);
-  let entries = [];
-  try { entries = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
+  const cls = appData.find(c => c.id === classId);
+  let entries = (cls && cls.history) ? [...cls.history] : [];
 
   // Lọc 2 tuần
   const cutoff = Date.now() - 14 * 24 * 60 * 60 * 1000;
   entries = entries.filter(e => e.ts >= cutoff);
+
+  // Sắp xếp giảm dần (mới nhất lên trên)
+  entries.sort((a, b) => b.ts - a.ts);
 
   content.innerHTML = '';
 
@@ -1641,8 +1639,9 @@ function renderHistoryPanel(classId) {
   // Nhóm theo ngày
   const groups = {};
   entries.forEach(e => {
-    if (!groups[e.date]) groups[e.date] = [];
-    groups[e.date].push(e);
+    const dateStr = _todayStr(e.ts);
+    if (!groups[dateStr]) groups[dateStr] = [];
+    groups[dateStr].push(e);
   });
 
   Object.keys(groups).forEach(date => {
@@ -1660,7 +1659,7 @@ function renderHistoryPanel(classId) {
 
       const name = document.createElement('span');
       name.className = 'history-entry-name';
-      name.textContent = entry.name;
+      name.textContent = entry.studentName || entry.name;
 
       const change = document.createElement('span');
       const isPositive = entry.change > 0;

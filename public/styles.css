@@ -763,7 +763,7 @@ body.theme-christmas .student-card.with-frame {
     position: fixed;
     left: 32px;
     bottom: 28px;
-    width: 300px;
+    width: 260px;
     max-height: 380px;
     overflow: hidden;
     z-index: 100;
@@ -783,7 +783,7 @@ body.theme-christmas .student-card.with-frame {
 }
 
 .history-panel.minimized {
-    width: 220px;
+    width: 200px;
     max-height: none;
 }
 
