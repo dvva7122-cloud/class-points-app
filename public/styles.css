@@ -542,6 +542,20 @@ body.theme-christmas .student-card.with-frame {
         0 0 0 1.5px #FFB84D;
 }
 
+/* Thẻ bị điểm âm (cảnh báo) */
+.student-card.is-negative {
+    background: #FFF0F0;
+    border-color: #FF8A8A;
+    border-top-color: #FF4D4D;
+}
+
+.student-card.is-negative:hover {
+    border-color: #FF6B6B;
+    box-shadow:
+        0 12px 32px rgba(255, 77, 77, 0.12),
+        0 0 0 2px rgba(255, 77, 77, 0.10);
+}
+
 .student-card:hover::after {
     opacity: 1;
 }

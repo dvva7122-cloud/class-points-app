@@ -1469,7 +1469,7 @@ function renderStudentCard(student, classId, maxPts) {
 
   const card = createEl('div', {
     id: `student-card-${student.id}`,
-    className: `student-card ${themeState.useFrames ? 'with-frame' : ''} ${isTop ? 'is-top' : ''} ${isBirthday ? 'is-birthday' : ''}`,
+    className: `student-card ${themeState.useFrames ? 'with-frame' : ''} ${isTop ? 'is-top' : ''} ${isBirthday ? 'is-birthday' : ''} ${student.points < 0 ? 'is-negative' : ''}`,
   });
   card.dataset.studentId = student.id;
 
@@ -1513,7 +1513,8 @@ function renderStudentCard(student, classId, maxPts) {
   pointsRow.appendChild(pointVal);
   pointsRow.appendChild(document.createTextNode(' '));
   
-  const orangeEmoji = createEl('span', { className: 'orange-emoji', text: '🍊' });
+  const emojiToUse = student.points < 0 ? '🍄' : '🍊';
+  const orangeEmoji = createEl('span', { className: 'orange-emoji', text: emojiToUse });
   pointsRow.appendChild(orangeEmoji);
 
   if (isAdmin) {
@@ -1540,7 +1541,7 @@ function renderStudentCard(student, classId, maxPts) {
       const applyChange = () => {
         const newVal = parseInt(input.value, 10);
         pointsRow.replaceChild(pointVal, input);
-        if (!isNaN(newVal) && newVal !== oldPoints && newVal >= 0) {
+        if (!isNaN(newVal) && newVal !== oldPoints) {
           const change = newVal - oldPoints;
           doUpdatePoints(classId, student.id, change);
         }
@@ -1591,13 +1592,21 @@ function doUpdatePoints(classId, studentId, change) {
   if (!student) return;
 
   // 1. Cập nhật state local & DOM ngay lập tức (không chờ server)
-  student.points = Math.max(0, student.points + change);
+  student.points = student.points + change;
   const display = document.getElementById(`points-${studentId}`);
   if (display) {
     display.querySelector('.point-val').textContent = student.points;
+    const emojiSpan = display.querySelector('.orange-emoji');
+    if (emojiSpan) emojiSpan.textContent = student.points < 0 ? '🍄' : '🍊';
     display.classList.remove('pop');
     void display.offsetWidth;
     display.classList.add('pop');
+  }
+  
+  const cardEl = document.getElementById(`student-card-${studentId}`);
+  if (cardEl) {
+    if (student.points < 0) cardEl.classList.add('is-negative');
+    else cardEl.classList.remove('is-negative');
   }
 
   // 2. Gom thay đổi vào hàng chờ
@@ -1654,6 +1663,21 @@ function updateCrowns(cls) {
     } else {
       card.classList.remove('is-top');
     }
+
+    // Toggle is-negative class
+    if (s.points < 0) {
+      card.classList.add('is-negative');
+    } else {
+      card.classList.remove('is-negative');
+    }
+
+    // Cập nhật emoji: âm → nấm, dương → cam
+    const emojiSpan = card.querySelector('.orange-emoji');
+    if (emojiSpan) emojiSpan.textContent = s.points < 0 ? '🍄' : '🍊';
+
+    // Cập nhật số điểm hiển thị
+    const pointVal = card.querySelector('.point-val');
+    if (pointVal) pointVal.textContent = String(s.points);
 
     // Toggle crown icon in icons container
     const iconsContainer = card.querySelector('.student-icons-container');

@@ -656,7 +656,7 @@ app.patch('/api/classes/:classId/students/:studentId/points', requireAdmin, asyn
     }
     
     let currentPoints = cls.students[0].points || 0;
-    let newPoints = Math.max(0, currentPoints + change);
+    let newPoints = currentPoints + change;
 
     const result = await classesColl.findOneAndUpdate(
       { id: classId, 'students.id': studentId },
