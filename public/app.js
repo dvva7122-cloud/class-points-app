@@ -703,6 +703,9 @@ function renderCurrentClass() {
   renderEvents(cls);
   renderWheel(cls);
   renderDuckRaceSection(cls);
+
+  // Cập nhật lịch sử điểm cho mọi người (kể cả không phải admin)
+  renderHistoryPanel(cls.id);
 }
 
 // ─── Events (Upcoming Events) ─────────────────────────────────────────────
@@ -2188,13 +2191,6 @@ function updateAdminUI() {
   const editModeToggle = document.getElementById('edit-mode-toggle');
 
   const conversionTable = document.getElementById('conversion-table');
-  const historyPanel    = document.getElementById('history-panel');
-
-  // Lịch sử điểm luôn hiển thị (kể cả không phải admin)
-  if (historyPanel) {
-    historyPanel.style.display = 'flex';
-    renderHistoryPanel(currentClassId);
-  }
 
   if (isAdmin) {
     document.body.classList.add('is-admin');

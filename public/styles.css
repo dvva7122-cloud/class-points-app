@@ -1291,12 +1291,20 @@ body:not(.is-editing) #add-student-container {
     }
 
     .conversion-table,
-    .conversion-table.minimized {
+    .conversion-table.minimized,
+    .history-panel,
+    .history-panel.minimized {
         position: relative;
         right: auto;
+        left: auto;
         bottom: auto;
         width: 100%;
         margin-top: 22px;
+        max-height: none;
+    }
+
+    .history-content {
+        max-height: 260px;
     }
 }
 
