@@ -1586,10 +1586,103 @@ function renderStudentCard(student, classId, maxPts) {
 // Lưu thay đổi điểm đang chờ gửi (chưa sync với server)
 const pendingPointsChange = {}; // { studentId: { classId, change, timer } }
 
+// ─── Lịch sử điểm (localStorage) ────────────────────────────────────────
+
+function _historyKey(classId) {
+  return `pointHistory_${classId}`;
+}
+
+function _todayStr() {
+  const now = new Date();
+  const d = String(now.getDate()).padStart(2, '0');
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const y = now.getFullYear();
+  return `${d}/${m}/${y}`;
+}
+
+function saveToHistory(classId, studentName, change) {
+  const key = _historyKey(classId);
+  let entries = [];
+  try { entries = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
+
+  // Giữ lại 2 tuần = 14 ngày gần nhất
+  const cutoff = Date.now() - 14 * 24 * 60 * 60 * 1000;
+  entries = entries.filter(e => e.ts >= cutoff);
+
+  entries.unshift({ date: _todayStr(), name: studentName, change, ts: Date.now() });
+  localStorage.setItem(key, JSON.stringify(entries));
+
+  // Cập nhật panel ngay nếu đang hiện
+  renderHistoryPanel(classId);
+}
+
+function renderHistoryPanel(classId) {
+  const content = document.getElementById('history-content');
+  if (!content) return;
+
+  const key = _historyKey(classId);
+  let entries = [];
+  try { entries = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
+
+  // Lọc 2 tuần
+  const cutoff = Date.now() - 14 * 24 * 60 * 60 * 1000;
+  entries = entries.filter(e => e.ts >= cutoff);
+
+  content.innerHTML = '';
+
+  if (entries.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'history-empty';
+    empty.textContent = 'Chưa có thay đổi điểm nào.';
+    content.appendChild(empty);
+    return;
+  }
+
+  // Nhóm theo ngày
+  const groups = {};
+  entries.forEach(e => {
+    if (!groups[e.date]) groups[e.date] = [];
+    groups[e.date].push(e);
+  });
+
+  Object.keys(groups).forEach(date => {
+    const group = document.createElement('div');
+    group.className = 'history-date-group';
+
+    const label = document.createElement('div');
+    label.className = 'history-date-label';
+    label.textContent = `📅 ${date}`;
+    group.appendChild(label);
+
+    groups[date].forEach(entry => {
+      const row = document.createElement('div');
+      row.className = 'history-entry';
+
+      const name = document.createElement('span');
+      name.className = 'history-entry-name';
+      name.textContent = entry.name;
+
+      const change = document.createElement('span');
+      const isPositive = entry.change > 0;
+      change.className = `history-entry-change ${isPositive ? 'positive' : 'negative'}`;
+      change.textContent = `${isPositive ? '+' : ''}${entry.change} 🍊`;
+
+      row.appendChild(name);
+      row.appendChild(change);
+      group.appendChild(row);
+    });
+
+    content.appendChild(group);
+  });
+}
+
 function doUpdatePoints(classId, studentId, change) {
   const cls     = appData.find(c => c.id === classId);
   const student = cls && cls.students.find(s => s.id === studentId);
   if (!student) return;
+
+  // Ghi vào lịch sử ngay lập tức (trước debounce)
+  saveToHistory(classId, student.name, change);
 
   // 1. Cập nhật state local & DOM ngay lập tức (không chờ server)
   student.points = student.points + change;
@@ -2096,6 +2189,7 @@ function updateAdminUI() {
   const editModeToggle = document.getElementById('edit-mode-toggle');
 
   const conversionTable = document.getElementById('conversion-table');
+  const historyPanel    = document.getElementById('history-panel');
 
   if (isAdmin) {
     document.body.classList.add('is-admin');
@@ -2103,6 +2197,10 @@ function updateAdminUI() {
     toggleBtn.innerHTML = '<i class="fa-solid fa-lock-open"></i>';
     editModeToggle.style.display = 'inline-flex';
     if (conversionTable) conversionTable.style.display = 'block';
+    if (historyPanel) {
+      historyPanel.style.display = 'flex';
+      renderHistoryPanel(currentClassId);
+    }
 
     if (isEditingMode) {
       document.body.classList.add('is-editing');
@@ -2122,6 +2220,7 @@ function updateAdminUI() {
     editModeToggle.style.display = 'none';
     isEditingMode = false;
     if (conversionTable) conversionTable.style.display = 'none';
+    if (historyPanel) historyPanel.style.display = 'none';
   }
 }
 
@@ -2262,6 +2361,11 @@ function setupListeners() {
   // Conversion table collapse
   document.getElementById('conversion-header').addEventListener('click', () => {
     document.getElementById('conversion-table').classList.toggle('minimized');
+  });
+
+  // History panel collapse
+  document.getElementById('history-header').addEventListener('click', () => {
+    document.getElementById('history-panel').classList.toggle('minimized');
   });
 
   // Theme Modal
