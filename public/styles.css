@@ -761,8 +761,8 @@ body.theme-christmas .student-card.with-frame {
 /* ── History Panel (Lịch sử điểm) ─────────────────────────────────────── */
 .history-panel {
     position: fixed;
-    right: 32px;
-    bottom: 210px; /* Nằm phía trên Bảng Quy Đổi */
+    left: 32px;
+    bottom: 28px;
     width: 300px;
     max-height: 380px;
     overflow: hidden;
@@ -772,7 +772,7 @@ body.theme-christmas .student-card.with-frame {
     background: #ffffff;
     box-shadow: 0 20px 52px rgba(31, 41, 55, 0.18);
     transition: var(--transition);
-    transform-origin: bottom right;
+    transform-origin: bottom left;
     display: flex;
     flex-direction: column;
 }

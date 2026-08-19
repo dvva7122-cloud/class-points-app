@@ -2191,16 +2191,18 @@ function updateAdminUI() {
   const conversionTable = document.getElementById('conversion-table');
   const historyPanel    = document.getElementById('history-panel');
 
+  // Lịch sử điểm luôn hiển thị (kể cả không phải admin)
+  if (historyPanel) {
+    historyPanel.style.display = 'flex';
+    renderHistoryPanel(currentClassId);
+  }
+
   if (isAdmin) {
     document.body.classList.add('is-admin');
     toggleBtn.classList.add('unlocked');
     toggleBtn.innerHTML = '<i class="fa-solid fa-lock-open"></i>';
     editModeToggle.style.display = 'inline-flex';
     if (conversionTable) conversionTable.style.display = 'block';
-    if (historyPanel) {
-      historyPanel.style.display = 'flex';
-      renderHistoryPanel(currentClassId);
-    }
 
     if (isEditingMode) {
       document.body.classList.add('is-editing');
@@ -2220,7 +2222,6 @@ function updateAdminUI() {
     editModeToggle.style.display = 'none';
     isEditingMode = false;
     if (conversionTable) conversionTable.style.display = 'none';
-    if (historyPanel) historyPanel.style.display = 'none';
   }
 }
 
