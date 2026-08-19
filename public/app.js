@@ -2998,6 +2998,10 @@ function setupRealtime() {
       const data = JSON.parse(e.data);
       if (data.type === 'DATA_CHANGED') {
         await loadAllData();
+        // Nếu đang có thay đổi điểm chưa gửi (debounce đang chờ),
+        // KHÔNG render lại để tránh flash lại giá trị cũ từ server.
+        // Khi debounce gửi xong, updateCrowns() sẽ tự đồng bộ DOM.
+        if (Object.keys(pendingPointsChange).length > 0) return;
         renderClassTabs();
         renderCurrentClass();
       } else if (data.type === 'SETTINGS_CHANGED') {
