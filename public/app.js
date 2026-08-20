@@ -3812,6 +3812,25 @@ function renderSeatingChart(cls) {
         tLabel = 'Thầy Việt Anh';
       }
       deskEl.innerHTML = '<div class="teacher-desk-icon">💻 📚</div><div class="teacher-desk-name">' + tLabel + '</div>';
+
+      // Nút sửa tên bàn giáo viên (chỉ hiện khi đang chỉnh sửa)
+      if (isEditingSeatingChart) {
+        const editLabelBtn = document.createElement('div');
+        editLabelBtn.className = 'teacher-desk-edit-btn';
+        editLabelBtn.innerHTML = '✏️';
+        editLabelBtn.title = 'Sửa tên';
+        editLabelBtn.onclick = async (e) => {
+          e.stopPropagation();
+          const result = await showCustomPrompt('Sửa tên bàn giáo viên', [
+            { key: 'label', label: 'Tên hiển thị', value: desk.label || tLabel }
+          ]);
+          if (!result || !result.label || !result.label.trim()) return;
+          desk.label = result.label.trim();
+          renderSeatingChart(cls);
+          doSaveSeatingChart(cls.id);
+        };
+        deskEl.appendChild(editLabelBtn);
+      }
     } else if (desk.type === 'image') {
       const img = document.createElement('img');
       img.src = desk.url;

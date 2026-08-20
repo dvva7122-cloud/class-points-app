@@ -2319,6 +2319,7 @@ body:not(.is-editing) #add-student-container {
     justify-content: center;
     gap: 6px;
     padding: 10px;
+    position: relative;
     box-shadow: 0 8px 0 #3D1A00, 0 12px 20px rgba(120,53,15,0.35);
 }
 .desk-teacher::before {
@@ -2339,6 +2340,23 @@ body:not(.is-editing) #add-student-container {
     font-size: 0.88rem;
     text-align: center;
     text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+
+.teacher-desk-edit-btn {
+    position: absolute;
+    top: 5px;
+    right: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    opacity: 0.55;
+    transition: opacity 0.15s, transform 0.15s;
+    line-height: 1;
+    z-index: 5;
+}
+
+.teacher-desk-edit-btn:hover {
+    opacity: 1;
+    transform: scale(1.2);
 }
 
 /* ── Canvas min-height ── */
