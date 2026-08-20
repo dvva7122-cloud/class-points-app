@@ -287,6 +287,10 @@ app.patch('/api/classes/:classId', requireAdmin, async (req, res) => {
     updateData.name = validName;
   }
   
+  if (req.body.isHidden !== undefined) {
+    updateData.isHidden = !!req.body.isHidden;
+  }
+  
   if (req.body.gifUrl !== undefined) {
     updateData.gifUrl = req.body.gifUrl; // có thể là null (để xóa gif)
   }

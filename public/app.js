@@ -548,7 +548,17 @@ function renderClassTabs() {
   let draggedItem = null;
 
   appData.forEach((cls, index) => {
+    // Ẩn lớp nếu không phải chế độ chỉnh sửa (áp dụng cho cả khách và admin đang xem)
+    if (!isEditingMode && cls.isHidden) return;
+
     const btn = createEl('button', { className: `tab-btn${cls.id === currentClassId ? ' active' : ''}`, text: cls.name });
+    
+    // Đánh dấu lớp ẩn bằng icon
+    if (cls.isHidden) {
+      btn.innerHTML = `<i class="fa-solid fa-eye-slash" style="margin-right: 4px; font-size: 0.8em;"></i> ` + cls.name;
+      btn.style.opacity = '0.6';
+    }
+    
     btn.dataset.index = index;
     btn.dataset.id = cls.id;
 
@@ -636,6 +646,19 @@ function renderCurrentClass() {
 
   classInfoEl.style.display = 'flex';
   nameEl.textContent = cls.name;
+  
+  const hideBtn = document.getElementById('toggle-hide-class-btn');
+  if (hideBtn) {
+    if (cls.isHidden) {
+      hideBtn.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
+      hideBtn.style.color = '#ef4444'; // Red-ish to indicate hidden
+      hideBtn.title = 'Lớp này đang bị Ẩn (Nhấn để Hiện)';
+    } else {
+      hideBtn.innerHTML = '<i class="fa-solid fa-eye"></i>';
+      hideBtn.style.color = '#10b981'; // Green-ish to indicate visible
+      hideBtn.title = 'Lớp này đang Hiện (Nhấn để Ẩn)';
+    }
+  }
 
   // Render multi GIFs/images beside class name
   const gifsContainer = document.getElementById('current-class-gifs');
@@ -2011,6 +2034,22 @@ async function doEditClassGif() {
   }
 }
 
+async function doToggleHideClass() {
+  const cls = getCurrentClass();
+  if (!cls) return;
+  const isCurrentlyHidden = !!cls.isHidden;
+  const newStatus = !isCurrentlyHidden;
+  
+  try {
+    const patchRes = await api('PATCH', `/api/classes/${currentClassId}`, { isHidden: newStatus });
+    cls.isHidden = newStatus;
+    renderClassTabs();
+    renderCurrentClass();
+  } catch (err) {
+    if (err.message !== 'Unauthorized') showError(err.message);
+  }
+}
+
 async function doDeleteClass() {
   const cls = getCurrentClass();
   if (!cls) return;
@@ -2252,11 +2291,20 @@ async function loadAllData() {
     });
   }
 
-  if (!currentClassId && appData.length > 0) {
-    currentClassId = appData[0].id;
+  const visibleClasses = isEditingMode ? appData : appData.filter(c => !c.isHidden);
+  
+  if (!currentClassId && visibleClasses.length > 0) {
+    currentClassId = visibleClasses[0].id;
   }
+  
   if (currentClassId && !appData.find(c => c.id === currentClassId)) {
-    currentClassId = appData.length > 0 ? appData[0].id : null;
+    currentClassId = visibleClasses.length > 0 ? visibleClasses[0].id : null;
+  }
+  
+  // Nếu class đang chọn bị ẩn mà đang ở chế độ xem thì nhảy sang lớp khác
+  const currentObj = appData.find(c => c.id === currentClassId);
+  if (currentObj && currentObj.isHidden && !isEditingMode && visibleClasses.length > 0) {
+    currentClassId = visibleClasses[0].id;
   }
 }
 
@@ -2303,7 +2351,18 @@ function setupListeners() {
   document.getElementById('edit-mode-toggle').addEventListener('click', () => {
     if (!isAdmin) return;
     isEditingMode = !isEditingMode;
+    
+    // Nếu vừa tắt edit mode mà lớp hiện tại đang bị ẩn, chuyển sang lớp khác
+    const currentObj = appData.find(c => c.id === currentClassId);
+    if (!isEditingMode && currentObj && currentObj.isHidden) {
+      const visibleClasses = appData.filter(c => !c.isHidden);
+      if (visibleClasses.length > 0) {
+        currentClassId = visibleClasses[0].id;
+      }
+    }
+    
     updateAdminUI();
+    renderClassTabs();
     renderCurrentClass();
   });
 
@@ -2311,6 +2370,7 @@ function setupListeners() {
   document.getElementById('add-class-btn').addEventListener('click', doAddClass);
   document.getElementById('edit-class-btn').addEventListener('click', doEditClassName);
   document.getElementById('edit-class-gif-btn').addEventListener('click', doEditClassGif);
+  document.getElementById('toggle-hide-class-btn').addEventListener('click', doToggleHideClass);
   document.getElementById('delete-class-btn').addEventListener('click', doDeleteClass);
 
   // Student actions
