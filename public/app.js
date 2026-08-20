@@ -3662,11 +3662,16 @@ function renderSeatingChart(cls) {
       editBtn.onclick = () => { isEditingSeatingChart = true; renderSeatingChart(cls); };
       controls.appendChild(editBtn);
     } else {
-      ['Bàn 2 chỗ', 'Bàn 4 chỗ'].forEach((label, i) => {
+      const deskTypes = [
+        { label: 'Bàn 1 chỗ', seats: 1 },
+        { label: 'Bàn 2 chỗ', seats: 2 },
+        { label: 'Bàn 4 chỗ', seats: 4 }
+      ];
+      deskTypes.forEach(t => {
         const btn = document.createElement('button');
         btn.className = 'seating-btn';
-        btn.innerHTML = '<i class="fa-solid fa-plus"></i> ' + label;
-        btn.onclick = () => addDesk(i === 0 ? 2 : 4);
+        btn.innerHTML = '<i class="fa-solid fa-plus"></i> ' + t.label;
+        btn.onclick = () => addDesk(t.seats);
         controls.appendChild(btn);
       });
 
@@ -3799,7 +3804,7 @@ function renderSeatingChart(cls) {
     let deskClass = 'desk';
     if (desk.type === 'teacher') deskClass += ' desk-teacher';
     else if (desk.type === 'image') deskClass = 'decor-image-wrapper';
-    else deskClass += ' desk-' + (seatCount === 4 ? '4' : '2');
+    else deskClass += ' desk-' + seatCount;
     if (isEditingSeatingChart) deskClass += ' draggable';
     deskEl.className = deskClass;
     deskEl.style.left = desk.x + 'px';
