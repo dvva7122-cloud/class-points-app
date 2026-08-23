@@ -1490,7 +1490,7 @@ body:not(.is-editing) #add-student-container {
     margin-top: 40px;
     width: 100%;
     padding: 30px 28px;
-    background: linear-gradient(145deg, #FFFDF7 0%, #FFF8ED 100%);
+    background: #FFFFFF;
     border-radius: var(--card-radius);
     border: 1.5px solid #FFE0A0;
     box-shadow: 0 4px 20px rgba(255, 152, 0, 0.08);
