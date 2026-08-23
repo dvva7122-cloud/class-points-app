@@ -724,6 +724,7 @@ function renderCurrentClass() {
   
   renderSeatingChart(cls);
   renderEvents(cls);
+  renderAnnouncements(cls);
   renderWheel(cls);
   renderDuckRaceSection(cls);
 
@@ -1317,6 +1318,269 @@ function rotateHandbookImage(classId, evt, degrees, imgElement) {
     doSaveEventImage(classId, evt.id, dataUrl);
   };
   tempImg.src = evt.imageUrl;
+}
+
+// ─── Thông Báo (Announcements) ────────────────────────────────────────────
+
+// State for announcement modal
+let _annModalClassId = null;
+let _annEditId       = null;
+let _annImageData    = null; // base64 data URL
+
+function _annFormatDate(ts) {
+  const d = new Date(ts);
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mo = String(d.getMonth() + 1).padStart(2, '0');
+  const yy = d.getFullYear();
+  return `${hh}:${mm} – ${dd}/${mo}/${yy}`;
+}
+
+function _linkify(text) {
+  const urlRegex = /((https?:\/\/)[^\s<>"]+)/g;
+  return text.replace(urlRegex, (url) => {
+    const display = url.length > 60 ? url.substring(0, 57) + '...' : url;
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer">${display}</a>`;
+  });
+}
+
+function openAnnouncementModal(classId, editAnn = null) {
+  _annModalClassId = classId;
+  _annEditId       = editAnn ? editAnn.id : null;
+  _annImageData    = editAnn ? editAnn.imageUrl : null;
+
+  const modal    = document.getElementById('announcement-modal');
+  const title    = document.getElementById('announcement-modal-title');
+  const textarea = document.getElementById('announcement-content');
+  const imgName  = document.getElementById('announcement-image-name');
+  const preview  = document.getElementById('announcement-image-preview');
+  const previewC = document.getElementById('announcement-image-preview-container');
+  const removeBtn = document.getElementById('announcement-remove-image-btn');
+
+  title.textContent   = editAnn ? 'Sửa thông báo' : 'Tạo thông báo mới';
+  textarea.value      = editAnn ? editAnn.content : '';
+
+  if (_annImageData) {
+    imgName.textContent        = 'Ảnh đã chọn';
+    preview.src                = _annImageData;
+    previewC.style.display     = 'block';
+    removeBtn.style.display    = 'flex';
+  } else {
+    imgName.textContent        = 'Chưa chọn ảnh';
+    preview.src                = '';
+    previewC.style.display     = 'none';
+    removeBtn.style.display    = 'none';
+  }
+
+  modal.classList.add('show');
+  textarea.focus();
+}
+
+function closeAnnouncementModal() {
+  document.getElementById('announcement-modal').classList.remove('show');
+  _annModalClassId = null;
+  _annEditId       = null;
+  _annImageData    = null;
+}
+
+async function saveAnnouncement() {
+  const content = document.getElementById('announcement-content').value.trim();
+  if (!content) {
+    document.getElementById('announcement-content').focus();
+    return;
+  }
+  const classId = _annModalClassId;
+  const saveBtn = document.getElementById('announcement-save-btn');
+  saveBtn.disabled   = true;
+  saveBtn.textContent = '⏳ Đang lưu...';
+
+  try {
+    if (_annEditId) {
+      await api('PATCH', `/api/classes/${classId}/announcements/${_annEditId}`, {
+        content,
+        imageUrl: _annImageData || null
+      });
+      const cls = appData.find(c => c.id === classId);
+      if (cls && cls.announcements) {
+        const ann = cls.announcements.find(a => a.id === _annEditId);
+        if (ann) { ann.content = content; ann.imageUrl = _annImageData || null; }
+      }
+    } else {
+      const newAnn = await api('POST', `/api/classes/${classId}/announcements`, {
+        content,
+        imageUrl: _annImageData || null
+      });
+      const cls = appData.find(c => c.id === classId);
+      if (cls) {
+        if (!cls.announcements) cls.announcements = [];
+        cls.announcements.push(newAnn);
+      }
+    }
+    closeAnnouncementModal();
+    renderAnnouncements(appData.find(c => c.id === classId));
+  } catch (err) {
+    if (err.message !== 'Unauthorized') showError(err.message);
+  } finally {
+    saveBtn.disabled    = false;
+    saveBtn.textContent = 'Lưu thông báo';
+  }
+}
+
+async function deleteAnnouncement(classId, annId) {
+  if (!confirm('Bạn có chắc muốn xóa thông báo này không?')) return;
+  try {
+    await api('DELETE', `/api/classes/${classId}/announcements/${annId}`);
+    const cls = appData.find(c => c.id === classId);
+    if (cls && cls.announcements) {
+      cls.announcements = cls.announcements.filter(a => a.id !== annId);
+    }
+    renderAnnouncements(cls);
+  } catch (err) {
+    if (err.message !== 'Unauthorized') showError(err.message);
+  }
+}
+
+function renderAnnouncements(cls) {
+  const container = document.getElementById('announcements-container');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const anns = (cls && cls.announcements) ? [...cls.announcements] : [];
+  // Sort newest first
+  anns.sort((a, b) => b.createdAt - a.createdAt);
+
+  const hasAnns = anns.length > 0;
+  if (!hasAnns && !isAdmin) return; // Ẩn section khi không có gì và không phải admin
+
+  const section = document.createElement('div');
+  section.className = 'announcements-section';
+
+  // Header
+  const header = document.createElement('div');
+  header.className = 'announcements-header';
+  const h2 = document.createElement('h2');
+  h2.innerHTML = '📢 Bảng Tin Lớp Học';
+  header.appendChild(h2);
+
+  if (isAdmin) {
+    const addBtn = document.createElement('button');
+    addBtn.className = 'add-announcement-btn admin-only';
+    addBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Đăng thông báo';
+    addBtn.onclick = () => openAnnouncementModal(cls.id);
+    header.appendChild(addBtn);
+  }
+  section.appendChild(header);
+
+  // List
+  const list = document.createElement('div');
+  list.className = 'announcements-list';
+
+  if (!hasAnns) {
+    const empty = document.createElement('div');
+    empty.className = 'announcements-empty';
+    empty.innerHTML = '<span class="empty-icon">📭</span><p>Chưa có thông báo nào. Nhấn <strong>+ Đăng thông báo</strong> để thêm!</p>';
+    list.appendChild(empty);
+  } else {
+    anns.forEach(ann => {
+      const card = document.createElement('div');
+      card.className = 'announcement-card';
+
+      // Card header
+      const cardHeader = document.createElement('div');
+      cardHeader.className = 'announcement-card-header';
+
+      const timeEl = document.createElement('div');
+      timeEl.className = 'announcement-time';
+      timeEl.innerHTML = `<i class="fa-regular fa-clock"></i> ${_annFormatDate(ann.createdAt)}`;
+      cardHeader.appendChild(timeEl);
+
+      if (isAdmin) {
+        const actions = document.createElement('div');
+        actions.className = 'announcement-actions';
+
+        const editBtn = document.createElement('button');
+        editBtn.className = 'ann-action-btn ann-edit-btn';
+        editBtn.innerHTML = '<i class="fa-solid fa-pen"></i>';
+        editBtn.title = 'Sửa thông báo';
+        editBtn.onclick = () => openAnnouncementModal(cls.id, ann);
+        actions.appendChild(editBtn);
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'ann-action-btn ann-delete-btn';
+        delBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+        delBtn.title = 'Xóa thông báo';
+        delBtn.onclick = () => deleteAnnouncement(cls.id, ann.id);
+        actions.appendChild(delBtn);
+
+        cardHeader.appendChild(actions);
+      }
+      card.appendChild(cardHeader);
+
+      // Content (with linkify)
+      const contentEl = document.createElement('div');
+      contentEl.className = 'announcement-content';
+      contentEl.innerHTML = _linkify(ann.content.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'));
+      card.appendChild(contentEl);
+
+      // Image
+      if (ann.imageUrl) {
+        const img = document.createElement('img');
+        img.className = 'announcement-image';
+        img.src = ann.imageUrl;
+        img.alt = 'Ảnh thông báo';
+        img.onclick = () => window.open(ann.imageUrl, '_blank');
+        card.appendChild(img);
+      }
+
+      list.appendChild(card);
+    });
+  }
+
+  section.appendChild(list);
+  container.appendChild(section);
+}
+
+// ─── Setup Announcement Modal Events ─────────────────────────────────────
+function setupAnnouncementModal() {
+  document.getElementById('announcement-cancel-btn').addEventListener('click', closeAnnouncementModal);
+  document.getElementById('announcement-save-btn').addEventListener('click', saveAnnouncement);
+
+  document.getElementById('announcement-upload-btn').addEventListener('click', () => {
+    document.getElementById('announcement-file-input').click();
+  });
+
+  document.getElementById('announcement-file-input').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 4 * 1024 * 1024) {
+      showError('Ảnh quá lớn. Vui lòng chọn ảnh nhỏ hơn 4MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      _annImageData = ev.target.result;
+      document.getElementById('announcement-image-name').textContent = file.name;
+      document.getElementById('announcement-image-preview').src = _annImageData;
+      document.getElementById('announcement-image-preview-container').style.display = 'block';
+      document.getElementById('announcement-remove-image-btn').style.display = 'flex';
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  });
+
+  document.getElementById('announcement-remove-image-btn').addEventListener('click', () => {
+    _annImageData = null;
+    document.getElementById('announcement-image-name').textContent = 'Chưa chọn ảnh';
+    document.getElementById('announcement-image-preview').src = '';
+    document.getElementById('announcement-image-preview-container').style.display = 'none';
+    document.getElementById('announcement-remove-image-btn').style.display = 'none';
+  });
+
+  // Đóng modal khi click nền
+  document.getElementById('announcement-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'announcement-modal') closeAnnouncementModal();
+  });
 }
 
 function renderEvents(cls) {
@@ -3216,6 +3480,7 @@ async function init() {
   renderClassTabs();
   renderCurrentClass();
   setupRealtime();
+  setupAnnouncementModal();
   startClock();
 }
 

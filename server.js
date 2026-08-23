@@ -687,6 +687,85 @@ app.patch('/api/classes/:classId/students/:studentId/points', requireAdmin, asyn
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
+//  API: THÔNG BÁO (ANNOUNCEMENTS)
+// ═══════════════════════════════════════════════════════════════════════════
+
+// POST /api/classes/:classId/announcements  (admin) - Tạo thông báo mới
+app.post('/api/classes/:classId/announcements', requireAdmin, async (req, res) => {
+  const { classId } = req.params;
+  const { content, imageUrl } = req.body;
+  if (!content || typeof content !== 'string' || !content.trim()) {
+    return res.status(400).json({ error: 'Nội dung thông báo không được để trống.' });
+  }
+  if (imageUrl && (typeof imageUrl !== 'string' || !imageUrl.startsWith('data:image/'))) {
+    return res.status(400).json({ error: 'Ảnh không hợp lệ.' });
+  }
+
+  try {
+    const classesColl = db.getClassesCollection();
+    const newAnn = {
+      id: generateId('ann'),
+      content: content.trim(),
+      imageUrl: imageUrl || null,
+      createdAt: Date.now()
+    };
+    const result = await classesColl.updateOne(
+      { id: classId },
+      { $push: { announcements: newAnn } }
+    );
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Không tìm thấy lớp.' });
+    broadcast({ type: 'DATA_CHANGED' });
+    res.status(201).json(newAnn);
+  } catch (err) {
+    res.status(500).json({ error: 'Lỗi server' });
+  }
+});
+
+// PATCH /api/classes/:classId/announcements/:annId  (admin) - Sửa thông báo
+app.patch('/api/classes/:classId/announcements/:annId', requireAdmin, async (req, res) => {
+  const { classId, annId } = req.params;
+  const { content, imageUrl } = req.body;
+  if (!content || typeof content !== 'string' || !content.trim()) {
+    return res.status(400).json({ error: 'Nội dung thông báo không được để trống.' });
+  }
+
+  try {
+    const classesColl = db.getClassesCollection();
+    const result = await classesColl.updateOne(
+      { id: classId, 'announcements.id': annId },
+      {
+        $set: {
+          'announcements.$.content': content.trim(),
+          'announcements.$.imageUrl': imageUrl || null
+        }
+      }
+    );
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Không tìm thấy thông báo.' });
+    broadcast({ type: 'DATA_CHANGED' });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Lỗi server' });
+  }
+});
+
+// DELETE /api/classes/:classId/announcements/:annId  (admin) - Xóa thông báo
+app.delete('/api/classes/:classId/announcements/:annId', requireAdmin, async (req, res) => {
+  const { classId, annId } = req.params;
+  try {
+    const classesColl = db.getClassesCollection();
+    const result = await classesColl.updateOne(
+      { id: classId },
+      { $pull: { announcements: { id: annId } } }
+    );
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Không tìm thấy lớp.' });
+    broadcast({ type: 'DATA_CHANGED' });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Lỗi server' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
 //  API: SỰ KIỆN (UPCOMING EVENTS)
 // ═══════════════════════════════════════════════════════════════════════════
 

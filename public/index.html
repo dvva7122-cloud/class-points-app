@@ -82,6 +82,9 @@
             <!-- UPCOMING EVENTS -->
             <div id="events-container"></div>
 
+            <!-- ANNOUNCEMENTS -->
+            <div id="announcements-container"></div>
+
             <!-- WHEEL OF NAMES -->
             <div id="wheel-container"></div>
 
@@ -174,6 +177,39 @@
             <div style="display:flex; justify-content:flex-end; gap:10px;">
                 <button id="custom-prompt-cancel" class="cancel-btn">Hủy</button>
                 <button id="custom-prompt-submit" class="submit-btn" style="background: var(--primary-color); color: white; border: none;">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Announcement Modal -->
+    <div class="modal" id="announcement-modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <h3 style="margin-bottom: 16px; font-weight: 800; color: var(--primary-dark);" id="announcement-modal-title">Tạo thông báo mới</h3>
+            
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Nội dung thông báo:</label>
+                <textarea id="announcement-content" rows="4" style="width: 100%; border-radius: 12px; padding: 10px; border: 2px solid #E2E8F0; resize: vertical;" placeholder="Nhập nội dung... (Link sẽ tự động biến thành liên kết)"></textarea>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Đính kèm hình ảnh (Tùy chọn):</label>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button id="announcement-upload-btn" class="winner-btn" style="background: var(--primary); padding: 8px 16px;">
+                        <i class="fa-solid fa-upload"></i> Tải ảnh lên
+                    </button>
+                    <span id="announcement-image-name" style="color: #6B7280; font-size: 0.9em; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Chưa chọn ảnh</span>
+                    <button id="announcement-remove-image-btn" class="action-icon delete-icon" style="display: none;" title="Xóa ảnh"><i class="fa-solid fa-times"></i></button>
+                </div>
+                <input type="file" id="announcement-file-input" accept="image/*" style="display: none;">
+                
+                <div id="announcement-image-preview-container" style="margin-top: 10px; display: none; text-align: center;">
+                    <img id="announcement-image-preview" src="" style="max-width: 100%; max-height: 200px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                </div>
+            </div>
+
+            <div class="modal-buttons">
+                <button class="winner-btn cancel-btn" id="announcement-cancel-btn">Hủy</button>
+                <button class="winner-btn" id="announcement-save-btn">Lưu thông báo</button>
             </div>
         </div>
     </div>
