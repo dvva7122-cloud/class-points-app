@@ -621,7 +621,7 @@ body.theme-christmas .student-card.with-frame {
 }
 
 .points-display {
-    flex: 1;
+    margin-top: auto;
     display: flex;
     align-items: center;
     justify-content: center;
