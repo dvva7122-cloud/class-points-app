@@ -1544,11 +1544,12 @@ body:not(.is-editing) #add-student-container {
 }
 
 .announcement-card {
-    background: #FFFFFF;
-    border-radius: 16px;
+    background: #FFF9ED;
+    border-radius: 12px;
     padding: 20px 24px;
-    border: 1.5px solid #FFE0A0;
-    box-shadow: 0 2px 10px rgba(255, 152, 0, 0.07);
+    border: 1px solid #FFE4B5;
+    border-left: 6px solid #FF9800;
+    box-shadow: 0 4px 16px rgba(255, 152, 0, 0.12);
     transition: var(--transition);
     position: relative;
     animation: ann-slide-in 0.3s ease;
@@ -1560,8 +1561,7 @@ body:not(.is-editing) #add-student-container {
 }
 
 .announcement-card:hover {
-    box-shadow: 0 6px 24px rgba(255, 152, 0, 0.15);
-    border-color: #FFB84D;
+    box-shadow: 0 8px 24px rgba(255, 152, 0, 0.2);
     transform: translateY(-2px);
 }
 
@@ -1584,9 +1584,9 @@ body:not(.is-editing) #add-student-container {
 
 .announcement-actions {
     display: flex;
-    gap: 7px;
+    gap: 8px;
     opacity: 0;
-    transition: opacity 0.2s;
+    transition: var(--transition);
 }
 
 .announcement-card:hover .announcement-actions {
@@ -1629,9 +1629,10 @@ body:not(.is-editing) #add-student-container {
 }
 
 .announcement-content {
-    font-size: 1rem;
-    color: #374151;
-    line-height: 1.7;
+    font-size: 1.15rem;
+    color: #111827;
+    font-weight: 500;
+    line-height: 1.6;
     white-space: pre-wrap;
     word-break: break-word;
 }
@@ -1679,6 +1680,23 @@ body:not(.is-editing) #add-student-container {
 .announcements-empty p {
     font-size: 1rem;
     margin: 0;
+}
+
+/* ─── Announcement Icon Animation ─── */
+@keyframes ring {
+    0%   { transform: rotate(0); }
+    10%  { transform: rotate(15deg); }
+    20%  { transform: rotate(-10deg); }
+    30%  { transform: rotate(5deg); }
+    40%  { transform: rotate(-5deg); }
+    50%  { transform: rotate(0); }
+    100% { transform: rotate(0); }
+}
+
+.ann-icon {
+    display: inline-block;
+    animation: ring 2s infinite ease-in-out;
+    transform-origin: center;
 }
 
 /* ─── Announcement Modal (redesigned) ─── */

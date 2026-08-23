@@ -1464,7 +1464,7 @@ function renderAnnouncements(cls) {
   const header = document.createElement('div');
   header.className = 'announcements-header';
   const h2 = document.createElement('h2');
-  h2.innerHTML = '📢 Bảng Tin Lớp Học';
+  h2.innerHTML = '<span class="ann-icon">📢</span> Bảng Tin Lớp Học';
   header.appendChild(h2);
 
   if (isAdmin) {
