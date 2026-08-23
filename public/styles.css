@@ -2439,7 +2439,7 @@ body:not(.is-editing) #add-student-container {
 #seating-chart-container {
     margin-top: 40px;
     margin-bottom: 40px;
-    background: linear-gradient(135deg, #fef9f0 0%, #fff8f0 100%);
+    background: #FFFFFF;
     border-radius: 20px;
     padding: 28px;
     box-shadow: 0 10px 35px rgba(0,0,0,0.06);
