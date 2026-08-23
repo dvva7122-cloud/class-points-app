@@ -1650,7 +1650,7 @@ body:not(.is-editing) #add-student-container {
 }
 
 .announcement-image {
-    margin-top: 14px;
+    margin: 14px auto 0;
     width: 100%;
     max-width: 600px;
     border-radius: 12px;
