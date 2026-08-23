@@ -183,33 +183,71 @@
 
     <!-- Announcement Modal -->
     <div class="modal" id="announcement-modal">
-        <div class="modal-content" style="max-width: 500px;">
-            <h3 style="margin-bottom: 16px; font-weight: 800; color: var(--primary-dark);" id="announcement-modal-title">Tạo thông báo mới</h3>
-            
-            <div style="margin-bottom: 15px;">
-                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Nội dung thông báo:</label>
-                <textarea id="announcement-content" rows="4" style="width: 100%; border-radius: 12px; padding: 10px; border: 2px solid #E2E8F0; resize: vertical;" placeholder="Nhập nội dung... (Link sẽ tự động biến thành liên kết)"></textarea>
-            </div>
-            
-            <div style="margin-bottom: 15px;">
-                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Đính kèm hình ảnh (Tùy chọn):</label>
-                <div style="display: flex; gap: 10px; align-items: center;">
-                    <button id="announcement-upload-btn" class="winner-btn" style="background: var(--primary); padding: 8px 16px;">
-                        <i class="fa-solid fa-upload"></i> Tải ảnh lên
-                    </button>
-                    <span id="announcement-image-name" style="color: #6B7280; font-size: 0.9em; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Chưa chọn ảnh</span>
-                    <button id="announcement-remove-image-btn" class="action-icon delete-icon" style="display: none;" title="Xóa ảnh"><i class="fa-solid fa-times"></i></button>
+        <div class="ann-modal-box">
+            <!-- Header -->
+            <div class="ann-modal-header">
+                <div class="ann-modal-header-icon">📢</div>
+                <div>
+                    <div id="announcement-modal-title" class="ann-modal-title">Tạo thông báo mới</div>
+                    <div class="ann-modal-subtitle">Thông báo sẽ hiển thị cho tất cả học sinh</div>
                 </div>
-                <input type="file" id="announcement-file-input" accept="image/*" style="display: none;">
-                
-                <div id="announcement-image-preview-container" style="margin-top: 10px; display: none; text-align: center;">
-                    <img id="announcement-image-preview" src="" style="max-width: 100%; max-height: 200px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <button class="ann-modal-close" id="announcement-cancel-btn" title="Đóng">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Toolbar -->
+            <div class="ann-toolbar">
+                <button class="ann-tool-btn" id="ann-insert-link-btn" title="Chèn liên kết với chữ tùy chỉnh">
+                    <i class="fa-solid fa-link"></i> Chèn link
+                </button>
+                <button class="ann-tool-btn" id="announcement-upload-btn" title="Đính kèm hình ảnh">
+                    <i class="fa-solid fa-image"></i> Chèn ảnh
+                </button>
+                <input type="file" id="announcement-file-input" accept="image/*" style="display:none;">
+                <span class="ann-toolbar-hint">Gõ nội dung → dùng nút trên để chèn link/ảnh</span>
+            </div>
+
+            <!-- Insert link popover (hidden by default) -->
+            <div class="ann-link-popover" id="ann-link-popover" style="display:none;">
+                <div class="ann-link-popover-title"><i class="fa-solid fa-link"></i> Chèn liên kết</div>
+                <div class="ann-link-row">
+                    <div class="ann-link-field">
+                        <label>Chữ hiển thị</label>
+                        <input type="text" id="ann-link-text" placeholder="ví dụ: tại đây">
+                    </div>
+                    <div class="ann-link-field">
+                        <label>Địa chỉ URL</label>
+                        <input type="url" id="ann-link-url" placeholder="https://...">
+                    </div>
+                </div>
+                <div class="ann-link-actions">
+                    <button class="ann-link-cancel" id="ann-link-cancel-btn">Hủy</button>
+                    <button class="ann-link-insert" id="ann-link-insert-btn"><i class="fa-solid fa-check"></i> Chèn vào</button>
                 </div>
             </div>
 
-            <div class="modal-buttons">
-                <button class="winner-btn cancel-btn" id="announcement-cancel-btn">Hủy</button>
-                <button class="winner-btn" id="announcement-save-btn">Lưu thông báo</button>
+            <!-- Textarea -->
+            <div class="ann-body">
+                <textarea id="announcement-content" class="ann-textarea"
+                    rows="5"
+                    placeholder="Nhập nội dung thông báo...&#10;Ví dụ: Các bạn xem hướng dẫn [tại đây](https://...)"></textarea>
+
+                <!-- Image preview -->
+                <div id="announcement-image-preview-container" style="display:none; margin-top: 12px; position: relative;">
+                    <img id="announcement-image-preview" src="" class="ann-img-preview">
+                    <button id="announcement-remove-image-btn" class="ann-remove-img-btn" title="Xóa ảnh">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Footer Buttons -->
+            <div class="ann-modal-footer">
+                <button class="ann-btn-cancel" id="announcement-cancel-btn-2">Hủy</button>
+                <button class="ann-btn-save" id="announcement-save-btn">
+                    <i class="fa-solid fa-paper-plane"></i> Đăng thông báo
+                </button>
             </div>
         </div>
     </div>

@@ -1633,6 +1633,321 @@ body:not(.is-editing) #add-student-container {
     margin: 0;
 }
 
+/* ─── Announcement Modal (redesigned) ─── */
+#announcement-modal {
+    align-items: flex-start;
+    padding-top: 60px;
+}
+
+.ann-modal-box {
+    background: #fff;
+    border-radius: 24px;
+    width: 100%;
+    max-width: 560px;
+    margin: 0 auto;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.18);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.ann-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 22px 24px 18px;
+    background: linear-gradient(135deg, #FFF8ED 0%, #FFF3DC 100%);
+    border-bottom: 1px solid #FFE0A0;
+}
+
+.ann-modal-header-icon {
+    font-size: 2rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.ann-modal-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #92400E;
+}
+
+.ann-modal-subtitle {
+    font-size: 0.78rem;
+    color: #B45309;
+    margin-top: 2px;
+}
+
+.ann-modal-close {
+    margin-left: auto;
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(180,83,9,0.1);
+    color: #B45309;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    transition: background 0.15s, transform 0.15s;
+}
+
+.ann-modal-close:hover {
+    background: rgba(180,83,9,0.2);
+    transform: scale(1.1);
+}
+
+/* Toolbar */
+.ann-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: #FAFAFA;
+    border-bottom: 1px solid #F0F0F0;
+}
+
+.ann-tool-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border: 1.5px solid #E5E7EB;
+    border-radius: 999px;
+    background: #fff;
+    color: #374151;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+
+.ann-tool-btn:hover {
+    border-color: #FF9800;
+    color: #E65100;
+    background: #FFF8ED;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(255,152,0,0.15);
+}
+
+.ann-toolbar-hint {
+    font-size: 0.75rem;
+    color: #9CA3AF;
+    margin-left: auto;
+}
+
+/* Link popover */
+.ann-link-popover {
+    margin: 0 20px;
+    padding: 14px 18px;
+    background: #EFF6FF;
+    border: 1.5px solid #BFDBFE;
+    border-radius: 14px;
+    margin-top: 12px;
+}
+
+.ann-link-popover-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #1D4ED8;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ann-link-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.ann-link-field label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #1E40AF;
+    margin-bottom: 4px;
+}
+
+.ann-link-field input {
+    width: 100%;
+    padding: 8px 11px;
+    border: 1.5px solid #BFDBFE;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    outline: none;
+    transition: border-color 0.15s;
+    box-sizing: border-box;
+    background: #fff;
+}
+
+.ann-link-field input:focus {
+    border-color: #2563EB;
+}
+
+.ann-link-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.ann-link-cancel {
+    padding: 7px 14px;
+    border: 1.5px solid #BFDBFE;
+    border-radius: 999px;
+    background: #fff;
+    color: #1D4ED8;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.ann-link-cancel:hover { background: #DBEAFE; }
+
+.ann-link-insert {
+    padding: 7px 16px;
+    border: none;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #2563EB, #1D4ED8);
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.ann-link-insert:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37,99,235,0.3);
+}
+
+/* Body / textarea */
+.ann-body {
+    padding: 16px 20px;
+    flex: 1;
+}
+
+.ann-textarea {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid #E5E7EB;
+    border-radius: 14px;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    box-sizing: border-box;
+    font-family: inherit;
+    color: #1F2937;
+    min-height: 120px;
+}
+
+.ann-textarea:focus {
+    border-color: #FF9800;
+    box-shadow: 0 0 0 3px rgba(255,152,0,0.12);
+}
+
+.ann-textarea::placeholder {
+    color: #9CA3AF;
+    font-size: 0.88rem;
+}
+
+.ann-img-preview {
+    width: 100%;
+    max-height: 200px;
+    object-fit: contain;
+    border-radius: 10px;
+    border: 1.5px solid #E5E7EB;
+}
+
+.ann-remove-img-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(220,38,38,0.85);
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    transition: background 0.15s, transform 0.15s;
+}
+
+.ann-remove-img-btn:hover {
+    background: #DC2626;
+    transform: scale(1.1);
+}
+
+/* Footer */
+.ann-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 20px;
+    border-top: 1px solid #F0F0F0;
+    background: #FAFAFA;
+}
+
+.ann-btn-cancel {
+    padding: 10px 20px;
+    border: 1.5px solid #E5E7EB;
+    border-radius: 999px;
+    background: #fff;
+    color: #6B7280;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.ann-btn-cancel:hover {
+    border-color: #9CA3AF;
+    color: #374151;
+}
+
+.ann-btn-save {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #FF9800, #F57C00);
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 12px rgba(255,152,0,0.3);
+}
+
+.ann-btn-save:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255,152,0,0.4);
+}
+
+.ann-btn-save:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
 /* ─── UPCOMING EVENTS ─── */
 .events-section {
     margin-top: 40px;
