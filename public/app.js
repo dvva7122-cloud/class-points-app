@@ -1337,12 +1337,20 @@ function _annFormatDate(ts) {
   return `${hh}:${mm} – ${dd}/${mo}/${yy}`;
 }
 
-function _linkify(text) {
-  const urlRegex = /((https?:\/\/)[^\s<>"]+)/g;
-  return text.replace(urlRegex, (url) => {
+function _linkify(htmlText) {
+  // 1. Process Markdown links: [text](url)
+  let html = htmlText.replace(/\[([^\]]+)\]\((https?:\/\/[^\s\)]+)\)/g, (match, p1, p2) => {
+    return `<a href="${p2}" target="_blank" rel="noopener noreferrer">${p1}</a>`;
+  });
+  
+  // 2. Process raw URLs that are not already inside <a> tags
+  html = html.replace(/<a\b[^>]*>.*?<\/a>|(https?:\/\/[^\s]+)/gi, (match, url) => {
+    if (!url) return match; // It was an <a> tag
     const display = url.length > 60 ? url.substring(0, 57) + '...' : url;
     return `<a href="${url}" target="_blank" rel="noopener noreferrer">${display}</a>`;
   });
+  
+  return html;
 }
 
 function openAnnouncementModal(classId, editAnn = null) {
@@ -1353,24 +1361,20 @@ function openAnnouncementModal(classId, editAnn = null) {
   const modal    = document.getElementById('announcement-modal');
   const title    = document.getElementById('announcement-modal-title');
   const textarea = document.getElementById('announcement-content');
-  const imgName  = document.getElementById('announcement-image-name');
   const preview  = document.getElementById('announcement-image-preview');
   const previewC = document.getElementById('announcement-image-preview-container');
-  const removeBtn = document.getElementById('announcement-remove-image-btn');
+  const linkPopover = document.getElementById('ann-link-popover');
 
   title.textContent   = editAnn ? 'Sửa thông báo' : 'Tạo thông báo mới';
   textarea.value      = editAnn ? editAnn.content : '';
+  linkPopover.style.display = 'none'; // reset popover
 
   if (_annImageData) {
-    imgName.textContent        = 'Ảnh đã chọn';
     preview.src                = _annImageData;
     previewC.style.display     = 'block';
-    removeBtn.style.display    = 'flex';
   } else {
-    imgName.textContent        = 'Chưa chọn ảnh';
     preview.src                = '';
     previewC.style.display     = 'none';
-    removeBtn.style.display    = 'none';
   }
 
   modal.classList.add('show');
@@ -1544,6 +1548,7 @@ function renderAnnouncements(cls) {
 // ─── Setup Announcement Modal Events ─────────────────────────────────────
 function setupAnnouncementModal() {
   document.getElementById('announcement-cancel-btn').addEventListener('click', closeAnnouncementModal);
+  document.getElementById('announcement-cancel-btn-2').addEventListener('click', closeAnnouncementModal);
   document.getElementById('announcement-save-btn').addEventListener('click', saveAnnouncement);
 
   document.getElementById('announcement-upload-btn').addEventListener('click', () => {
@@ -1560,10 +1565,8 @@ function setupAnnouncementModal() {
     const reader = new FileReader();
     reader.onload = (ev) => {
       _annImageData = ev.target.result;
-      document.getElementById('announcement-image-name').textContent = file.name;
       document.getElementById('announcement-image-preview').src = _annImageData;
       document.getElementById('announcement-image-preview-container').style.display = 'block';
-      document.getElementById('announcement-remove-image-btn').style.display = 'flex';
     };
     reader.readAsDataURL(file);
     e.target.value = '';
@@ -1571,10 +1574,57 @@ function setupAnnouncementModal() {
 
   document.getElementById('announcement-remove-image-btn').addEventListener('click', () => {
     _annImageData = null;
-    document.getElementById('announcement-image-name').textContent = 'Chưa chọn ảnh';
     document.getElementById('announcement-image-preview').src = '';
     document.getElementById('announcement-image-preview-container').style.display = 'none';
-    document.getElementById('announcement-remove-image-btn').style.display = 'none';
+  });
+
+  // --- Link Popover Logic ---
+  const insertLinkBtn = document.getElementById('ann-insert-link-btn');
+  const linkPopover = document.getElementById('ann-link-popover');
+  const linkCancelBtn = document.getElementById('ann-link-cancel-btn');
+  const linkInsertBtn = document.getElementById('ann-link-insert-btn');
+  const linkText = document.getElementById('ann-link-text');
+  const linkUrl = document.getElementById('ann-link-url');
+  const textarea = document.getElementById('announcement-content');
+
+  insertLinkBtn.addEventListener('click', () => {
+    linkPopover.style.display = 'block';
+    // Lấy bôi đen hiện tại (nếu có) làm chữ mặc định
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selection = textarea.value.substring(start, end);
+    linkText.value = selection || '';
+    linkUrl.value = '';
+    if (selection) {
+      linkUrl.focus();
+    } else {
+      linkText.focus();
+    }
+  });
+
+  linkCancelBtn.addEventListener('click', () => {
+    linkPopover.style.display = 'none';
+  });
+
+  linkInsertBtn.addEventListener('click', () => {
+    const text = linkText.value.trim() || 'link';
+    const url = linkUrl.value.trim();
+    if (!url) {
+      showError('Vui lòng nhập URL hợp lệ.');
+      return;
+    }
+    const markdownLink = `[${text}](${url})`;
+    
+    // Chèn vào vị trí con trỏ
+    const startPos = textarea.selectionStart;
+    const endPos = textarea.selectionEnd;
+    const val = textarea.value;
+    textarea.value = val.substring(0, startPos) + markdownLink + val.substring(endPos, val.length);
+    
+    linkPopover.style.display = 'none';
+    textarea.focus();
+    // Di chuyển con trỏ ra sau link vừa chèn
+    textarea.selectionStart = textarea.selectionEnd = startPos + markdownLink.length;
   });
 
   // Đóng modal khi click nền
@@ -1904,7 +1954,9 @@ function saveToHistory(classId, studentName, change) {
 
 function renderHistoryPanel(classId) {
   const content = document.getElementById('history-content');
-  if (!content) return;
+  const listEl = document.getElementById('history-list');
+  const searchInput = document.getElementById('history-search-input');
+  if (!content || !listEl || !searchInput) return;
 
   const cls = appData.find(c => c.id === classId);
   let entries = (cls && cls.history) ? [...cls.history] : [];
@@ -1913,16 +1965,22 @@ function renderHistoryPanel(classId) {
   const cutoff = Date.now() - 14 * 24 * 60 * 60 * 1000;
   entries = entries.filter(e => e.ts >= cutoff);
 
+  // Lọc theo search (nếu có)
+  const query = searchInput.value.toLowerCase().trim();
+  if (query) {
+    entries = entries.filter(e => e.studentName && e.studentName.toLowerCase().includes(query));
+  }
+
   // Sắp xếp giảm dần (mới nhất lên trên)
   entries.sort((a, b) => b.ts - a.ts);
 
-  content.innerHTML = '';
+  listEl.innerHTML = '';
 
   if (entries.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'history-empty';
-    empty.textContent = 'Chưa có thay đổi điểm nào.';
-    content.appendChild(empty);
+    empty.textContent = query ? 'Không tìm thấy kết quả.' : 'Chưa có thay đổi điểm nào.';
+    listEl.appendChild(empty);
     return;
   }
 
@@ -1961,7 +2019,7 @@ function renderHistoryPanel(classId) {
       group.appendChild(row);
     });
 
-    content.appendChild(group);
+    listEl.appendChild(group);
   });
 }
 
@@ -2584,6 +2642,10 @@ async function loadTitle() {
 
 // ─── Event Wiring ─────────────────────────────────────────────────────────
 function setupListeners() {
+  document.getElementById('history-search-input').addEventListener('input', () => {
+    if (currentClassId) renderHistoryPanel(currentClassId);
+  });
+
   // Admin toggle
   document.getElementById('admin-toggle').addEventListener('click', () => {
     if (isAdmin) {
