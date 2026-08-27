@@ -1021,9 +1021,13 @@ function setupEditorToolbar(origW, origH) {
   function applyZoom(zoom) {
     currentZoom = zoom;
     _fabricCanvas.setZoom(currentZoom);
+    
+    const newWidth = origW * currentZoom;
+    const newHeight = origH * currentZoom;
+    
     _fabricCanvas.setDimensions({
-      width: origW * currentZoom,
-      height: origH * currentZoom
+      width: newWidth,
+      height: newHeight
     });
     
     // Khởi tạo brush ảo để đánh thức các sự kiện chuột của Fabric
@@ -1031,12 +1035,19 @@ function setupEditorToolbar(origW, origH) {
       _fabricCanvas.freeDrawingBrush = new fabric.PencilBrush(_fabricCanvas);
     }
     
-    // Tắt flex center để tránh kẹt cuộn
-    if (currentZoom > 1) {
+    // Kiểm tra xem canvas có lớn hơn container không
+    const containerW = canvasContainer.clientWidth;
+    const containerH = canvasContainer.clientHeight;
+    
+    // Tắt flex center nếu canvas to hơn container để thanh cuộn hoạt động đúng từ góc trên trái
+    // Nếu canvas nhỏ hơn container, bật lại flex center để ảnh luôn nằm giữa
+    if (newWidth > containerW || newHeight > containerH) {
       canvasContainer.style.display = 'block';
       canvasContainer.style.cursor = 'grab';
     } else {
       canvasContainer.style.display = 'flex';
+      canvasContainer.style.alignItems = 'center';
+      canvasContainer.style.justifyContent = 'center';
       canvasContainer.style.cursor = 'default';
     }
   }

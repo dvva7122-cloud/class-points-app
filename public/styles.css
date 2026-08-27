@@ -476,10 +476,28 @@ body.custom-bg-active .app-background {
 .section-panel {
     display: none;
     animation: fadeIn 0.3s ease;
+    max-height: 70vh;
+    overflow-y: auto;
+    scroll-behavior: smooth;
 }
 
 .section-panel.active {
     display: block;
+}
+
+/* Custom scrollbar cho section panel */
+.section-panel::-webkit-scrollbar {
+    width: 6px;
+}
+.section-panel::-webkit-scrollbar-track {
+    background: transparent;
+}
+.section-panel::-webkit-scrollbar-thumb {
+    background: rgba(255, 152, 0, 0.25);
+    border-radius: 10px;
+}
+.section-panel::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 152, 0, 0.45);
 }
 
 @keyframes fadeIn {
