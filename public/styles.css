@@ -476,7 +476,11 @@ body.custom-bg-active .app-background {
 .section-panel {
     display: none;
     animation: fadeIn 0.3s ease;
-    max-height: 70vh;
+}
+
+/* Chỉ áp dụng cuộn cho riêng phần Sổ tay */
+.section-panel[data-section="notebook"] {
+    max-height: 85vh;
     overflow-y: auto;
     scroll-behavior: smooth;
 }
