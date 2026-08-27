@@ -3,6 +3,7 @@
 // ─── State ────────────────────────────────────────────────────────────────
 let appData        = [];       // [{id, name, students:[{id, name, points}]}]
 let currentClassId = null;
+let currentSection = 'collected';
 let isAdmin        = false;
 let isEditingMode  = false;
 
@@ -632,10 +633,12 @@ function renderCurrentClass() {
   const classInfoEl    = document.querySelector('.class-info');
   const addContainer   = document.getElementById('add-student-container');
   const eventsContainer = document.getElementById('events-container');
+  const sectionTabsEl = document.getElementById('section-tabs');
 
   if (!cls) {
     classInfoEl.style.display = 'none';
     addContainer.style.display = 'none';
+    sectionTabsEl.style.display = 'none';
     gridEl.innerHTML = '';
     eventsContainer.innerHTML = '';
     const p = createEl('p', { text: 'Chưa có lớp học nào. Hãy tạo một lớp mới!', className: 'empty-msg' });
@@ -645,6 +648,7 @@ function renderCurrentClass() {
   }
 
   classInfoEl.style.display = 'flex';
+  sectionTabsEl.style.display = 'flex';
   nameEl.textContent = cls.name;
   
   const hideBtn = document.getElementById('toggle-hide-class-btn');
@@ -730,6 +734,9 @@ function renderCurrentClass() {
 
   // Cập nhật lịch sử điểm cho mọi người (kể cả không phải admin)
   renderHistoryPanel(cls.id);
+
+  // Đảm bảo hiển thị đúng section hiện tại
+  switchSection(currentSection);
 }
 
 // ─── Events (Upcoming Events) ─────────────────────────────────────────────
@@ -2541,6 +2548,11 @@ function doLogout() {
   clearToken();
   isAdmin = false;
   isEditingMode = false;
+  
+  if (currentSection === 'games') {
+    currentSection = 'collected';
+  }
+  
   updateAdminUI();
   renderClassTabs();
   renderCurrentClass();
@@ -2640,8 +2652,30 @@ async function loadTitle() {
   } catch (_) {}
 }
 
+function switchSection(section) {
+  // Bỏ chặn Random tab nếu không phải admin
+  if (section === 'games' && !isAdmin) {
+    section = 'collected';
+  }
+  currentSection = section;
+
+  // Cập nhật tab active
+  document.querySelectorAll('.section-tab').forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.section === section);
+  });
+
+  // Hiển thị/ẩn panel
+  document.querySelectorAll('.section-panel').forEach(panel => {
+    panel.classList.toggle('active', panel.dataset.section === section);
+  });
+}
+
 // ─── Event Wiring ─────────────────────────────────────────────────────────
 function setupListeners() {
+  document.querySelectorAll('.section-tab').forEach(tab => {
+    tab.addEventListener('click', () => switchSection(tab.dataset.section));
+  });
+
   document.getElementById('history-search-input').addEventListener('input', () => {
     if (currentClassId) renderHistoryPanel(currentClassId);
   });
@@ -4012,10 +4046,9 @@ function renderSeatingChart(cls) {
   if (!container) return;
 
   if (!cls) {
-    container.style.display = 'none';
+    container.innerHTML = '';
     return;
   }
-  container.style.display = 'block';
 
   if (!cls.seatingChart) {
     cls.seatingChart = {

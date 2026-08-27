@@ -58,38 +58,53 @@
 
             </div>
 
-            <div class="student-grid" id="student-grid"></div>
-
-            <div id="add-student-container" class="add-student-container">
-                <button id="add-student-btn" class="add-student-btn">
-                    <i class="fa-solid fa-user-plus"></i> Thêm Học Sinh
-                </button>
-                <label for="excel-upload" class="excel-import-btn">
-                    <i class="fa-solid fa-file-excel"></i> Nhập từ Excel
-                </label>
-                <input type="file" id="excel-upload" accept=".xlsx,.xls,.csv" style="display:none">
-                <button id="excel-template-btn" class="excel-import-btn" style="background: rgba(255, 255, 255, 0.9); border: 1px solid rgba(40, 123, 83, 0.2); color: #287b53; cursor: pointer;">
-                    <i class="fa-solid fa-download"></i> Tải file mẫu
-                </button>
-                <button id="delete-all-students-btn" class="excel-import-btn" style="background: rgba(255, 255, 255, 0.9); border: 1px solid rgba(231, 76, 60, 0.2); color: #e74c3c; cursor: pointer;">
-                    <i class="fa-solid fa-trash-can"></i> Xóa tất cả HS
-                </button>
+            <!-- SECTION TABS -->
+            <div class="section-tabs" id="section-tabs">
+                <button class="section-tab active" data-section="collected">🍊 Collected</button>
+                <button class="section-tab" data-section="seating">🪑 Sơ đồ lớp</button>
+                <button class="section-tab" data-section="notebook">📒 Sổ tay</button>
+                <button class="section-tab admin-only" data-section="games">🎲 Random</button>
             </div>
 
-            <!-- SEATING CHART -->
-            <div id="seating-chart-container"></div>
+            <!-- TAB PANELS -->
+            <div class="section-panel active" data-section="collected">
+                <div class="student-grid" id="student-grid"></div>
+                <div id="add-student-container" class="add-student-container">
+                    <button id="add-student-btn" class="add-student-btn admin-only">
+                        <i class="fa-solid fa-user-plus"></i> Thêm Học Sinh
+                    </button>
+                    <label for="excel-upload" class="excel-import-btn admin-only">
+                        <i class="fa-solid fa-file-excel"></i> Nhập từ Excel
+                    </label>
+                    <input type="file" id="excel-upload" accept=".xlsx,.xls,.csv" style="display:none">
+                    <button id="excel-template-btn" class="excel-import-btn admin-only" style="background: rgba(255, 255, 255, 0.9); border: 1px solid rgba(40, 123, 83, 0.2); color: #287b53; cursor: pointer;">
+                        <i class="fa-solid fa-download"></i> Tải file mẫu
+                    </button>
+                    <button id="delete-all-students-btn" class="excel-import-btn admin-only" style="background: rgba(255, 255, 255, 0.9); border: 1px solid rgba(231, 76, 60, 0.2); color: #e74c3c; cursor: pointer;">
+                        <i class="fa-solid fa-trash-can"></i> Xóa tất cả HS
+                    </button>
+                </div>
+            </div>
 
-            <!-- UPCOMING EVENTS -->
-            <div id="events-container"></div>
+            <div class="section-panel" data-section="seating">
+                <!-- SEATING CHART -->
+                <div id="seating-chart-container"></div>
+            </div>
 
-            <!-- ANNOUNCEMENTS -->
+            <div class="section-panel" data-section="notebook">
+                <!-- UPCOMING EVENTS -->
+                <div id="events-container"></div>
+            </div>
+
+            <div class="section-panel" data-section="games">
+                <!-- WHEEL OF NAMES -->
+                <div id="wheel-container"></div>
+                <!-- DUCK RACE -->
+                <div id="duck-race-container"></div>
+            </div>
+
+            <!-- ANNOUNCEMENTS (Luôn hiển thị dưới các tab) -->
             <div id="announcements-container"></div>
-
-            <!-- WHEEL OF NAMES -->
-            <div id="wheel-container"></div>
-
-            <!-- DUCK RACE -->
-            <div id="duck-race-container"></div>
         </main>
 
         <!-- LỊCH SỬ ĐIỂM -->
