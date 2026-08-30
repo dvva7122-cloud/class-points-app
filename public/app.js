@@ -2054,7 +2054,13 @@ function renderHistoryPanel(classId) {
       if (entry.reason && entry.reason.trim() !== '') {
         const reasonIcon = document.createElement('span');
         reasonIcon.className = 'history-reason-icon tooltip-wrapper';
-        reasonIcon.innerHTML = '💬 <span class="tooltip-text">' + escapeHTML(entry.reason) + '</span>';
+        reasonIcon.textContent = '💬';
+        
+        const tooltip = document.createElement('span');
+        tooltip.className = 'tooltip-text';
+        tooltip.textContent = entry.reason;
+        
+        reasonIcon.appendChild(tooltip);
         actionWrapper.appendChild(reasonIcon);
       }
 
@@ -2102,9 +2108,13 @@ async function doEditHistoryReason(classId, historyId, reason) {
   }
 
   try {
+    const token = getToken();
     const res = await fetch(`/api/classes/${classId}/history/${historyId}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify({ reason })
     });
     const data = await res.json();
