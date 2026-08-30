@@ -664,9 +664,11 @@ app.patch('/api/classes/:classId/students/:studentId/points', requireAdmin, asyn
     let newPoints = currentPoints + change;
 
     const historyEntry = {
+      historyId: Date.now().toString() + '_' + Math.floor(Math.random() * 10000),
       studentId,
       studentName,
       change,
+      reason: '',
       ts: Date.now()
     };
 
@@ -681,6 +683,30 @@ app.patch('/api/classes/:classId/students/:studentId/points', requireAdmin, asyn
 
     broadcast({ type: 'DATA_CHANGED' });
     res.json({ id: studentId, points: newPoints });
+  } catch (err) {
+    res.status(500).json({ error: 'Lỗi server' });
+  }
+});
+
+// PATCH /api/classes/:classId/history/:historyId (admin)
+app.patch('/api/classes/:classId/history/:historyId', requireAdmin, async (req, res) => {
+  const { classId, historyId } = req.params;
+  const { reason } = req.body;
+  if (typeof reason !== 'string') {
+    return res.status(400).json({ error: 'Lý do không hợp lệ.' });
+  }
+
+  try {
+    const classesColl = db.getClassesCollection();
+    const result = await classesColl.updateOne(
+      { id: classId, 'history.historyId': historyId },
+      { $set: { 'history.$.reason': reason.trim() } }
+    );
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ error: 'Không tìm thấy lịch sử.' });
+    }
+    broadcast({ type: 'DATA_CHANGED' });
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Lỗi server' });
   }

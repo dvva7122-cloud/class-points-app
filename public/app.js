@@ -1959,11 +1959,13 @@ function saveToHistory(classId, studentName, change) {
   if (!cls) return;
   if (!cls.history) cls.history = [];
 
-  // Thêm optimistic vào đầu mảng local để render ngay
+  // Thêm optimistic vào mảng local để render ngay
   cls.history.push({
-    studentId: 'optimistic', // Dùng tạm
+    historyId: 'opt_' + Date.now(),
+    studentId: 'optimistic',
     studentName: studentName,
     change: change,
+    reason: '',
     ts: Date.now()
   });
 
@@ -2023,6 +2025,12 @@ function renderHistoryPanel(classId) {
       const row = document.createElement('div');
       row.className = 'history-entry';
 
+      const nameChangeWrapper = document.createElement('div');
+      nameChangeWrapper.style.display = 'flex';
+      nameChangeWrapper.style.alignItems = 'center';
+      nameChangeWrapper.style.justifyContent = 'space-between';
+      nameChangeWrapper.style.flex = '1';
+
       const name = document.createElement('span');
       name.className = 'history-entry-name';
       name.textContent = entry.studentName || entry.name;
@@ -2032,13 +2040,78 @@ function renderHistoryPanel(classId) {
       change.className = `history-entry-change ${isPositive ? 'positive' : 'negative'}`;
       change.textContent = `${isPositive ? '+' : ''}${entry.change} 🍊`;
 
-      row.appendChild(name);
-      row.appendChild(change);
+      nameChangeWrapper.appendChild(name);
+      nameChangeWrapper.appendChild(change);
+      
+      row.appendChild(nameChangeWrapper);
+
+      const actionWrapper = document.createElement('div');
+      actionWrapper.style.display = 'flex';
+      actionWrapper.style.alignItems = 'center';
+      actionWrapper.style.gap = '6px';
+      actionWrapper.style.marginLeft = '10px';
+
+      if (entry.reason && entry.reason.trim() !== '') {
+        const reasonIcon = document.createElement('span');
+        reasonIcon.className = 'history-reason-icon tooltip-wrapper';
+        reasonIcon.innerHTML = '💬 <span class="tooltip-text">' + escapeHTML(entry.reason) + '</span>';
+        actionWrapper.appendChild(reasonIcon);
+      }
+
+      if (isAdmin && entry.historyId) {
+        const editBtn = document.createElement('button');
+        editBtn.className = 'history-edit-btn';
+        editBtn.innerHTML = '<i class="fa-solid fa-pen"></i>';
+        editBtn.title = 'Sửa lý do';
+        editBtn.onclick = async () => {
+          const res = await showCustomPrompt('Nhập lý do cộng/trừ điểm:', [
+            { key: 'reason', label: 'Lý do', type: 'text', value: entry.reason || '' }
+          ]);
+          if (res && res.reason !== undefined) {
+            doEditHistoryReason(classId, entry.historyId, res.reason);
+          }
+        };
+        actionWrapper.appendChild(editBtn);
+      }
+
+      if (actionWrapper.children.length > 0) {
+        row.appendChild(actionWrapper);
+      }
+
       group.appendChild(row);
     });
 
     listEl.appendChild(group);
   });
+}
+
+async function doEditHistoryReason(classId, historyId, reason) {
+  if (historyId.startsWith('opt_')) {
+    alert('Vui lòng đợi 1 chút để dữ liệu được đồng bộ trước khi sửa lý do.');
+    return;
+  }
+
+  // Update locally first for snappiness
+  const cls = appData.find(c => c.id === classId);
+  if (cls && cls.history) {
+    const entry = cls.history.find(e => e.historyId === historyId);
+    if (entry) {
+      entry.reason = reason;
+      renderHistoryPanel(classId);
+    }
+  }
+
+  try {
+    const res = await fetch(`/api/classes/${classId}/history/${historyId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+  } catch (err) {
+    alert('Lỗi cập nhật lý do: ' + err.message);
+  }
 }
 
 function doUpdatePoints(classId, studentId, change) {
