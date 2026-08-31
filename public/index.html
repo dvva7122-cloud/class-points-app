@@ -63,6 +63,7 @@
                 <button class="section-tab active" data-section="collected">🍊 Collected</button>
                 <button class="section-tab" data-section="seating">🪑 Sơ đồ lớp</button>
                 <button class="section-tab" data-section="notebook">📒 Sổ tay</button>
+                <button class="section-tab" data-section="conversion">🏆 Bảng quy đổi</button>
                 <button class="section-tab admin-only" data-section="games">🎲 Random</button>
             </div>
 
@@ -96,6 +97,17 @@
                 <div id="events-container"></div>
             </div>
 
+            <div class="section-panel" data-section="conversion">
+                <div class="conversion-content" style="display: block; max-width: 400px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #FFE0A0;">
+                    <h3 style="text-align: center; margin-bottom: 20px; color: #f47a00;">🏆 Bảng Quy Đổi Điểm</h3>
+                    <div class="conversion-row"><div class="score">&lt; 5 đ</div><div class="points">1 🍊 = 1 đ</div></div>
+                    <div class="conversion-row"><div class="score">5 đ -- 7 đ</div><div class="points">2 🍊 = 1 đ</div></div>
+                    <div class="conversion-row"><div class="score">7 đ -- 8 đ</div><div class="points">4 🍊 = 1 đ</div></div>
+                    <div class="conversion-row"><div class="score">8 đ -- 9 đ</div><div class="points">8 🍊 = 1 đ</div></div>
+                    <div class="conversion-row"><div class="score">9 đ --10 đ</div><div class="points">16 🍊 = 1 đ</div></div>
+                </div>
+            </div>
+
             <div class="section-panel" data-section="games">
                 <!-- WHEEL OF NAMES -->
                 <div id="wheel-container"></div>
@@ -123,19 +135,6 @@
             </div>
         </aside>
 
-        <aside class="conversion-table minimized" id="conversion-table" style="display: none;">
-            <div class="conversion-header" id="conversion-header" title="Thu nhỏ/Phóng to">
-                <span>Bảng Quy Đổi Điểm</span>
-                <i class="fa-solid fa-chevron-down toggle-icon"></i>
-            </div>
-            <div class="conversion-content">
-                <div class="conversion-row"><div class="score">&lt; 5 đ</div><div class="points">1 🍊 = 1 đ</div></div>
-                <div class="conversion-row"><div class="score">5 đ -- 7 đ</div><div class="points">2 🍊 = 1 đ</div></div>
-                <div class="conversion-row"><div class="score">7 đ -- 8 đ</div><div class="points">4 🍊 = 1 đ</div></div>
-                <div class="conversion-row"><div class="score">8 đ -- 9 đ</div><div class="points">8 🍊 = 1 đ</div></div>
-                <div class="conversion-row"><div class="score">9 đ --10 đ</div><div class="points">16 🍊 = 1 đ</div></div>
-            </div>
-        </aside>
     </div>
 
     <!-- Modal: Đăng nhập Admin -->

@@ -832,9 +832,9 @@ body.theme-christmas .student-card.with-frame {
 /* ── History Panel (Lịch sử điểm) ─────────────────────────────────────── */
 .history-panel {
     position: fixed;
-    left: 32px;
+    right: 32px;
     bottom: 28px;
-    width: 260px;
+    width: 230px;
     max-height: 380px;
     overflow: hidden;
     z-index: 100;
@@ -843,7 +843,7 @@ body.theme-christmas .student-card.with-frame {
     background: #ffffff;
     box-shadow: 0 20px 52px rgba(31, 41, 55, 0.18);
     transition: var(--transition);
-    transform-origin: bottom left;
+    transform-origin: bottom right;
     display: flex;
     flex-direction: column;
 }
@@ -854,7 +854,7 @@ body.theme-christmas .student-card.with-frame {
 }
 
 .history-panel.minimized {
-    width: 200px;
+    width: 190px;
     max-height: none;
 }
 
@@ -1082,38 +1082,6 @@ body.theme-christmas .student-card.with-frame {
     font-size: 0.88rem;
 }
 
-/* Floating Conversion Table */
-.conversion-table {
-    position: fixed;
-    right: 32px;
-    bottom: 28px;
-    width: 310px;
-    overflow: hidden;
-    z-index: 100;
-    border: 1px solid rgba(255, 255, 255, 0.72);
-    border-radius: 22px;
-    background: #ffffff; /* Dùng nền trắng đục hoàn toàn để không nhìn thấy nội dung đằng sau */
-    box-shadow: 0 20px 52px rgba(31, 41, 55, 0.18);
-    transition: var(--transition);
-    transform-origin: bottom right;
-}
-
-.conversion-table:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 26px 60px rgba(31, 41, 55, 0.21);
-}
-
-.conversion-table.minimized {
-    width: 236px;
-}
-
-.conversion-table.minimized .conversion-content {
-    display: none;
-}
-
-.conversion-table.minimized .toggle-icon {
-    transform: rotate(180deg);
-}
 
 .conversion-header {
     padding: 16px 18px;
@@ -1482,8 +1450,6 @@ body:not(.is-editing) #add-student-container {
         align-items: flex-start;
     }
 
-    .conversion-table,
-    .conversion-table.minimized,
     .history-panel,
     .history-panel.minimized {
         position: relative;

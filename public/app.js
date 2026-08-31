@@ -2868,11 +2868,7 @@ function setupListeners() {
   // Title
   document.getElementById('edit-title-btn').addEventListener('click', doEditTitle);
 
-  // Conversion table collapse
-  document.getElementById('conversion-header').addEventListener('click', () => {
-    document.getElementById('conversion-table').classList.toggle('minimized');
-  });
-
+  
   // History panel collapse
   document.getElementById('history-header').addEventListener('click', () => {
     document.getElementById('history-panel').classList.toggle('minimized');
