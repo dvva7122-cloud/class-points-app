@@ -834,7 +834,7 @@ body.theme-christmas .student-card.with-frame {
     position: fixed;
     right: 32px;
     bottom: 28px;
-    width: 230px;
+    width: 280px;
     max-height: 380px;
     overflow: hidden;
     z-index: 100;
@@ -854,7 +854,7 @@ body.theme-christmas .student-card.with-frame {
 }
 
 .history-panel.minimized {
-    width: 190px;
+    width: 220px;
     max-height: none;
 }
 
@@ -991,7 +991,10 @@ body.theme-christmas .student-card.with-frame {
     white-space: nowrap;
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 3px;
+    width: 45px;
+    text-align: right;
 }
 
 .history-entry-change.positive {
@@ -1050,9 +1053,9 @@ body.theme-christmas .student-card.with-frame {
     /* Position tooltip */
     position: absolute;
     z-index: 99999;
-    bottom: 125%;
-    left: 50%;
-    transform: translateX(-50%);
+    bottom: 50%;
+    right: 125%;
+    transform: translateY(50%);
     opacity: 0;
     transition: opacity 0.2s;
     pointer-events: none;
@@ -1062,12 +1065,12 @@ body.theme-christmas .student-card.with-frame {
 .tooltip-wrapper .tooltip-text::after {
     content: "";
     position: absolute;
-    top: 100%;
-    left: 50%;
-    margin-left: -5px;
+    top: 50%;
+    left: 100%;
+    margin-top: -5px;
     border-width: 5px;
     border-style: solid;
-    border-color: #1f2937 transparent transparent transparent;
+    border-color: transparent transparent transparent #1f2937;
 }
 
 .tooltip-wrapper:hover .tooltip-text {
