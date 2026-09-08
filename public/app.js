@@ -1013,9 +1013,20 @@ function setupEditorToolbar(origW, origH) {
     undoBtn.onclick = () => undoEditorHistory();
   }
 
-  // Zoom — min zoom=1 (original), can only zoom IN from default
+  // Zoom — tự động tính toán tỷ lệ phóng to tối đa vừa khít màn hình
   const canvasContainer = document.getElementById('editor-canvas-container');
-  let currentZoom = 1;
+  
+  // Kích thước khả dụng của khung chứa
+  const containerW = canvasContainer.clientWidth || (window.innerWidth * 0.96);
+  const containerH = canvasContainer.clientHeight || (window.innerHeight * 0.85);
+  // Tính tỷ lệ để ảnh phóng to nhất có thể theo cả chiều ngang và dọc
+  const fitZoom = Math.min((containerW - 24) / origW, (containerH - 24) / origH);
+  const defaultZoom = Math.max(parseFloat(fitZoom.toFixed(2)), 0.1);
+  let currentZoom = defaultZoom;
+
+  function isCanvasOverflowing() {
+    return (origW * currentZoom > canvasContainer.clientWidth) || (origH * currentZoom > canvasContainer.clientHeight);
+  }
 
   // Cập nhật applyZoom để luôn khởi tạo brush (sửa lỗi Fabric không nhận sự kiện khi chưa dùng bút)
   function applyZoom(zoom) {
@@ -1035,13 +1046,9 @@ function setupEditorToolbar(origW, origH) {
       _fabricCanvas.freeDrawingBrush = new fabric.PencilBrush(_fabricCanvas);
     }
     
-    // Kiểm tra xem canvas có lớn hơn container không
-    const containerW = canvasContainer.clientWidth;
-    const containerH = canvasContainer.clientHeight;
-    
     // Tắt flex center nếu canvas to hơn container để thanh cuộn hoạt động đúng từ góc trên trái
     // Nếu canvas nhỏ hơn container, bật lại flex center để ảnh luôn nằm giữa
-    if (newWidth > containerW || newHeight > containerH) {
+    if (newWidth > canvasContainer.clientWidth || newHeight > canvasContainer.clientHeight) {
       canvasContainer.style.display = 'block';
       canvasContainer.style.cursor = 'grab';
     } else {
@@ -1052,10 +1059,13 @@ function setupEditorToolbar(origW, origH) {
     }
   }
 
+  // Áp dụng zoom cực đại vừa khít màn hình ngay khi mở ảnh
+  applyZoom(currentZoom);
+
   zoomInBtn.onclick = () => applyZoom(Math.min(currentZoom + 0.25, 5));
-  zoomOutBtn.onclick = () => applyZoom(Math.max(currentZoom - 0.25, 1));
+  zoomOutBtn.onclick = () => applyZoom(Math.max(currentZoom - 0.25, 0.1));
   resetZoomBtn.onclick = () => {
-    applyZoom(1);
+    applyZoom(defaultZoom);
     canvasContainer.scrollLeft = 0;
     canvasContainer.scrollTop = 0;
   };
@@ -1063,7 +1073,7 @@ function setupEditorToolbar(origW, origH) {
   // ── Drag-to-Pan (kéo ảnh sau khi zoom) - Dùng chuẩn Fabric ──────────────────────
   
   _fabricCanvas.on('mouse:down', function(opt) {
-    if (this.isDrawingMode || currentZoom <= 1) return;
+    if (this.isDrawingMode || !isCanvasOverflowing()) return;
     
     // Bỏ qua nếu click trúng object (chữ, sticker)
     if (opt.target && opt.target.selectable !== false) return;
@@ -1095,7 +1105,7 @@ function setupEditorToolbar(origW, origH) {
   _fabricCanvas.on('mouse:up', function(opt) {
     if (!this.isDragging) return;
     this.isDragging = false;
-    canvasContainer.style.cursor = currentZoom > 1 ? 'grab' : 'default';
+    canvasContainer.style.cursor = isCanvasOverflowing() ? 'grab' : 'default';
     if (isAdmin && !this.isDrawingMode) {
       this.selection = true;
     }
