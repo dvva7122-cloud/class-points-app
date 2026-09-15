@@ -2609,6 +2609,167 @@ async function handleExcelUpload(e) {
   e.target.value = '';
 }
 
+// ─── Sửa nhanh Mã Học Sinh hàng loạt ─────────────────────────────────────
+function openBulkCodeModal() {
+  const cls = getCurrentClass();
+  if (!cls) return;
+  if (!cls.students || cls.students.length === 0) {
+    alert('Lớp học chưa có học sinh nào.');
+    return;
+  }
+
+  const modal = document.getElementById('bulk-code-modal');
+  const tbody = document.getElementById('bulk-code-tbody');
+  if (!modal || !tbody) return;
+
+  tbody.innerHTML = '';
+
+  cls.students.forEach((s, idx) => {
+    const tr = document.createElement('tr');
+    tr.className = 'bulk-code-row';
+
+    const tdIdx = document.createElement('td');
+    tdIdx.style.cssText = 'text-align: center; color: #64748B; font-weight: 600;';
+    tdIdx.textContent = idx + 1;
+    tr.appendChild(tdIdx);
+
+    const tdName = document.createElement('td');
+    tdName.style.cssText = 'font-weight: 600; color: #1E293B;';
+    tdName.textContent = s.name;
+    tr.appendChild(tdName);
+
+    const tdInput = document.createElement('td');
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'bulk-code-input';
+    input.dataset.studentId = s.id;
+    input.value = s.code || '';
+    input.placeholder = 'Nhập mã...';
+    input.spellcheck = false;
+
+    // Phím tắt Enter / Mũi tên để di chuyển nhanh
+    input.addEventListener('keydown', (e) => {
+      const inputs = Array.from(tbody.querySelectorAll('.bulk-code-input'));
+      const currentIndex = inputs.indexOf(input);
+
+      if (e.key === 'Enter' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (currentIndex < inputs.length - 1) {
+          inputs[currentIndex + 1].focus();
+          inputs[currentIndex + 1].select();
+        }
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (currentIndex > 0) {
+          inputs[currentIndex - 1].focus();
+          inputs[currentIndex - 1].select();
+        }
+      }
+    });
+
+    // Smart paste: Nếu copy nhiều dòng từ Excel thì điền tự động lần lượt xuống các ô dưới
+    input.addEventListener('paste', (e) => {
+      const text = (e.clipboardData || window.clipboardData).getData('text');
+      if (!text) return;
+      const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+      if (lines.length > 1) {
+        e.preventDefault();
+        const inputs = Array.from(tbody.querySelectorAll('.bulk-code-input'));
+        const currentIndex = inputs.indexOf(input);
+        for (let k = 0; k < lines.length; k++) {
+          if (currentIndex + k < inputs.length) {
+            inputs[currentIndex + k].value = lines[k];
+            inputs[currentIndex + k].classList.add('highlight-change');
+          }
+        }
+      } else {
+        input.classList.add('highlight-change');
+      }
+    });
+
+    input.addEventListener('input', () => {
+      input.classList.add('highlight-change');
+    });
+
+    tdInput.appendChild(input);
+    tr.appendChild(tdInput);
+    tbody.appendChild(tr);
+  });
+
+  modal.classList.add('show');
+
+  // Focus ô đầu tiên
+  setTimeout(() => {
+    const firstInput = tbody.querySelector('.bulk-code-input');
+    if (firstInput) {
+      firstInput.focus();
+      firstInput.select();
+    }
+  }, 100);
+}
+
+function closeBulkCodeModal() {
+  const modal = document.getElementById('bulk-code-modal');
+  if (modal) modal.classList.remove('show');
+}
+
+async function doSaveBulkCodes() {
+  if (!currentClassId) return;
+  const tbody = document.getElementById('bulk-code-tbody');
+  if (!tbody) return;
+
+  const inputs = Array.from(tbody.querySelectorAll('.bulk-code-input'));
+  const updates = inputs.map(inp => ({
+    id: inp.dataset.studentId,
+    code: inp.value.trim()
+  }));
+
+  const saveBtn = document.getElementById('save-bulk-code-btn');
+  const originalText = saveBtn.innerHTML;
+  saveBtn.disabled = true;
+  saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
+
+  try {
+    const res = await api('PATCH', `/api/classes/${currentClassId}/students/bulk-codes`, { updates });
+    closeBulkCodeModal();
+    alert(`Đã cập nhật mã thành công cho ${res.count} học sinh!`);
+    await loadAllData();
+    renderCurrentClass();
+  } catch (err) {
+    if (err.message !== 'Unauthorized') showError('Lỗi cập nhật mã: ' + err.message);
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = originalText;
+  }
+}
+
+function autoFillBulkCodes() {
+  const tbody = document.getElementById('bulk-code-tbody');
+  const prefixInput = document.getElementById('bulk-code-prefix');
+  if (!tbody || !prefixInput) return;
+
+  const prefix = prefixInput.value.trim();
+  const inputs = Array.from(tbody.querySelectorAll('.bulk-code-input'));
+  const padLength = inputs.length >= 100 ? 3 : 2;
+
+  inputs.forEach((inp, idx) => {
+    const num = String(idx + 1).padStart(padLength, '0');
+    inp.value = prefix ? `${prefix}${num}` : num;
+    inp.classList.add('highlight-change');
+  });
+}
+
+function clearAllBulkCodes() {
+  const tbody = document.getElementById('bulk-code-tbody');
+  if (!tbody) return;
+  if (!confirm('Bạn có chắc chắn muốn xóa trống tất cả ô mã học sinh?')) return;
+  const inputs = Array.from(tbody.querySelectorAll('.bulk-code-input'));
+  inputs.forEach(inp => {
+    inp.value = '';
+    inp.classList.add('highlight-change');
+  });
+}
+
 // ─── Auth ─────────────────────────────────────────────────────────────────
 async function verifyPassword() {
   const pwd      = document.getElementById('admin-password').value;
@@ -2872,6 +3033,44 @@ function setupListeners() {
           if (err.message !== 'Unauthorized') showError(err.message);
         }
       }
+    });
+  }
+
+  // Bulk Edit Student Codes
+  const bulkEditCodeBtn = document.getElementById('bulk-edit-code-btn');
+  if (bulkEditCodeBtn) {
+    bulkEditCodeBtn.addEventListener('click', openBulkCodeModal);
+  }
+
+  const closeBulkCodeModalBtn = document.getElementById('close-bulk-code-modal');
+  if (closeBulkCodeModalBtn) {
+    closeBulkCodeModalBtn.addEventListener('click', closeBulkCodeModal);
+  }
+
+  const cancelBulkCodeBtn = document.getElementById('cancel-bulk-code-btn');
+  if (cancelBulkCodeBtn) {
+    cancelBulkCodeBtn.addEventListener('click', closeBulkCodeModal);
+  }
+
+  const saveBulkCodeBtn = document.getElementById('save-bulk-code-btn');
+  if (saveBulkCodeBtn) {
+    saveBulkCodeBtn.addEventListener('click', doSaveBulkCodes);
+  }
+
+  const autofillBtn = document.getElementById('bulk-code-autofill-btn');
+  if (autofillBtn) {
+    autofillBtn.addEventListener('click', autoFillBulkCodes);
+  }
+
+  const clearBtn = document.getElementById('bulk-code-clear-btn');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', clearAllBulkCodes);
+  }
+
+  const bulkCodeModal = document.getElementById('bulk-code-modal');
+  if (bulkCodeModal) {
+    bulkCodeModal.addEventListener('click', (e) => {
+      if (e.target === bulkCodeModal) closeBulkCodeModal();
     });
   }
 

@@ -3701,3 +3701,51 @@ body:not(.is-editing) #add-student-container {
         font-size: 0.85rem;
     }
 }
+
+/* ─── BULK CODE EDITOR MODAL ─── */
+#bulk-edit-code-btn:hover {
+    background: #4F46E5 !important;
+    color: #FFFFFF !important;
+    border-color: #4F46E5 !important;
+    transform: translateY(-2px);
+}
+
+.bulk-code-row {
+    border-bottom: 1px solid #F1F5F9;
+    transition: background 0.15s ease;
+}
+
+.bulk-code-row:hover {
+    background: #F8FAFC;
+}
+
+.bulk-code-row td {
+    padding: 8px 12px;
+}
+
+.bulk-code-input {
+    width: 100%;
+    max-width: 200px;
+    padding: 7px 10px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    font-family: monospace, sans-serif;
+    color: #1E293B;
+    border: 1.5px solid #CBD5E1;
+    border-radius: 6px;
+    outline: none;
+    transition: all 0.2s;
+    background: #FFFFFF;
+}
+
+.bulk-code-input:focus {
+    border-color: #4F46E5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+    background: #F5F3FF;
+}
+
+.bulk-code-input.highlight-change {
+    border-color: #10B981;
+    background: #ECFDF5;
+}
+

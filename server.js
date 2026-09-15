@@ -510,6 +510,56 @@ app.patch('/api/classes/:classId/students/:studentId', requireAdmin, async (req,
   }
 });
 
+// PATCH /api/classes/:classId/students/bulk-codes (admin) - Cập nhật hàng loạt mã học sinh
+app.patch('/api/classes/:classId/students/bulk-codes', requireAdmin, async (req, res) => {
+  const { classId } = req.params;
+  const { updates } = req.body;
+  if (!Array.isArray(updates) || updates.length === 0) {
+    return res.status(400).json({ error: 'Dữ liệu cập nhật không hợp lệ.' });
+  }
+
+  try {
+    const classesColl = db.getClassesCollection();
+    const cls = await classesColl.findOne({ id: classId });
+    if (!cls) return res.status(404).json({ error: 'Không tìm thấy lớp.' });
+
+    const updateMap = new Map();
+    for (const item of updates) {
+      if (item && item.id) {
+        const cleanCode = item.code !== undefined && item.code !== null ? String(item.code).trim() : '';
+        updateMap.set(String(item.id), cleanCode || null);
+      }
+    }
+
+    let updatedCount = 0;
+    for (const student of cls.students) {
+      if (updateMap.has(student.id)) {
+        const newCode = updateMap.get(student.id);
+        student.code = newCode;
+
+        if (student.code && student.dob) {
+          const rawPassword = student.code.toLowerCase() + student.dob.replace(/\//g, '');
+          student.passwordHash = await bcrypt.hash(rawPassword, 10);
+        } else {
+          student.passwordHash = null;
+        }
+        updatedCount++;
+      }
+    }
+
+    await classesColl.updateOne(
+      { id: classId },
+      { $set: { students: cls.students } }
+    );
+
+    broadcast({ type: 'DATA_CHANGED' });
+    res.json({ success: true, count: updatedCount });
+  } catch (err) {
+    console.error('Error in bulk-codes:', err);
+    res.status(500).json({ error: 'Lỗi server khi cập nhật mã học sinh.' });
+  }
+});
+
 // DELETE /api/classes/:classId/students/:studentId  (admin)
 // DELETE /api/classes/:classId/students (admin) - Xóa tất cả học sinh
 app.delete('/api/classes/:classId/students', requireAdmin, async (req, res) => {
