@@ -384,7 +384,7 @@ app.post('/api/classes/:classId/students', requireAdmin, async (req, res) => {
 
     // Tự động tạo passwordHash từ mã HS + ngày sinh (nếu có cả 2)
     if (code && dob) {
-      const rawPassword = code.toLowerCase() + dob.replace(/\//g, '');
+      const rawPassword = String(code).toLowerCase() + String(dob).trim().replace(/\//g, '');
       newStudent.passwordHash = await bcrypt.hash(rawPassword, 10);
     }
     
@@ -422,7 +422,7 @@ app.post('/api/classes/:classId/students/bulk', requireAdmin, async (req, res) =
     const rawCode = (typeof raw === 'object' && raw.code) ? String(raw.code).trim() : null;
     let passwordHash = null;
     if (rawCode && rawDob) {
-      const rawPassword = rawCode.toLowerCase() + rawDob.replace(/\//g, '');
+      const rawPassword = String(rawCode).toLowerCase() + String(rawDob).trim().replace(/\//g, '');
       passwordHash = await bcrypt.hash(rawPassword, 10);
     }
     // Parse grades nếu có
@@ -492,7 +492,7 @@ app.patch('/api/classes/:classId/students/:studentId', requireAdmin, async (req,
 
     // Re-generate password hash if both code and dob exist
     if (student.code && student.dob) {
-      const rawPassword = student.code.toLowerCase() + student.dob.replace(/\//g, '');
+      const rawPassword = String(student.code).toLowerCase() + String(student.dob).trim().replace(/\//g, '');
       student.passwordHash = await bcrypt.hash(rawPassword, 10);
     } else {
       student.passwordHash = null;
@@ -538,7 +538,7 @@ app.patch('/api/classes/:classId/students/bulk-codes', requireAdmin, async (req,
         student.code = newCode;
 
         if (student.code && student.dob) {
-          const rawPassword = student.code.toLowerCase() + student.dob.replace(/\//g, '');
+          const rawPassword = String(student.code).toLowerCase() + String(student.dob).trim().replace(/\//g, '');
           student.passwordHash = await bcrypt.hash(rawPassword, 10);
         } else {
           student.passwordHash = null;
