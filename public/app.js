@@ -649,6 +649,7 @@ function renderCurrentClass() {
 
   classInfoEl.style.display = 'flex';
   sectionTabsEl.style.display = 'flex';
+  if (addContainer) addContainer.style.display = '';
   nameEl.textContent = cls.name;
   
   const hideBtn = document.getElementById('toggle-hide-class-btn');
