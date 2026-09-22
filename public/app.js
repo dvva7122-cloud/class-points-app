@@ -1965,6 +1965,14 @@ function _todayStr(timestamp) {
   return `${d}/${m}/${y}`;
 }
 
+function _formatDateYYYYMMDD(timestamp) {
+  const d = timestamp ? new Date(timestamp) : new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 function saveToHistory(classId, studentName, change) {
   const cls = appData.find(c => c.id === classId);
   if (!cls) return;
@@ -1987,6 +1995,9 @@ function renderHistoryPanel(classId) {
   const content = document.getElementById('history-content');
   const listEl = document.getElementById('history-list');
   const searchInput = document.getElementById('history-search-input');
+  const dateFilter = document.getElementById('history-date-filter');
+  const typeFilter = document.getElementById('history-type-filter');
+  const clearDateBtn = document.getElementById('history-clear-date-btn');
   if (!content || !listEl || !searchInput) return;
 
   const cls = appData.find(c => c.id === classId);
@@ -1999,7 +2010,24 @@ function renderHistoryPanel(classId) {
   // Lọc theo search (nếu có)
   const query = searchInput.value.toLowerCase().trim();
   if (query) {
-    entries = entries.filter(e => e.studentName && e.studentName.toLowerCase().includes(query));
+    entries = entries.filter(e => (e.studentName || e.name || '').toLowerCase().includes(query));
+  }
+
+  // Lọc theo ngày chọn (nếu có)
+  const dateVal = dateFilter ? dateFilter.value : '';
+  if (clearDateBtn) {
+    clearDateBtn.style.display = dateVal ? 'flex' : 'none';
+  }
+  if (dateVal) {
+    entries = entries.filter(e => _formatDateYYYYMMDD(e.ts) === dateVal);
+  }
+
+  // Lọc theo loại điểm (tất cả / cộng / trừ)
+  const typeVal = typeFilter ? typeFilter.value : 'all';
+  if (typeVal === 'plus') {
+    entries = entries.filter(e => e.change > 0);
+  } else if (typeVal === 'minus') {
+    entries = entries.filter(e => e.change < 0);
   }
 
   // Sắp xếp giảm dần (mới nhất lên trên)
@@ -2007,10 +2035,11 @@ function renderHistoryPanel(classId) {
 
   listEl.innerHTML = '';
 
+  const isFiltered = query || dateVal || (typeVal !== 'all');
   if (entries.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'history-empty';
-    empty.textContent = query ? 'Không tìm thấy kết quả.' : 'Chưa có thay đổi điểm nào.';
+    empty.textContent = isFiltered ? 'Không tìm thấy kết quả phù hợp.' : 'Chưa có thay đổi điểm nào.';
     listEl.appendChild(empty);
     return;
   }
@@ -2945,6 +2974,28 @@ function setupListeners() {
   document.getElementById('history-search-input').addEventListener('input', () => {
     if (currentClassId) renderHistoryPanel(currentClassId);
   });
+
+  const dateFilterInput = document.getElementById('history-date-filter');
+  if (dateFilterInput) {
+    dateFilterInput.addEventListener('change', () => {
+      if (currentClassId) renderHistoryPanel(currentClassId);
+    });
+  }
+
+  const typeFilterSelect = document.getElementById('history-type-filter');
+  if (typeFilterSelect) {
+    typeFilterSelect.addEventListener('change', () => {
+      if (currentClassId) renderHistoryPanel(currentClassId);
+    });
+  }
+
+  const clearDateBtn = document.getElementById('history-clear-date-btn');
+  if (clearDateBtn) {
+    clearDateBtn.addEventListener('click', () => {
+      if (dateFilterInput) dateFilterInput.value = '';
+      if (currentClassId) renderHistoryPanel(currentClassId);
+    });
+  }
 
   // Admin toggle
   document.getElementById('admin-toggle').addEventListener('click', () => {

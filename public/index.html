@@ -131,6 +131,17 @@
             <div class="history-content" id="history-content">
                 <div class="history-search-container">
                     <input type="text" id="history-search-input" class="history-search-input" placeholder="🔍 Tìm học sinh...">
+                    <div class="history-filter-bar">
+                        <div class="history-date-wrapper">
+                            <input type="date" id="history-date-filter" class="history-filter-date" title="Lọc theo ngày">
+                            <button type="button" id="history-clear-date-btn" class="history-clear-date-btn" title="Bỏ lọc ngày" style="display: none;">&times;</button>
+                        </div>
+                        <select id="history-type-filter" class="history-filter-select">
+                            <option value="all">Tất cả điểm</option>
+                            <option value="plus">➕ Điểm cộng (+)</option>
+                            <option value="minus">🍄 Điểm trừ (-)</option>
+                        </select>
+                    </div>
                 </div>
                 <div id="history-list" class="history-list">
                     <!-- Các mục lịch sử điểm sẽ được render vào đây -->
