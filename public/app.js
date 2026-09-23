@@ -6,6 +6,7 @@ let currentClassId = null;
 let currentSection = 'collected';
 let isAdmin        = false;
 let isEditingMode  = false;
+let globalSettings = { lockRedeemHk1: false, lockRedeemHk2: false };
 
 async function doStudentPrivatePopup(classId, student) {
   const res = await showCustomPrompt(`Khóa bảo mật: ${student.name}`, [
@@ -75,6 +76,32 @@ function renderGradeReport(container, student, grades, points, classId, studentP
     templateBtn.innerHTML = '<i class="fa-solid fa-download"></i> Tải file mẫu điểm';
     templateBtn.onclick = () => doDownloadGradeTemplate(classId);
     toolbar.appendChild(templateBtn);
+
+    const lockHk1Btn = document.createElement('button');
+    lockHk1Btn.className = `btn-grade-action ${globalSettings.lockRedeemHk1 ? 'btn-lock-active' : ''}`;
+    lockHk1Btn.innerHTML = globalSettings.lockRedeemHk1 ? '<i class="fa-solid fa-lock"></i> Đã khóa quy đổi HK1' : '<i class="fa-solid fa-lock-open"></i> Khóa quy đổi HK1';
+    lockHk1Btn.onclick = async () => {
+      try {
+        const patchRes = await api('PATCH', '/api/settings', { lockRedeemHk1: !globalSettings.lockRedeemHk1 });
+        globalSettings.lockRedeemHk1 = patchRes.lockRedeemHk1;
+        showSuccess(`Đã ${globalSettings.lockRedeemHk1 ? 'KHÓA' : 'MỞ'} quy đổi điểm cho Học kỳ I.`);
+        renderGradeReport(container, student, grades, points, classId, studentPassword);
+      } catch (err) { showError(err.message); }
+    };
+    toolbar.appendChild(lockHk1Btn);
+
+    const lockHk2Btn = document.createElement('button');
+    lockHk2Btn.className = `btn-grade-action ${globalSettings.lockRedeemHk2 ? 'btn-lock-active' : ''}`;
+    lockHk2Btn.innerHTML = globalSettings.lockRedeemHk2 ? '<i class="fa-solid fa-lock"></i> Đã khóa quy đổi HK2' : '<i class="fa-solid fa-lock-open"></i> Khóa quy đổi HK2';
+    lockHk2Btn.onclick = async () => {
+      try {
+        const patchRes = await api('PATCH', '/api/settings', { lockRedeemHk2: !globalSettings.lockRedeemHk2 });
+        globalSettings.lockRedeemHk2 = patchRes.lockRedeemHk2;
+        showSuccess(`Đã ${globalSettings.lockRedeemHk2 ? 'KHÓA' : 'MỞ'} quy đổi điểm cho Học kỳ II.`);
+        renderGradeReport(container, student, grades, points, classId, studentPassword);
+      } catch (err) { showError(err.message); }
+    };
+    toolbar.appendChild(lockHk2Btn);
 
     container.appendChild(toolbar);
   }
@@ -146,13 +173,14 @@ function renderGradeReport(container, student, grades, points, classId, studentP
 
   semesters.forEach(sem => {
     const semData = (grades && grades[sem.key]) || { hs1: [null, null, null, null], hs2: null, hs3: null };
+    const isSemLocked = (sem.key === 'hk1' && globalSettings.lockRedeemHk1) || (sem.key === 'hk2' && globalSettings.lockRedeemHk2);
     const section = document.createElement('div');
     section.className = 'semester-section';
 
     // Header
     const header = document.createElement('div');
     header.className = `semester-header ${sem.headerClass}`;
-    header.innerHTML = `<span class="sem-icon">${sem.icon}</span> ${sem.label}`;
+    header.innerHTML = `<span class="sem-icon">${sem.icon}</span> ${sem.label}${isSemLocked ? ' <span class="sem-lock-tag"><i class="fa-solid fa-lock"></i> Đã khóa quy đổi</span>' : ''}`;
     section.appendChild(header);
 
     // Table
@@ -215,6 +243,23 @@ function renderGradeReport(container, student, grades, points, classId, studentP
         grades[sem.key].hs1[i] = newVal;
         saveGradesAndRefresh(classId, student, grades, container, points);
       });
+
+      // Nếu là Học sinh (có password), điểm cam > 0, HK chưa khóa và điểm < 10.0
+      if (!isAdmin && studentPassword && points > 0 && !isSemLocked && (val === null || val < 10.0)) {
+        td.classList.add('grade-cell-hover-redeem');
+        const quickBtn = document.createElement('button');
+        quickBtn.className = 'cell-quick-redeem-btn';
+        quickBtn.title = `Bấm để quy đổi 🍊 cộng điểm vào Ô HS1 số ${i + 1}`;
+        quickBtn.innerHTML = '<i class="fa-solid fa-plus"></i>🍊';
+        quickBtn.onclick = (e) => {
+          e.stopPropagation();
+          showRedeemHs1Modal(classId, student, grades, points, studentPassword, (updatedGrades, updatedPoints) => {
+            renderGradeReport(container, student, updatedGrades, updatedPoints, classId, studentPassword);
+          }, sem.key, i);
+        };
+        td.appendChild(quickBtn);
+      }
+
       tr.appendChild(td);
     }
 
@@ -313,11 +358,11 @@ async function saveGradesAndRefresh(classId, student, grades, container, points)
   }
 }
 
-function showRedeemHs1Modal(classId, student, grades, points, studentPassword, onSuccess) {
+function showRedeemHs1Modal(classId, student, grades, points, studentPassword, onSuccess, defaultSemKey = 'hk1', defaultTargetSlotIdx = null) {
   const modal = document.createElement('div');
   modal.className = 'redeem-modal-overlay';
   
-  let currentSemKey = 'hk1';
+  let currentSemKey = defaultSemKey;
   let selectedDelta = 1.0;
 
   function findTargetSlotIndex(arr) {
@@ -354,13 +399,24 @@ function showRedeemHs1Modal(classId, student, grades, points, studentPassword, o
   function updateModalBody() {
     const semData = (grades && grades[currentSemKey]) || { hs1: [null, null, null, null] };
     const hs1Array = semData.hs1 || [null, null, null, null];
-    const targetIdx = findTargetSlotIndex(hs1Array);
+    
+    const isLocked = (currentSemKey === 'hk1' && globalSettings.lockRedeemHk1) || (currentSemKey === 'hk2' && globalSettings.lockRedeemHk2);
+
+    let targetIdx = -1;
+    if (defaultTargetSlotIdx !== null && currentSemKey === defaultSemKey && hs1Array[defaultTargetSlotIdx] !== undefined && (hs1Array[defaultTargetSlotIdx] === null || hs1Array[defaultTargetSlotIdx] < 10)) {
+      targetIdx = defaultTargetSlotIdx;
+    } else {
+      targetIdx = findTargetSlotIndex(hs1Array);
+    }
 
     let targetInfoText = '';
     let curMark = 0;
     let disabledAll = false;
 
-    if (targetIdx === -1) {
+    if (isLocked) {
+      targetInfoText = `<span style="color: #ef4444; font-weight: bold;"><i class="fa-solid fa-lock"></i> ${currentSemKey === 'hk1' ? 'Học kỳ I' : 'Học kỳ II'} đã bị giáo viên khóa chức năng quy đổi điểm!</span>`;
+      disabledAll = true;
+    } else if (targetIdx === -1) {
       targetInfoText = `<span style="color: #ef4444; font-weight: bold;">Tất cả 4 ô HS1 (${currentSemKey === 'hk1' ? 'HK1' : 'HK2'}) đã đạt 10.0!</span>`;
       disabledAll = true;
     } else {
@@ -402,8 +458,8 @@ function showRedeemHs1Modal(classId, student, grades, points, studentPassword, o
       </div>
       <div class="redeem-modal-body">
         <div class="redeem-sem-selector">
-          <button class="sem-btn ${currentSemKey === 'hk1' ? 'active' : ''}" data-sem="hk1">Học kỳ I</button>
-          <button class="sem-btn ${currentSemKey === 'hk2' ? 'active' : ''}" data-sem="hk2">Học kỳ II</button>
+          <button class="sem-btn ${currentSemKey === 'hk1' ? 'active' : ''}" data-sem="hk1">Học kỳ I ${globalSettings.lockRedeemHk1 ? '🔒' : ''}</button>
+          <button class="sem-btn ${currentSemKey === 'hk2' ? 'active' : ''}" data-sem="hk2">Học kỳ II ${globalSettings.lockRedeemHk2 ? '🔒' : ''}</button>
         </div>
 
         <div class="redeem-info-banner">
@@ -458,11 +514,28 @@ function showRedeemHs1Modal(classId, student, grades, points, studentPassword, o
           const res = await api('POST', `/api/classes/${classId}/students/${student.id}/redeem-hs1`, {
             password: studentPassword,
             semKey: currentSemKey,
-            delta: selectedDelta
+            delta: selectedDelta,
+            targetSlotIndex: targetIdx
           });
           if (res.success) {
             showSuccess(`Quy đổi thành công! Ô HS1 số ${targetIdx + 1} đã được cộng +${selectedDelta}đ.`);
             document.body.removeChild(modal);
+
+            // Cập nhật appData local & bảng Lịch sử điểm
+            const cls = appData.find(c => c.id === classId);
+            if (cls) {
+              const s = (cls.students || []).find(st => st.id === student.id);
+              if (s) {
+                s.points = res.points;
+                s.grades = res.grades;
+              }
+              if (res.historyEntry) {
+                if (!cls.history) cls.history = [];
+                cls.history.push(res.historyEntry);
+              }
+              renderHistoryPanel(classId);
+            }
+
             onSuccess(res.grades, res.points);
           }
         } catch (err) {
@@ -4031,6 +4104,8 @@ async function loadSettings() {
     if (res.theme)                   themeState.name      = res.theme;
     if (res.useFrames !== undefined) themeState.useFrames = res.useFrames;
     if (res.customBg  !== undefined) themeState.customBg  = res.customBg;
+    if (res.lockRedeemHk1 !== undefined) globalSettings.lockRedeemHk1 = Boolean(res.lockRedeemHk1);
+    if (res.lockRedeemHk2 !== undefined) globalSettings.lockRedeemHk2 = Boolean(res.lockRedeemHk2);
     applyTheme();
   } catch (_) {}
 }

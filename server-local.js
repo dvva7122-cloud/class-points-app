@@ -76,13 +76,21 @@ app.post('/api/admin/login', loginLimiter, async (req, res) => {
   res.json({ token });
 });
 
-app.get('/api/settings', (req, res) => res.json({ title: localData.settings?.title || '🍊COLLECTED' }));
+app.get('/api/settings', (req, res) => res.json({
+  title: localData.settings?.title || '🍊COLLECTED',
+  lockRedeemHk1: localData.settings?.lockRedeemHk1 || false,
+  lockRedeemHk2: localData.settings?.lockRedeemHk2 || false
+}));
 app.patch('/api/settings', requireAdmin, (req, res) => {
-  const t = validateName(req.body.title);
-  if (!t) return res.status(400).json({ error: 'Không hợp lệ.' });
   if (!localData.settings) localData.settings = {};
-  localData.settings.title = t; saveLocal();
-  res.json({ success:true, title:t });
+  if (req.body.title !== undefined) {
+    const t = validateName(req.body.title);
+    if (t) localData.settings.title = t;
+  }
+  if (req.body.lockRedeemHk1 !== undefined) localData.settings.lockRedeemHk1 = Boolean(req.body.lockRedeemHk1);
+  if (req.body.lockRedeemHk2 !== undefined) localData.settings.lockRedeemHk2 = Boolean(req.body.lockRedeemHk2);
+  saveLocal();
+  res.json({ success:true, ...localData.settings });
 });
 
 app.get('/api/classes', (req, res) => res.json(localData.classes || []));
@@ -169,12 +177,19 @@ app.patch('/api/classes/:cid/students/:sid/points', requireAdmin, (req, res) => 
 
 app.post('/api/classes/:cid/students/:sid/redeem-hs1', async (req, res) => {
   const { cid, sid } = req.params;
-  const { password, semKey, delta } = req.body;
+  const { password, semKey, delta, targetSlotIndex } = req.body;
 
   if (typeof password !== 'string' || !password) return res.status(400).json({ error: 'Vui lòng nhập mật khẩu.' });
   if (!['hk1', 'hk2'].includes(semKey)) return res.status(400).json({ error: 'Học kỳ không hợp lệ.' });
   const numericDelta = parseFloat(delta);
   if (![0.25, 0.5, 1.0].includes(numericDelta)) return res.status(400).json({ error: 'Mức điểm quy đổi không hợp lệ.' });
+
+  if (semKey === 'hk1' && localData.settings?.lockRedeemHk1) {
+    return res.status(400).json({ error: 'Học kỳ I đã bị giáo viên khóa chức năng quy đổi điểm.' });
+  }
+  if (semKey === 'hk2' && localData.settings?.lockRedeemHk2) {
+    return res.status(400).json({ error: 'Học kỳ II đã bị giáo viên khóa chức năng quy đổi điểm.' });
+  }
 
   const cls = (localData.classes || []).find(c => c.id === cid);
   if (!cls) return res.status(404).json({ error: 'Không tìm thấy lớp.' });
@@ -213,7 +228,16 @@ app.post('/api/classes/:cid/students/:sid/redeem-hs1', async (req, res) => {
     return Math.max(1, Math.round(r * d));
   }
 
-  const targetIdx = findTargetSlotIndex(hs1Array);
+  let targetIdx = -1;
+  if (targetSlotIndex !== undefined && targetSlotIndex !== null && !isNaN(parseInt(targetSlotIndex, 10))) {
+    const idx = parseInt(targetSlotIndex, 10);
+    if (idx >= 0 && idx < 4 && (hs1Array[idx] === null || hs1Array[idx] < 10)) {
+      targetIdx = idx;
+    }
+  }
+  if (targetIdx === -1) {
+    targetIdx = findTargetSlotIndex(hs1Array);
+  }
   if (targetIdx === -1) return res.status(400).json({ error: 'Tất cả 4 cột điểm HS1 học kỳ này đã đạt 10.0 điểm.' });
 
   const curMark = hs1Array[targetIdx] || 0;
@@ -235,18 +259,18 @@ app.post('/api/classes/:cid/students/:sid/redeem-hs1', async (req, res) => {
   }
 
   student.points = currentPoints - cost;
-  if (!cls.history) cls.history = [];
-  cls.history.push({
+  const historyEntry = {
     historyId: Date.now().toString() + '_' + Math.floor(Math.random() * 10000),
     studentId: sid,
     studentName: student.name,
     change: -cost,
     reason: `Tự đổi ${cost} 🍊 lấy +${numericDelta}đ HS1 (${semKey === 'hk1' ? 'HK1' : 'HK2'} - Ô ${targetIdx + 1})`,
     ts: Date.now()
-  });
+  };
+  cls.history.push(historyEntry);
 
   saveLocal();
-  res.json({ success: true, points: student.points, grades: student.grades });
+  res.json({ success: true, points: student.points, grades: student.grades, historyEntry });
 });
 
 app.use((req,res)=>{

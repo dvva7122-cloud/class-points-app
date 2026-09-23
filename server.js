@@ -165,10 +165,12 @@ app.get('/api/settings', async (req, res) => {
     const settingsColl = db.getSettingsCollection();
     const s = await settingsColl.findOne({ _id: 'global' });
     res.json({
-      title     : s ? (s.title      || '🍊COLLECTED') : '🍊COLLECTED',
-      theme     : s ? (s.theme      || 'default')     : 'default',
-      useFrames : s ? (s.useFrames  || false)         : false,
-      customBg  : s ? (s.customBg   || null)          : null,
+      title         : s ? (s.title          || '🍊COLLECTED') : '🍊COLLECTED',
+      theme         : s ? (s.theme          || 'default')     : 'default',
+      useFrames     : s ? (s.useFrames      || false)         : false,
+      customBg      : s ? (s.customBg       || null)          : null,
+      lockRedeemHk1 : s ? (s.lockRedeemHk1  || false)         : false,
+      lockRedeemHk2 : s ? (s.lockRedeemHk2  || false)         : false,
     });
   } catch (err) {
     res.status(500).json({ error: 'Lỗi server' });
@@ -193,6 +195,14 @@ app.patch('/api/settings', requireAdmin, async (req, res) => {
 
   if (req.body.useFrames !== undefined) {
     update.useFrames = Boolean(req.body.useFrames);
+  }
+
+  if (req.body.lockRedeemHk1 !== undefined) {
+    update.lockRedeemHk1 = Boolean(req.body.lockRedeemHk1);
+  }
+
+  if (req.body.lockRedeemHk2 !== undefined) {
+    update.lockRedeemHk2 = Boolean(req.body.lockRedeemHk2);
   }
 
   if (req.body.customBg !== undefined) {
@@ -663,7 +673,7 @@ function getCostForDelta(mark, d) {
 // POST /api/classes/:classId/students/:studentId/redeem-hs1  (public - xác thực mật khẩu học sinh)
 app.post('/api/classes/:classId/students/:studentId/redeem-hs1', async (req, res) => {
   const { classId, studentId } = req.params;
-  const { password, semKey, delta } = req.body;
+  const { password, semKey, delta, targetSlotIndex } = req.body;
 
   if (typeof password !== 'string' || !password) {
     return res.status(400).json({ error: 'Vui lòng nhập mật khẩu xác nhận.' });
@@ -677,6 +687,16 @@ app.post('/api/classes/:classId/students/:studentId/redeem-hs1', async (req, res
   }
 
   try {
+    // Kiểm tra cài đặt khóa quy đổi của Giáo viên
+    const settingsColl = db.getSettingsCollection();
+    const globalSettings = await settingsColl.findOne({ _id: 'global' });
+    if (semKey === 'hk1' && globalSettings && globalSettings.lockRedeemHk1) {
+      return res.status(400).json({ error: 'Học kỳ I đã bị giáo viên khóa chức năng quy đổi điểm.' });
+    }
+    if (semKey === 'hk2' && globalSettings && globalSettings.lockRedeemHk2) {
+      return res.status(400).json({ error: 'Học kỳ II đã bị giáo viên khóa chức năng quy đổi điểm.' });
+    }
+
     const classesColl = db.getClassesCollection();
     const cls = await classesColl.findOne({ id: classId });
     if (!cls) return res.status(404).json({ error: 'Không tìm thấy lớp.' });
@@ -695,7 +715,18 @@ app.post('/api/classes/:classId/students/:studentId/redeem-hs1', async (req, res
     if (!Array.isArray(student.grades[semKey].hs1)) student.grades[semKey].hs1 = [null, null, null, null];
 
     const hs1Array = student.grades[semKey].hs1;
-    const targetIdx = findTargetSlotIndex(hs1Array);
+
+    // Xác định ô điểm cần gánh (nếu chỉ định ô cụ thể hoặc tự động theo Phương án A)
+    let targetIdx = -1;
+    if (targetSlotIndex !== undefined && targetSlotIndex !== null && !isNaN(parseInt(targetSlotIndex, 10))) {
+      const idx = parseInt(targetSlotIndex, 10);
+      if (idx >= 0 && idx < 4 && (hs1Array[idx] === null || hs1Array[idx] < 10)) {
+        targetIdx = idx;
+      }
+    }
+    if (targetIdx === -1) {
+      targetIdx = findTargetSlotIndex(hs1Array);
+    }
     if (targetIdx === -1) {
       return res.status(400).json({ error: 'Tất cả 4 cột điểm HS1 học kỳ này đã đạt 10.0 điểm.' });
     }
@@ -743,7 +774,7 @@ app.post('/api/classes/:classId/students/:studentId/redeem-hs1', async (req, res
     );
 
     broadcast({ type: 'DATA_CHANGED' });
-    res.json({ success: true, points: student.points, grades: student.grades });
+    res.json({ success: true, points: student.points, grades: student.grades, historyEntry });
   } catch (err) {
     console.error('Redeem error:', err);
     res.status(500).json({ error: 'Lỗi server khi quy đổi điểm.' });

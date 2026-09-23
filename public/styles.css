@@ -4053,4 +4053,64 @@ body:not(.is-editing) #add-student-container {
     box-shadow: none;
 }
 
+/* Quick Redeem Hover on HS1 Cells & Admin Lock Tags */
+.grade-cell-hover-redeem {
+    position: relative !important;
+}
+
+.cell-quick-redeem-btn {
+    position: absolute;
+    top: 50%;
+    right: 4px;
+    transform: translateY(-50%) scale(0.75);
+    opacity: 0;
+    pointer-events: none;
+    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: 12px;
+    padding: 3px 7px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(245, 124, 0, 0.4);
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 10;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.grade-cell-hover-redeem:hover .cell-quick-redeem-btn {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(-50%) scale(1);
+}
+
+.cell-quick-redeem-btn:hover {
+    background: linear-gradient(135deg, #ffa726 0%, #e65100 100%);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.sem-lock-tag {
+    margin-left: 10px;
+    font-size: 0.78rem;
+    background: rgba(239, 68, 68, 0.15);
+    color: #dc2626;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-lock-active {
+    background: #fee2e2 !important;
+    color: #dc2626 !important;
+    border-color: #fca5a5 !important;
+}
+
+
 
