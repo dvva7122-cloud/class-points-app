@@ -167,6 +167,88 @@ app.patch('/api/classes/:cid/students/:sid/points', requireAdmin, (req, res) => 
   saveLocal(); res.json({ id:req.params.sid, points:stu.points });
 });
 
+app.post('/api/classes/:cid/students/:sid/redeem-hs1', async (req, res) => {
+  const { cid, sid } = req.params;
+  const { password, semKey, delta } = req.body;
+
+  if (typeof password !== 'string' || !password) return res.status(400).json({ error: 'Vui lòng nhập mật khẩu.' });
+  if (!['hk1', 'hk2'].includes(semKey)) return res.status(400).json({ error: 'Học kỳ không hợp lệ.' });
+  const numericDelta = parseFloat(delta);
+  if (![0.25, 0.5, 1.0].includes(numericDelta)) return res.status(400).json({ error: 'Mức điểm quy đổi không hợp lệ.' });
+
+  const cls = (localData.classes || []).find(c => c.id === cid);
+  if (!cls) return res.status(404).json({ error: 'Không tìm thấy lớp.' });
+  const student = (cls.students || []).find(s => s.id === sid);
+  if (!student) return res.status(404).json({ error: 'Không tìm thấy học sinh.' });
+  if (!student.passwordHash) return res.status(400).json({ error: 'Học sinh chưa có mật khẩu.' });
+
+  const match = await bcrypt.compare(password.toLowerCase(), student.passwordHash);
+  if (!match) return res.status(401).json({ error: 'Mật khẩu không đúng.' });
+
+  if (!student.grades) student.grades = { hk1: { hs1: [null, null, null, null], hs2: null, hs3: null }, hk2: { hs1: [null, null, null, null], hs2: null, hs3: null } };
+  if (!student.grades[semKey]) student.grades[semKey] = { hs1: [null, null, null, null], hs2: null, hs3: null };
+  if (!Array.isArray(student.grades[semKey].hs1)) student.grades[semKey].hs1 = [null, null, null, null];
+
+  const hs1Array = student.grades[semKey].hs1;
+
+  function findTargetSlotIndex(arr) {
+    for (let i = 0; i < 4; i++) { if (arr[i] === null || arr[i] === undefined) return i; }
+    let lowestIdx = -1, lowestVal = 11;
+    for (let i = 0; i < 4; i++) {
+      if (arr[i] !== null && arr[i] < 10) {
+        if (arr[i] < lowestVal) { lowestVal = arr[i]; lowestIdx = i; }
+      }
+    }
+    return lowestIdx;
+  }
+
+  function getCostForDelta(mark, d) {
+    const m = (mark === null || mark === undefined) ? 0 : mark;
+    let r = 1;
+    if (m < 5) r = 1;
+    else if (m < 7) r = 2;
+    else if (m < 8) r = 4;
+    else if (m < 9) r = 8;
+    else r = 16;
+    return Math.max(1, Math.round(r * d));
+  }
+
+  const targetIdx = findTargetSlotIndex(hs1Array);
+  if (targetIdx === -1) return res.status(400).json({ error: 'Tất cả 4 cột điểm HS1 học kỳ này đã đạt 10.0 điểm.' });
+
+  const curMark = hs1Array[targetIdx] || 0;
+  const cost = getCostForDelta(curMark, numericDelta);
+  const currentPoints = student.points || 0;
+  if (currentPoints < cost) return res.status(400).json({ error: `Số Quả Cam không đủ! Cần ${cost} 🍊 nhưng bạn chỉ có ${currentPoints} 🍊.` });
+
+  let newVal = curMark + numericDelta;
+  let overflowVal = 0;
+  if (newVal > 10.0) { overflowVal = Math.round((newVal - 10.0) * 100) / 100; newVal = 10.0; }
+  hs1Array[targetIdx] = Math.round(newVal * 100) / 100;
+
+  if (overflowVal > 0) {
+    const nextIdx = findTargetSlotIndex(hs1Array);
+    if (nextIdx !== -1) {
+      const nextCur = hs1Array[nextIdx] || 0;
+      hs1Array[nextIdx] = Math.min(10.0, Math.round((nextCur + overflowVal) * 100) / 100);
+    }
+  }
+
+  student.points = currentPoints - cost;
+  if (!cls.history) cls.history = [];
+  cls.history.push({
+    historyId: Date.now().toString() + '_' + Math.floor(Math.random() * 10000),
+    studentId: sid,
+    studentName: student.name,
+    change: -cost,
+    reason: `Tự đổi ${cost} 🍊 lấy +${numericDelta}đ HS1 (${semKey === 'hk1' ? 'HK1' : 'HK2'} - Ô ${targetIdx + 1})`,
+    ts: Date.now()
+  });
+
+  saveLocal();
+  res.json({ success: true, points: student.points, grades: student.grades });
+});
+
 app.use((req,res)=>{
   if(req.path.startsWith('/api/')) return res.status(404).json({error:'Không tìm thấy.'});
   res.sendFile(path.join(__dirname,'public','index.html'));

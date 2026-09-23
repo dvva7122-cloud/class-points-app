@@ -3833,3 +3833,224 @@ body:not(.is-editing) #add-student-container {
     background: #ECFDF5;
 }
 
+/* === Student Grade Redemption Modal === */
+.btn-redeem-hs1 {
+    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    padding: 10px 18px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 14px rgba(245, 124, 0, 0.35);
+    transition: all 0.25s ease;
+}
+.btn-redeem-hs1:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(245, 124, 0, 0.45);
+    background: linear-gradient(135deg, #ffa726 0%, #fb8c00 100%);
+}
+
+.redeem-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.redeem-modal-card {
+    background: #ffffff;
+    border-radius: 24px;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+    animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.redeem-modal-header {
+    background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+    padding: 18px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #fed7aa;
+}
+.redeem-modal-header h3 {
+    margin: 0;
+    color: #c2410c;
+    font-size: 1.15rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.redeem-modal-close {
+    background: transparent;
+    border: none;
+    font-size: 1.6rem;
+    color: #9a3412;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.redeem-modal-body {
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.redeem-sem-selector {
+    display: flex;
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: 12px;
+    gap: 4px;
+}
+.redeem-sem-selector .sem-btn {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.redeem-sem-selector .sem-btn.active {
+    background: #ffffff;
+    color: #ea580c;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.redeem-info-banner {
+    background: #fff8f0;
+    border: 1px solid #ffedd5;
+    border-radius: 14px;
+    padding: 12px 16px;
+    font-size: 0.92rem;
+    color: #431407;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.redeem-section-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #334155;
+}
+
+.redeem-options-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.redeem-option-card {
+    border: 2px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 12px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    background: #fff;
+}
+.redeem-option-card input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+.redeem-option-card .option-label {
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: #1e293b;
+}
+.redeem-option-card .option-cost {
+    font-size: 0.82rem;
+    color: #ea580c;
+    font-weight: 600;
+    margin-top: 2px;
+}
+.redeem-option-card:hover:not(.disabled) {
+    border-color: #fdba74;
+    background: #fffbf7;
+}
+.redeem-option-card.selected {
+    border-color: #f97316;
+    background: #fff7ed;
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.15);
+}
+.redeem-option-card.selected .option-label {
+    color: #c2410c;
+}
+.redeem-option-card.disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    background: #f8fafc;
+}
+
+.redeem-preview-card {
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 14px;
+    padding: 12px 16px;
+    font-size: 0.9rem;
+    color: #334155;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.redeem-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 8px;
+}
+.btn-redeem-cancel {
+    background: #f1f5f9;
+    color: #475569;
+    border: none;
+    border-radius: 12px;
+    padding: 10px 18px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.btn-redeem-confirm {
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 10px 20px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(234, 88, 12, 0.3);
+}
+.btn-redeem-confirm:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+

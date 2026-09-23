@@ -21,7 +21,7 @@ async function doStudentPrivatePopup(classId, student) {
       const grades = verifyRes.grades;
       const points = verifyRes.points;
 
-      renderGradeReport(body, student, grades, points, classId);
+      renderGradeReport(body, student, grades, points, classId, res.password);
 
       modal.classList.add('show');
       document.getElementById('student-popup-close').onclick = () => modal.classList.remove('show');
@@ -47,7 +47,7 @@ function calcSemesterAvg(sem) {
   return Math.round((totalScore / totalWeight) * 100) / 100;
 }
 
-function renderGradeReport(container, student, grades, points, classId) {
+function renderGradeReport(container, student, grades, points, classId, studentPassword = null) {
   container.innerHTML = `
     <div style="width: 100%; display: flex; justify-content: center;">
       <div class="grade-report-title-wrap">
@@ -118,6 +118,20 @@ function renderGradeReport(container, student, grades, points, classId) {
     <div class="yearly-score">${yearlyAvg !== null ? yearlyAvg.toFixed(2) : '—'}</div>
   `;
   left.appendChild(yearlyBox);
+
+  // Nút Quy đổi điểm HS1 cho học sinh (chỉ hiển thị khi mở qua mật khẩu học sinh và có điểm cam)
+  if (studentPassword && points > 0) {
+    const redeemBox = document.createElement('div');
+    redeemBox.style.cssText = 'margin-top: 14px; width: 100%; display: flex; justify-content: center;';
+    const redeemBtn = document.createElement('button');
+    redeemBtn.className = 'btn-redeem-hs1';
+    redeemBtn.innerHTML = '<i class="fa-solid fa-gift"></i> 🍊 Quy đổi điểm HS1';
+    redeemBtn.onclick = () => showRedeemHs1Modal(classId, student, grades, points, studentPassword, (updatedGrades, updatedPoints) => {
+      renderGradeReport(container, student, updatedGrades, updatedPoints, classId, studentPassword);
+    });
+    redeemBox.appendChild(redeemBtn);
+    left.appendChild(redeemBox);
+  }
 
   report.appendChild(left);
 
@@ -297,6 +311,170 @@ async function saveGradesAndRefresh(classId, student, grades, container, points)
   } catch (err) {
     if (err.message !== 'Unauthorized') showError(err.message);
   }
+}
+
+function showRedeemHs1Modal(classId, student, grades, points, studentPassword, onSuccess) {
+  const modal = document.createElement('div');
+  modal.className = 'redeem-modal-overlay';
+  
+  let currentSemKey = 'hk1';
+  let selectedDelta = 1.0;
+
+  function findTargetSlotIndex(arr) {
+    if (!Array.isArray(arr)) return 0;
+    for (let i = 0; i < 4; i++) {
+      if (arr[i] === null || arr[i] === undefined) return i;
+    }
+    let lowestIdx = -1;
+    let lowestVal = 11;
+    for (let i = 0; i < 4; i++) {
+      if (arr[i] !== null && arr[i] < 10) {
+        if (arr[i] < lowestVal) { lowestVal = arr[i]; lowestIdx = i; }
+      }
+    }
+    return lowestIdx;
+  }
+
+  function getCostForDelta(mark, d) {
+    const m = (mark === null || mark === undefined) ? 0 : mark;
+    let r = 1;
+    if (m < 5) r = 1;
+    else if (m < 7) r = 2;
+    else if (m < 8) r = 4;
+    else if (m < 9) r = 8;
+    else r = 16;
+    return Math.max(1, Math.round(r * d));
+  }
+
+  const modalContent = document.createElement('div');
+  modalContent.className = 'redeem-modal-card';
+  modal.appendChild(modalContent);
+  document.body.appendChild(modal);
+
+  function updateModalBody() {
+    const semData = (grades && grades[currentSemKey]) || { hs1: [null, null, null, null] };
+    const hs1Array = semData.hs1 || [null, null, null, null];
+    const targetIdx = findTargetSlotIndex(hs1Array);
+
+    let targetInfoText = '';
+    let curMark = 0;
+    let disabledAll = false;
+
+    if (targetIdx === -1) {
+      targetInfoText = `<span style="color: #ef4444; font-weight: bold;">Tất cả 4 ô HS1 (${currentSemKey === 'hk1' ? 'HK1' : 'HK2'}) đã đạt 10.0!</span>`;
+      disabledAll = true;
+    } else {
+      curMark = hs1Array[targetIdx] !== null && hs1Array[targetIdx] !== undefined ? hs1Array[targetIdx] : 0;
+      targetInfoText = `Ô gánh điểm: <b>Ô HS1 số ${targetIdx + 1}</b> (Hiện có: <b>${curMark}đ</b>)`;
+    }
+
+    const deltas = [0.25, 0.5, 1.0];
+    let optionsHtml = '';
+
+    let activeCost = 0;
+    let activeNewMark = curMark;
+
+    deltas.forEach(d => {
+      const c = getCostForDelta(curMark, d);
+      const isSelected = (d === selectedDelta);
+      const isAffordable = (points >= c) && !disabledAll;
+      
+      if (isSelected && isAffordable) {
+        activeCost = c;
+        activeNewMark = Math.min(10.0, Math.round((curMark + d) * 100) / 100);
+      }
+
+      optionsHtml += `
+        <label class="redeem-option-card ${isSelected ? 'selected' : ''} ${!isAffordable ? 'disabled' : ''}">
+          <input type="radio" name="redeem-delta" value="${d}" ${isSelected ? 'checked' : ''} ${!isAffordable ? 'disabled' : ''}>
+          <div class="option-label">+${d.toFixed(2)} đ</div>
+          <div class="option-cost">(Cần ${c} 🍊)</div>
+        </label>
+      `;
+    });
+
+    const remPoints = Math.max(0, points - activeCost);
+
+    modalContent.innerHTML = `
+      <div class="redeem-modal-header">
+        <h3><i class="fa-solid fa-gift"></i> QUY ĐỔI ĐIỂM THƯỞNG HS1</h3>
+        <button class="redeem-modal-close">&times;</button>
+      </div>
+      <div class="redeem-modal-body">
+        <div class="redeem-sem-selector">
+          <button class="sem-btn ${currentSemKey === 'hk1' ? 'active' : ''}" data-sem="hk1">Học kỳ I</button>
+          <button class="sem-btn ${currentSemKey === 'hk2' ? 'active' : ''}" data-sem="hk2">Học kỳ II</button>
+        </div>
+
+        <div class="redeem-info-banner">
+          <div>🍊 Số Quả Cam hiện có: <b>${points} 🍊</b></div>
+          <div>${targetInfoText}</div>
+        </div>
+
+        ${!disabledAll ? `
+          <div class="redeem-section-title">Chọn mức điểm muốn đổi:</div>
+          <div class="redeem-options-grid">
+            ${optionsHtml}
+          </div>
+
+          <div class="redeem-preview-card">
+            <div>➔ Sau khi đổi: Ô HS1 số ${targetIdx + 1} sẽ tăng lên <b style="color: #2563eb; font-size: 1.1rem;">${activeNewMark}đ</b></div>
+            <div>➔ Số Quả Cam còn lại: <b style="color: #d97706;">${remPoints} 🍊</b></div>
+          </div>
+        ` : ''}
+
+        <div class="redeem-actions">
+          <button class="btn-redeem-cancel">Hủy</button>
+          <button class="btn-redeem-confirm" ${disabledAll || points < activeCost || activeCost === 0 ? 'disabled' : ''}>
+            <i class="fa-solid fa-check"></i> XÁC NHẬN ĐỔI
+          </button>
+        </div>
+      </div>
+    `;
+
+    modalContent.querySelector('.redeem-modal-close').onclick = () => document.body.removeChild(modal);
+    modalContent.querySelector('.btn-redeem-cancel').onclick = () => document.body.removeChild(modal);
+
+    modalContent.querySelectorAll('.sem-btn').forEach(btn => {
+      btn.onclick = () => {
+        currentSemKey = btn.dataset.sem;
+        updateModalBody();
+      };
+    });
+
+    modalContent.querySelectorAll('input[name="redeem-delta"]').forEach(input => {
+      input.onchange = () => {
+        selectedDelta = parseFloat(input.value);
+        updateModalBody();
+      };
+    });
+
+    const confirmBtn = modalContent.querySelector('.btn-redeem-confirm');
+    if (confirmBtn) {
+      confirmBtn.onclick = async () => {
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý...';
+        try {
+          const res = await api('POST', `/api/classes/${classId}/students/${student.id}/redeem-hs1`, {
+            password: studentPassword,
+            semKey: currentSemKey,
+            delta: selectedDelta
+          });
+          if (res.success) {
+            showSuccess(`Quy đổi thành công! Ô HS1 số ${targetIdx + 1} đã được cộng +${selectedDelta}đ.`);
+            document.body.removeChild(modal);
+            onSuccess(res.grades, res.points);
+          }
+        } catch (err) {
+          showError(err.message || 'Lỗi quy đổi điểm.');
+          confirmBtn.disabled = false;
+          confirmBtn.innerHTML = '<i class="fa-solid fa-check"></i> XÁC NHẬN ĐỔI';
+        }
+      };
+    }
+  }
+
+  updateModalBody();
 }
 
 // Import điểm từ Excel (Admin)

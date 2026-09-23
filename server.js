@@ -630,6 +630,126 @@ app.post('/api/classes/:classId/students/:studentId/verify-password', async (req
   }
 });
 
+// Helpers cho quy đổi điểm HS1 (Phương án A)
+function findTargetSlotIndex(arr) {
+  if (!Array.isArray(arr)) return 0;
+  for (let i = 0; i < 4; i++) {
+    if (arr[i] === null || arr[i] === undefined) return i;
+  }
+  let lowestIdx = -1;
+  let lowestVal = 11;
+  for (let i = 0; i < 4; i++) {
+    if (arr[i] !== null && arr[i] < 10) {
+      if (arr[i] < lowestVal) {
+        lowestVal = arr[i];
+        lowestIdx = i;
+      }
+    }
+  }
+  return lowestIdx;
+}
+
+function getCostForDelta(mark, d) {
+  const m = (mark === null || mark === undefined) ? 0 : mark;
+  let rate = 1;
+  if (m < 5.0) rate = 1;
+  else if (m < 7.0) rate = 2;
+  else if (m < 8.0) rate = 4;
+  else if (m < 9.0) rate = 8;
+  else rate = 16;
+  return Math.max(1, Math.round(rate * d));
+}
+
+// POST /api/classes/:classId/students/:studentId/redeem-hs1  (public - xác thực mật khẩu học sinh)
+app.post('/api/classes/:classId/students/:studentId/redeem-hs1', async (req, res) => {
+  const { classId, studentId } = req.params;
+  const { password, semKey, delta } = req.body;
+
+  if (typeof password !== 'string' || !password) {
+    return res.status(400).json({ error: 'Vui lòng nhập mật khẩu xác nhận.' });
+  }
+  if (!['hk1', 'hk2'].includes(semKey)) {
+    return res.status(400).json({ error: 'Học kỳ không hợp lệ.' });
+  }
+  const numericDelta = parseFloat(delta);
+  if (![0.25, 0.5, 1.0].includes(numericDelta)) {
+    return res.status(400).json({ error: 'Mức điểm quy đổi không hợp lệ.' });
+  }
+
+  try {
+    const classesColl = db.getClassesCollection();
+    const cls = await classesColl.findOne({ id: classId });
+    if (!cls) return res.status(404).json({ error: 'Không tìm thấy lớp.' });
+
+    const student = cls.students.find(s => s.id === studentId);
+    if (!student) return res.status(404).json({ error: 'Không tìm thấy học sinh.' });
+    if (!student.passwordHash) return res.status(400).json({ error: 'Học sinh chưa được thiết lập mật khẩu.' });
+
+    const match = await bcrypt.compare(password.toLowerCase(), student.passwordHash);
+    if (!match) {
+      return res.status(401).json({ error: 'Mật khẩu không đúng.' });
+    }
+
+    if (!student.grades) student.grades = emptyGrades();
+    if (!student.grades[semKey]) student.grades[semKey] = { hs1: [null, null, null, null], hs2: null, hs3: null };
+    if (!Array.isArray(student.grades[semKey].hs1)) student.grades[semKey].hs1 = [null, null, null, null];
+
+    const hs1Array = student.grades[semKey].hs1;
+    const targetIdx = findTargetSlotIndex(hs1Array);
+    if (targetIdx === -1) {
+      return res.status(400).json({ error: 'Tất cả 4 cột điểm HS1 học kỳ này đã đạt 10.0 điểm.' });
+    }
+
+    const curMark = hs1Array[targetIdx] || 0;
+    const cost = getCostForDelta(curMark, numericDelta);
+    const currentPoints = student.points || 0;
+    if (currentPoints < cost) {
+      return res.status(400).json({ error: `Số Quả Cam không đủ! Cần ${cost} 🍊 nhưng bạn chỉ có ${currentPoints} 🍊.` });
+    }
+
+    let newVal = curMark + numericDelta;
+    let overflowVal = 0;
+    if (newVal > 10.0) {
+      overflowVal = Math.round((newVal - 10.0) * 100) / 100;
+      newVal = 10.0;
+    }
+    hs1Array[targetIdx] = Math.round(newVal * 100) / 100;
+
+    if (overflowVal > 0) {
+      const nextIdx = findTargetSlotIndex(hs1Array);
+      if (nextIdx !== -1) {
+        const nextCur = hs1Array[nextIdx] || 0;
+        hs1Array[nextIdx] = Math.min(10.0, Math.round((nextCur + overflowVal) * 100) / 100);
+      }
+    }
+
+    student.points = currentPoints - cost;
+
+    const historyEntry = {
+      historyId: Date.now().toString() + '_' + Math.floor(Math.random() * 10000),
+      studentId,
+      studentName: student.name,
+      change: -cost,
+      reason: `Tự đổi ${cost} 🍊 lấy +${numericDelta}đ HS1 (${semKey === 'hk1' ? 'HK1' : 'HK2'} - Ô ${targetIdx + 1})`,
+      ts: Date.now()
+    };
+
+    await classesColl.updateOne(
+      { id: classId },
+      { 
+        $set: { students: cls.students },
+        $push: { history: historyEntry }
+      }
+    );
+
+    broadcast({ type: 'DATA_CHANGED' });
+    res.json({ success: true, points: student.points, grades: student.grades });
+  } catch (err) {
+    console.error('Redeem error:', err);
+    res.status(500).json({ error: 'Lỗi server khi quy đổi điểm.' });
+  }
+});
+
 // PATCH /api/classes/:classId/students/:studentId/grades  (admin) - Cập nhật điểm học sinh
 app.patch('/api/classes/:classId/students/:studentId/grades', requireAdmin, async (req, res) => {
   const { classId, studentId } = req.params;
