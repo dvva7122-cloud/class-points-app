@@ -4112,5 +4112,101 @@ body:not(.is-editing) #add-student-container {
     border-color: #fca5a5 !important;
 }
 
+/* Admin Hover Actions on Grade Cells */
+.grade-cell-hover-admin {
+    position: relative !important;
+}
+
+.admin-cell-hover-actions {
+    position: absolute;
+    top: 50%;
+    right: 2px;
+    transform: translateY(-50%) scale(0.75);
+    opacity: 0;
+    pointer-events: none;
+    display: flex;
+    gap: 3px;
+    align-items: center;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 10;
+}
+
+.grade-cell-hover-admin:hover .admin-cell-hover-actions {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(-50%) scale(1);
+}
+
+.cell-action-btn {
+    border: none;
+    border-radius: 10px;
+    padding: 3px 7px;
+    font-size: 0.68rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    white-space: nowrap;
+}
+
+.btn-action-redeem {
+    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(245, 124, 0, 0.35);
+}
+
+.btn-action-redeem:hover {
+    background: linear-gradient(135deg, #ffa726 0%, #e65100 100%);
+    transform: scale(1.12);
+}
+
+.btn-action-edit {
+    background: linear-gradient(135deg, #42a5f5 0%, #1e88e5 100%);
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(30, 136, 229, 0.35);
+}
+
+.btn-action-edit:hover {
+    background: linear-gradient(135deg, #64b5f6 0%, #1565c0 100%);
+    transform: scale(1.12);
+}
+
+/* ── Z-Index: ensure modals appear above student-popup-modal (z-index: 9500) ── */
+#custom-alert-modal.show {
+    z-index: 50000 !important;
+}
+
+#custom-prompt-modal.show {
+    z-index: 50000 !important;
+}
+
+#password-modal.show {
+    z-index: 50000 !important;
+}
+
+#session-expired-modal.show {
+    z-index: 50000 !important;
+}
+
+#wheel-winner-modal.show {
+    z-index: 50000 !important;
+}
+
+#announcement-modal.show {
+    z-index: 50000 !important;
+}
+
+#theme-modal.show {
+    z-index: 50000 !important;
+}
+
+.redeem-modal-overlay {
+    z-index: 50000 !important;
+}
+
+
 
 

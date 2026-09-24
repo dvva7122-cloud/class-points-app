@@ -703,11 +703,28 @@ app.post('/api/classes/:classId/students/:studentId/redeem-hs1', async (req, res
 
     const student = cls.students.find(s => s.id === studentId);
     if (!student) return res.status(404).json({ error: 'Không tìm thấy học sinh.' });
-    if (!student.passwordHash) return res.status(400).json({ error: 'Học sinh chưa được thiết lập mật khẩu.' });
+    // Admin bypass: nếu password là 'ADMIN', xác thực qua JWT admin token
+    let isAdminRedeem = false;
+    if (password === 'ADMIN') {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Admin cần đăng nhập để thao tác.' });
+      }
+      try {
+        jwt.verify(authHeader.split(' ')[1], JWT_SECRET);
+        isAdminRedeem = true;
+      } catch (e) {
+        return res.status(401).json({ error: 'Token admin không hợp lệ hoặc đã hết hạn.' });
+      }
+    }
 
-    const match = await bcrypt.compare(password.toLowerCase(), student.passwordHash);
-    if (!match) {
-      return res.status(401).json({ error: 'Mật khẩu không đúng.' });
+    if (!isAdminRedeem) {
+      if (!student.passwordHash) return res.status(400).json({ error: 'Học sinh chưa được thiết lập mật khẩu.' });
+
+      const match = await bcrypt.compare(password.toLowerCase(), student.passwordHash);
+      if (!match) {
+        return res.status(401).json({ error: 'Mật khẩu không đúng.' });
+      }
     }
 
     if (!student.grades) student.grades = emptyGrades();
@@ -761,7 +778,9 @@ app.post('/api/classes/:classId/students/:studentId/redeem-hs1', async (req, res
       studentId,
       studentName: student.name,
       change: -cost,
-      reason: `Tự đổi ${cost} 🍊 lấy +${numericDelta}đ HS1 (${semKey === 'hk1' ? 'HK1' : 'HK2'} - Ô ${targetIdx + 1})`,
+      reason: isAdminRedeem 
+        ? `Giáo viên quy đổi ${cost} 🍊 cho HS lấy +${numericDelta}đ HS1 (${semKey === 'hk1' ? 'HK1' : 'HK2'} - Ô ${targetIdx + 1})`
+        : `Tự đổi ${cost} 🍊 lấy +${numericDelta}đ HS1 (${semKey === 'hk1' ? 'HK1' : 'HK2'} - Ô ${targetIdx + 1})`,
       ts: Date.now()
     };
 

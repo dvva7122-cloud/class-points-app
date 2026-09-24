@@ -195,10 +195,13 @@ app.post('/api/classes/:cid/students/:sid/redeem-hs1', async (req, res) => {
   if (!cls) return res.status(404).json({ error: 'Không tìm thấy lớp.' });
   const student = (cls.students || []).find(s => s.id === sid);
   if (!student) return res.status(404).json({ error: 'Không tìm thấy học sinh.' });
-  if (!student.passwordHash) return res.status(400).json({ error: 'Học sinh chưa có mật khẩu.' });
+  if (!student.passwordHash && password !== 'ADMIN') return res.status(400).json({ error: 'Học sinh chưa có mật khẩu.' });
 
-  const match = await bcrypt.compare(password.toLowerCase(), student.passwordHash);
-  if (!match) return res.status(401).json({ error: 'Mật khẩu không đúng.' });
+  // Admin bypass: nếu password là 'ADMIN', bỏ qua xác thực mật khẩu học sinh
+  if (password !== 'ADMIN') {
+    const match = await bcrypt.compare(password.toLowerCase(), student.passwordHash);
+    if (!match) return res.status(401).json({ error: 'Mật khẩu không đúng.' });
+  }
 
   if (!student.grades) student.grades = { hk1: { hs1: [null, null, null, null], hs2: null, hs3: null }, hk2: { hs1: [null, null, null, null], hs2: null, hs3: null } };
   if (!student.grades[semKey]) student.grades[semKey] = { hs1: [null, null, null, null], hs2: null, hs3: null };
@@ -264,7 +267,9 @@ app.post('/api/classes/:cid/students/:sid/redeem-hs1', async (req, res) => {
     studentId: sid,
     studentName: student.name,
     change: -cost,
-    reason: `Tự đổi ${cost} 🍊 lấy +${numericDelta}đ HS1 (${semKey === 'hk1' ? 'HK1' : 'HK2'} - Ô ${targetIdx + 1})`,
+    reason: password === 'ADMIN'
+      ? `Giáo viên quy đổi ${cost} 🍊 cho HS lấy +${numericDelta}đ HS1 (${semKey === 'hk1' ? 'HK1' : 'HK2'} - Ô ${targetIdx + 1})`
+      : `Tự đổi ${cost} 🍊 lấy +${numericDelta}đ HS1 (${semKey === 'hk1' ? 'HK1' : 'HK2'} - Ô ${targetIdx + 1})`,
     ts: Date.now()
   };
   cls.history.push(historyEntry);

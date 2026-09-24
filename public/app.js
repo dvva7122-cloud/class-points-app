@@ -146,20 +146,6 @@ function renderGradeReport(container, student, grades, points, classId, studentP
   `;
   left.appendChild(yearlyBox);
 
-  // Nút Quy đổi điểm HS1 cho học sinh (chỉ hiển thị khi mở qua mật khẩu học sinh và có điểm cam)
-  if (studentPassword && points > 0) {
-    const redeemBox = document.createElement('div');
-    redeemBox.style.cssText = 'margin-top: 14px; width: 100%; display: flex; justify-content: center;';
-    const redeemBtn = document.createElement('button');
-    redeemBtn.className = 'btn-redeem-hs1';
-    redeemBtn.innerHTML = '<i class="fa-solid fa-gift"></i> 🍊 Quy đổi điểm HS1';
-    redeemBtn.onclick = () => showRedeemHs1Modal(classId, student, grades, points, studentPassword, (updatedGrades, updatedPoints) => {
-      renderGradeReport(container, student, updatedGrades, updatedPoints, classId, studentPassword);
-    });
-    redeemBox.appendChild(redeemBtn);
-    left.appendChild(redeemBox);
-  }
-
   report.appendChild(left);
 
   // === RIGHT/MIDDLE: Bảng điểm 2 học kỳ ===
@@ -244,8 +230,37 @@ function renderGradeReport(container, student, grades, points, classId, studentP
         saveGradesAndRefresh(classId, student, grades, container, points);
       });
 
-      // Nếu là Học sinh (có password), điểm cam > 0, HK chưa khóa và điểm < 10.0
-      if (!isAdmin && studentPassword && points > 0 && !isSemLocked && (val === null || val < 10.0)) {
+      if (isAdmin) {
+        td.classList.add('grade-cell-hover-admin');
+        const adminActions = document.createElement('div');
+        adminActions.className = 'admin-cell-hover-actions';
+
+        if (points > 0 && (val === null || val < 10.0)) {
+          const quickRedeemBtn = document.createElement('button');
+          quickRedeemBtn.className = 'cell-action-btn btn-action-redeem';
+          quickRedeemBtn.title = '🍊 Quy đổi điểm thưởng cho học sinh';
+          quickRedeemBtn.innerHTML = '<i class="fa-solid fa-plus"></i>🍊';
+          quickRedeemBtn.onclick = (e) => {
+            e.stopPropagation();
+            showRedeemHs1Modal(classId, student, grades, points, 'ADMIN', (updatedGrades, updatedPoints) => {
+              renderGradeReport(container, student, updatedGrades, updatedPoints, classId, studentPassword);
+            }, sem.key, i);
+          };
+          adminActions.appendChild(quickRedeemBtn);
+        }
+
+        const quickEditBtn = document.createElement('button');
+        quickEditBtn.className = 'cell-action-btn btn-action-edit';
+        quickEditBtn.title = '✏️ Sửa điểm trực tiếp';
+        quickEditBtn.innerHTML = '<i class="fa-solid fa-pen"></i>';
+        quickEditBtn.onclick = (e) => {
+          e.stopPropagation();
+          td.click();
+        };
+        adminActions.appendChild(quickEditBtn);
+
+        td.appendChild(adminActions);
+      } else if (studentPassword && points > 0 && !isSemLocked && (val === null || val < 10.0)) {
         td.classList.add('grade-cell-hover-redeem');
         const quickBtn = document.createElement('button');
         quickBtn.className = 'cell-quick-redeem-btn';
@@ -724,7 +739,7 @@ async function api(method, path, body) {
   });
 
   // Bỏ qua lỗi 401/403 (không tính là hết hạn session) đối với API đăng nhập và API xác thực mật khẩu
-  if ((res.status === 401 || res.status === 403) && path !== '/api/admin/login' && !path.includes('/verify-password')) {
+  if ((res.status === 401 || res.status === 403) && path !== '/api/admin/login' && !path.includes('/verify-password') && !path.includes('/redeem-hs1')) {
     handleSessionExpired();
     throw new Error('Unauthorized');
   }
@@ -3434,6 +3449,7 @@ function showError(msg, title = 'Thông báo', icon = '⚠️') {
     alert(msg);
     return;
   }
+  modal.style.zIndex = '30000';
   document.getElementById('custom-alert-icon').textContent = icon;
   document.getElementById('custom-alert-title').textContent = title;
   document.getElementById('custom-alert-message').textContent = msg;
@@ -3444,6 +3460,14 @@ function showError(msg, title = 'Thông báo', icon = '⚠️') {
   okBtn.onclick = () => {
     modal.classList.remove('show');
   };
+}
+
+function showSuccess(msg, title = 'Thành công') {
+  showError(msg, title, '🎉');
+}
+
+function showCustomAlert(title, msg, icon = 'ℹ️') {
+  showError(msg, title, icon);
 }
 
 
