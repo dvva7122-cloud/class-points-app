@@ -395,15 +395,30 @@ function showRedeemHs1Modal(classId, student, grades, points, studentPassword, o
     return lowestIdx;
   }
 
-  function getCostForDelta(mark, d) {
-    const m = (mark === null || mark === undefined) ? 0 : mark;
-    let r = 1;
-    if (m < 5) r = 1;
-    else if (m < 7) r = 2;
-    else if (m < 8) r = 4;
-    else if (m < 9) r = 8;
-    else r = 16;
-    return Math.max(1, Math.round(r * d));
+  function getCostForDelta(mark, delta) {
+    const start = Math.max(0, (mark === null || mark === undefined) ? 0 : mark);
+    const end = Math.min(10.0, Math.round((start + delta) * 100) / 100);
+    if (end <= start) return 0;
+
+    const tiers = [
+      { min: 0.0, max: 5.0, rate: 1 },
+      { min: 5.0, max: 7.0, rate: 2 },
+      { min: 7.0, max: 8.0, rate: 4 },
+      { min: 8.0, max: 9.0, rate: 8 },
+      { min: 9.0, max: 10.0, rate: 16 }
+    ];
+
+    let totalCost = 0;
+    for (const t of tiers) {
+      const overlapStart = Math.max(start, t.min);
+      const overlapEnd = Math.min(end, t.max);
+      if (overlapEnd > overlapStart) {
+        const span = overlapEnd - overlapStart;
+        totalCost += span * t.rate;
+      }
+    }
+
+    return Math.max(1, Math.round(totalCost));
   }
 
   const modalContent = document.createElement('div');
