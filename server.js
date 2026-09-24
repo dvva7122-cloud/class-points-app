@@ -711,8 +711,12 @@ app.post('/api/classes/:classId/students/:studentId/redeem-hs1', async (req, res
         return res.status(401).json({ error: 'Admin cần đăng nhập để thao tác.' });
       }
       try {
-        jwt.verify(authHeader.split(' ')[1], JWT_SECRET);
-        isAdminRedeem = true;
+        const decoded = jwt.verify(authHeader.split(' ')[1], process.env.JWT_SECRET);
+        if (decoded && decoded.role === 'admin') {
+          isAdminRedeem = true;
+        } else {
+          return res.status(403).json({ error: 'Không đủ quyền Admin.' });
+        }
       } catch (e) {
         return res.status(401).json({ error: 'Token admin không hợp lệ hoặc đã hết hạn.' });
       }
