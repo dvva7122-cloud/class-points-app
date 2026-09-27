@@ -3917,26 +3917,45 @@ body:not(.is-editing) #add-student-container {
 .redeem-sem-selector {
     display: flex;
     background: #f1f5f9;
-    padding: 4px;
-    border-radius: 12px;
-    gap: 4px;
+    padding: 5px;
+    border-radius: 14px;
+    gap: 6px;
 }
 .redeem-sem-selector .sem-btn {
     flex: 1;
-    border: none;
-    background: transparent;
-    padding: 8px 12px;
-    border-radius: 8px;
+    border: 2px solid transparent;
+    padding: 9px 12px;
+    border-radius: 10px;
     font-weight: 700;
-    font-size: 0.9rem;
-    color: #64748b;
+    font-size: 0.92rem;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
 }
-.redeem-sem-selector .sem-btn.active {
-    background: #ffffff;
-    color: #ea580c;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+.redeem-sem-selector .sem-btn.sem-hk1 {
+    color: #1d4ed8;
+    background: #eff6ff;
+    border-color: #bfdbfe;
+}
+.redeem-sem-selector .sem-btn.sem-hk1.active {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: #ffffff;
+    border-color: #1d4ed8;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+}
+.redeem-sem-selector .sem-btn.sem-hk2 {
+    color: #047857;
+    background: #ecfdf5;
+    border-color: #a7f3d0;
+}
+.redeem-sem-selector .sem-btn.sem-hk2.active {
+    background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+    color: #ffffff;
+    border-color: #047857;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
 }
 
 .redeem-info-banner {
@@ -4004,6 +4023,31 @@ body:not(.is-editing) #add-student-container {
 .redeem-option-card.selected .option-label {
     color: #c2410c;
 }
+
+/* ── Max Option Highlight Card ── */
+.redeem-option-card.max-option-highlight {
+    background: linear-gradient(135deg, #fffbe0 0%, #fef3c7 100%);
+    border: 2px solid #fcd34d;
+}
+.redeem-option-card.max-option-highlight .option-label {
+    color: #b45309;
+}
+.redeem-option-card.max-option-highlight .option-cost {
+    color: #d97706;
+}
+.redeem-option-card.max-option-highlight:hover:not(.disabled) {
+    border-color: #f59e0b;
+    background: #fde68a;
+}
+.redeem-option-card.max-option-highlight.selected {
+    border-color: #d97706;
+    background: linear-gradient(135deg, #fde68a 0%, #fcd34d 100%);
+    box-shadow: 0 4px 14px rgba(217, 119, 6, 0.35);
+}
+.redeem-option-card.max-option-highlight.selected .option-label {
+    color: #78350f;
+}
+
 .redeem-option-card.disabled {
     opacity: 0.45;
     cursor: not-allowed;

@@ -478,7 +478,7 @@ function showRedeemHs1Modal(classId, student, grades, points, studentPassword, o
       disabledAll = true;
     } else {
       curMark = hs1Array[targetIdx] !== null && hs1Array[targetIdx] !== undefined ? hs1Array[targetIdx] : 0;
-      targetInfoText = `Ô gánh điểm: <b>Ô HS1 số ${targetIdx + 1}</b> (Hiện có: <b>${curMark}đ</b>)`;
+      targetInfoText = `🎯 Cột điểm quy đổi: <b>Ô HS1 (cột ${targetIdx + 1})</b> — Điểm hiện tại: <b>${curMark}đ</b>`;
     }
 
     const maxInfo = calcMaxPossibleGrade(curMark, points);
@@ -504,10 +504,10 @@ function showRedeemHs1Modal(classId, student, grades, points, studentPassword, o
       }
 
       optionsHtml += `
-        <label class="redeem-option-card ${isSelected ? 'selected' : ''} ${!isAffordable ? 'disabled' : ''}">
+        <label class="redeem-option-card ${isMaxOption ? 'max-option-highlight' : ''} ${isSelected ? 'selected' : ''} ${!isAffordable ? 'disabled' : ''}">
           <input type="radio" name="redeem-delta" value="${d}" ${isSelected ? 'checked' : ''} ${!isAffordable ? 'disabled' : ''}>
-          <div class="option-label">${isMaxOption ? '🚀 ' : ''}+${d.toFixed(2)} đ</div>
-          <div class="option-cost">${isMaxOption ? '(Tối đa - ' : '(Cần '}${c} 🍊)</div>
+          <div class="option-label">+${d.toFixed(2)} đ</div>
+          <div class="option-cost">(Cần ${c} 🍊)</div>
         </label>
       `;
     });
@@ -521,23 +521,23 @@ function showRedeemHs1Modal(classId, student, grades, points, studentPassword, o
       </div>
       <div class="redeem-modal-body">
         <div class="redeem-sem-selector">
-          <button class="sem-btn ${currentSemKey === 'hk1' ? 'active' : ''}" data-sem="hk1">Học kỳ I ${globalSettings.lockRedeemHk1 ? '🔒' : ''}</button>
-          <button class="sem-btn ${currentSemKey === 'hk2' ? 'active' : ''}" data-sem="hk2">Học kỳ II ${globalSettings.lockRedeemHk2 ? '🔒' : ''}</button>
+          <button class="sem-btn sem-hk1 ${currentSemKey === 'hk1' ? 'active' : ''}" data-sem="hk1">📘 HỌC KỲ I ${globalSettings.lockRedeemHk1 ? '🔒' : ''}</button>
+          <button class="sem-btn sem-hk2 ${currentSemKey === 'hk2' ? 'active' : ''}" data-sem="hk2">📗 HỌC KỲ II ${globalSettings.lockRedeemHk2 ? '🔒' : ''}</button>
         </div>
 
         <div class="redeem-info-banner">
-          <div>🍊 Số Quả Cam hiện có: <b>${points} 🍊</b></div>
+          <div>🍊 Điểm thưởng hiện có: <b>${points} Quả Cam</b></div>
           <div>${targetInfoText}</div>
         </div>
 
         ${!disabledAll ? `
           <div class="redeem-max-card">
             <div class="max-text">
-              🚀 <b>Khả năng cộng tối đa:</b> Với <b>${points} 🍊</b>, ô này có thể cộng tối đa <b style="color: #1d4ed8; font-size: 1.02rem;">+${maxInfo.addedPoints.toFixed(2)}đ</b> để đạt <b style="color: #15803d; font-size: 1.05rem;">${maxInfo.maxGrade.toFixed(2)}đ</b> (Cần <b>${maxInfo.costUsed} 🍊</b>)
+              💡 <b>Khả năng quy đổi cao nhất:</b> Với <b>${points} 🍊</b> hiện có, ô này có thể cộng thêm <b style="color: #1d4ed8; font-size: 1.02rem;">+${maxInfo.addedPoints.toFixed(2)}đ</b> để đạt <b style="color: #15803d; font-size: 1.05rem;">${maxInfo.maxGrade.toFixed(2)}đ</b> (Cần <b>${maxInfo.costUsed} 🍊</b>)
             </div>
             ${maxInfo.addedPoints > 0 ? `
               ${selectedDelta !== maxInfo.addedPoints ? `
-                <button class="btn-quick-max" id="btn-select-max-delta">⚡ Chọn tối đa</button>
+                <button class="btn-quick-max" id="btn-select-max-delta">Chọn mức này</button>
               ` : '<span style="color: #16a34a; font-weight: 800; font-size: 0.85rem;"><i class="fa-solid fa-circle-check"></i> Đã chọn</span>'}
             ` : ''}
           </div>
