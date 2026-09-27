@@ -669,7 +669,7 @@ function getCostForDelta(mark, delta) {
     { min: 5.0, max: 7.0, rate: 2 },
     { min: 7.0, max: 8.0, rate: 4 },
     { min: 8.0, max: 9.0, rate: 8 },
-    { min: 9.0, max: 10.0, rate: 16 }
+    { min: 9.0, max: 10.0, rate: 24 }
   ];
 
   let totalCost = 0;
@@ -697,7 +697,7 @@ app.post('/api/classes/:classId/students/:studentId/redeem-hs1', async (req, res
     return res.status(400).json({ error: 'Học kỳ không hợp lệ.' });
   }
   const numericDelta = parseFloat(delta);
-  if (![0.25, 0.5, 1.0].includes(numericDelta)) {
+  if (isNaN(numericDelta) || numericDelta <= 0 || numericDelta > 10.0) {
     return res.status(400).json({ error: 'Mức điểm quy đổi không hợp lệ.' });
   }
 

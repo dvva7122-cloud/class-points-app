@@ -405,7 +405,7 @@ function showRedeemHs1Modal(classId, student, grades, points, studentPassword, o
       { min: 5.0, max: 7.0, rate: 2 },
       { min: 7.0, max: 8.0, rate: 4 },
       { min: 8.0, max: 9.0, rate: 8 },
-      { min: 9.0, max: 10.0, rate: 16 }
+      { min: 9.0, max: 10.0, rate: 24 }
     ];
 
     let totalCost = 0;
@@ -419,6 +419,33 @@ function showRedeemHs1Modal(classId, student, grades, points, studentPassword, o
     }
 
     return Math.max(1, Math.round(totalCost));
+  }
+
+  function calcMaxPossibleGrade(mark, availablePoints) {
+    let cur = (mark === null || mark === undefined) ? 0 : mark;
+    cur = Math.max(0, cur);
+    let pts = availablePoints;
+    let totalCost = 0;
+    
+    while (cur < 10.0) {
+      const nextMark = Math.min(10.0, Math.round((cur + 0.25) * 100) / 100);
+      const costForStep = getCostForDelta(cur, nextMark - cur);
+      if (totalCost + costForStep <= pts) {
+        totalCost += costForStep;
+        cur = nextMark;
+      } else {
+        break;
+      }
+    }
+    
+    const origMark = (mark === null || mark === undefined) ? 0 : mark;
+    const added = Math.round((cur - origMark) * 100) / 100;
+    
+    return {
+      maxGrade: Math.round(cur * 100) / 100,
+      costUsed: totalCost,
+      addedPoints: added
+    };
   }
 
   const modalContent = document.createElement('div');
@@ -454,9 +481,14 @@ function showRedeemHs1Modal(classId, student, grades, points, studentPassword, o
       targetInfoText = `Ô gánh điểm: <b>Ô HS1 số ${targetIdx + 1}</b> (Hiện có: <b>${curMark}đ</b>)`;
     }
 
-    const deltas = [0.25, 0.5, 1.0];
-    let optionsHtml = '';
+    const maxInfo = calcMaxPossibleGrade(curMark, points);
 
+    const deltas = [0.25, 0.5, 1.0];
+    if (maxInfo.addedPoints > 0 && !deltas.includes(maxInfo.addedPoints)) {
+      deltas.push(maxInfo.addedPoints);
+    }
+
+    let optionsHtml = '';
     let activeCost = 0;
     let activeNewMark = curMark;
 
@@ -464,6 +496,7 @@ function showRedeemHs1Modal(classId, student, grades, points, studentPassword, o
       const c = getCostForDelta(curMark, d);
       const isSelected = (d === selectedDelta);
       const isAffordable = (points >= c) && !disabledAll;
+      const isMaxOption = (d === maxInfo.addedPoints && !([0.25, 0.5, 1.0].includes(d)));
       
       if (isSelected && isAffordable) {
         activeCost = c;
@@ -473,8 +506,8 @@ function showRedeemHs1Modal(classId, student, grades, points, studentPassword, o
       optionsHtml += `
         <label class="redeem-option-card ${isSelected ? 'selected' : ''} ${!isAffordable ? 'disabled' : ''}">
           <input type="radio" name="redeem-delta" value="${d}" ${isSelected ? 'checked' : ''} ${!isAffordable ? 'disabled' : ''}>
-          <div class="option-label">+${d.toFixed(2)} đ</div>
-          <div class="option-cost">(Cần ${c} 🍊)</div>
+          <div class="option-label">${isMaxOption ? '🚀 ' : ''}+${d.toFixed(2)} đ</div>
+          <div class="option-cost">${isMaxOption ? '(Tối đa - ' : '(Cần '}${c} 🍊)</div>
         </label>
       `;
     });
@@ -498,8 +531,19 @@ function showRedeemHs1Modal(classId, student, grades, points, studentPassword, o
         </div>
 
         ${!disabledAll ? `
+          <div class="redeem-max-card">
+            <div class="max-text">
+              🚀 <b>Khả năng cộng tối đa:</b> Với <b>${points} 🍊</b>, ô này có thể cộng tối đa <b style="color: #1d4ed8; font-size: 1.02rem;">+${maxInfo.addedPoints.toFixed(2)}đ</b> để đạt <b style="color: #15803d; font-size: 1.05rem;">${maxInfo.maxGrade.toFixed(2)}đ</b> (Cần <b>${maxInfo.costUsed} 🍊</b>)
+            </div>
+            ${maxInfo.addedPoints > 0 ? `
+              ${selectedDelta !== maxInfo.addedPoints ? `
+                <button class="btn-quick-max" id="btn-select-max-delta">⚡ Chọn tối đa</button>
+              ` : '<span style="color: #16a34a; font-weight: 800; font-size: 0.85rem;"><i class="fa-solid fa-circle-check"></i> Đã chọn</span>'}
+            ` : ''}
+          </div>
+
           <div class="redeem-section-title">Chọn mức điểm muốn đổi:</div>
-          <div class="redeem-options-grid">
+          <div class="redeem-options-grid" style="grid-template-columns: repeat(${deltas.length > 3 ? 4 : 3}, 1fr);">
             ${optionsHtml}
           </div>
 
@@ -520,6 +564,14 @@ function showRedeemHs1Modal(classId, student, grades, points, studentPassword, o
 
     modalContent.querySelector('.redeem-modal-close').onclick = () => document.body.removeChild(modal);
     modalContent.querySelector('.btn-redeem-cancel').onclick = () => document.body.removeChild(modal);
+
+    const maxBtn = modalContent.querySelector('#btn-select-max-delta');
+    if (maxBtn) {
+      maxBtn.onclick = () => {
+        selectedDelta = maxInfo.addedPoints;
+        updateModalBody();
+      };
+    }
 
     modalContent.querySelectorAll('.sem-btn').forEach(btn => {
       btn.onclick = () => {

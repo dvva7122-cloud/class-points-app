@@ -182,7 +182,7 @@ app.post('/api/classes/:cid/students/:sid/redeem-hs1', async (req, res) => {
   if (typeof password !== 'string' || !password) return res.status(400).json({ error: 'Vui lòng nhập mật khẩu.' });
   if (!['hk1', 'hk2'].includes(semKey)) return res.status(400).json({ error: 'Học kỳ không hợp lệ.' });
   const numericDelta = parseFloat(delta);
-  if (![0.25, 0.5, 1.0].includes(numericDelta)) return res.status(400).json({ error: 'Mức điểm quy đổi không hợp lệ.' });
+  if (isNaN(numericDelta) || numericDelta <= 0 || numericDelta > 10.0) return res.status(400).json({ error: 'Mức điểm quy đổi không hợp lệ.' });
 
   if (semKey === 'hk1' && localData.settings?.lockRedeemHk1) {
     return res.status(400).json({ error: 'Học kỳ I đã bị giáo viên khóa chức năng quy đổi điểm.' });
@@ -230,7 +230,7 @@ app.post('/api/classes/:cid/students/:sid/redeem-hs1', async (req, res) => {
       { min: 5.0, max: 7.0, rate: 2 },
       { min: 7.0, max: 8.0, rate: 4 },
       { min: 8.0, max: 9.0, rate: 8 },
-      { min: 9.0, max: 10.0, rate: 16 }
+      { min: 9.0, max: 10.0, rate: 24 }
     ];
 
     let totalCost = 0;
