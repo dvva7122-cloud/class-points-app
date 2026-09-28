@@ -3298,11 +3298,269 @@ function switchSection(section) {
   });
 }
 
+// ─── Admin Master Grade Sheet Modal ───────────────────────────────────────
+function openAdminGradesModal() {
+  const modal = document.getElementById('admin-grades-modal');
+  if (!modal) return;
+  const body = document.getElementById('admin-grades-body');
+  const searchInput = document.getElementById('admin-grades-search');
+  const closeBtn = document.getElementById('admin-grades-close');
+
+  modal.classList.add('show');
+
+  closeBtn.onclick = () => modal.classList.remove('show');
+
+  function renderMasterTable() {
+    const cls = getCurrentClass();
+    if (!cls || !cls.students || cls.students.length === 0) {
+      body.innerHTML = '<div style="text-align: center; padding: 40px; color: #94a3b8; font-weight: 700;">Không có học sinh nào trong lớp này.</div>';
+      return;
+    }
+
+    const searchTerm = (searchInput.value || '').trim().toLowerCase();
+    const filteredStudents = cls.students.filter(s => {
+      if (!searchTerm) return true;
+      return (s.name || '').toLowerCase().includes(searchTerm) || (s.code || '').toLowerCase().includes(searchTerm);
+    });
+
+    let html = `
+      <table class="admin-master-grade-table">
+        <thead>
+          <tr>
+            <th rowspan="2" style="min-width: 170px;">STT & Học sinh</th>
+            <th rowspan="2" style="min-width: 100px;">Điểm thưởng 🍊</th>
+            <th colspan="7" style="background: #eff6ff; color: #1d4ed8;">HỌC KỲ I</th>
+            <th colspan="7" style="background: #ecfdf5; color: #047857;">HỌC KỲ II</th>
+            <th rowspan="2" style="min-width: 70px; background: #fff7ed; color: #c2410c;">TB NĂM</th>
+          </tr>
+          <tr>
+            <!-- HK1 -->
+            <th style="background: #eff6ff;">HS1 - 1</th>
+            <th style="background: #eff6ff;">HS1 - 2</th>
+            <th style="background: #eff6ff;">HS1 - 3</th>
+            <th style="background: #eff6ff;">HS1 - 4</th>
+            <th style="background: #dbeafe;">HS2 (Giữa)</th>
+            <th style="background: #bfdbfe;">HS3 (Cuối)</th>
+            <th style="background: #93c5fd; color: #1e3a8a;">TB HK1</th>
+            <!-- HK2 -->
+            <th style="background: #ecfdf5;">HS1 - 1</th>
+            <th style="background: #ecfdf5;">HS1 - 2</th>
+            <th style="background: #ecfdf5;">HS1 - 3</th>
+            <th style="background: #ecfdf5;">HS1 - 4</th>
+            <th style="background: #d1fae5;">HS2 (Giữa)</th>
+            <th style="background: #a7f3d0;">HS3 (Cuối)</th>
+            <th style="background: #6ee7b7; color: #064e3b;">TB HK2</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+
+    body.innerHTML = html + '</tbody></table>';
+    const tbody = body.querySelector('tbody');
+
+    filteredStudents.forEach((student, idx) => {
+      const tr = document.createElement('tr');
+
+      // 1. Info Cell
+      const tdInfo = document.createElement('td');
+      tdInfo.innerHTML = `
+        <div class="admin-master-student-info">
+          <span style="font-size: 0.75rem; font-weight: 800; color: #94a3b8; width: 18px;">${idx + 1}</span>
+          <div>
+            <div style="font-weight: 800; color: #1e293b; cursor: pointer;" title="Bấm để xem chi tiết học sinh">${student.name}</div>
+            ${student.code ? `<div style="font-size: 0.72rem; color: #64748b;">Mã: ${student.code}</div>` : ''}
+          </div>
+        </div>
+      `;
+      tdInfo.querySelector('div > div').onclick = () => {
+        const popupModal = document.getElementById('student-popup-modal');
+        const popupBody = document.getElementById('student-popup-body');
+        if (popupModal && popupBody) {
+          popupModal.classList.add('show');
+          renderGradeReport(popupBody, student, student.grades, student.points || 0, cls.id, 'ADMIN');
+        }
+      };
+      tr.appendChild(tdInfo);
+
+      // 2. Points Cell 🍊
+      const tdPoints = document.createElement('td');
+      const ptsVal = student.points || 0;
+      tdPoints.innerHTML = `
+        <div class="admin-master-pts-box">
+          <button class="admin-master-pts-btn btn-minus-pts" title="Trừ 1 điểm 🍊">-</button>
+          <span>${ptsVal} 🍊</span>
+          <button class="admin-master-pts-btn btn-plus-pts" title="Cộng 1 điểm 🍊">+</button>
+        </div>
+      `;
+      tdPoints.querySelector('.btn-minus-pts').onclick = async (e) => {
+        e.stopPropagation();
+        await doUpdatePoints(cls.id, student.id, -1);
+        renderMasterTable();
+      };
+      tdPoints.querySelector('.btn-plus-pts').onclick = async (e) => {
+        e.stopPropagation();
+        await doUpdatePoints(cls.id, student.id, 1);
+        renderMasterTable();
+      };
+      tr.appendChild(tdPoints);
+
+      // Grades data helper
+      const grades = student.grades || { hk1: { hs1: [null, null, null, null], hs2: null, hs3: null }, hk2: { hs1: [null, null, null, null], hs2: null, hs3: null } };
+      
+      const setupHs1HoverActions = (td, semKey, slotIdx, val) => {
+        td.classList.add('grade-cell-hover-admin');
+        const adminActions = document.createElement('div');
+        adminActions.className = 'admin-cell-hover-actions';
+
+        if ((student.points || 0) > 0 && (val === null || val < 10.0)) {
+          const quickRedeemBtn = document.createElement('button');
+          quickRedeemBtn.className = 'cell-action-btn btn-action-redeem';
+          quickRedeemBtn.title = '🍊 Quy đổi điểm thưởng cho học sinh';
+          quickRedeemBtn.innerHTML = '<i class="fa-solid fa-plus"></i>🍊';
+          quickRedeemBtn.onclick = (e) => {
+            e.stopPropagation();
+            showRedeemHs1Modal(cls.id, student, student.grades, student.points || 0, 'ADMIN', (updatedGrades, updatedPoints) => {
+              student.grades = updatedGrades;
+              student.points = updatedPoints;
+              renderMasterTable();
+            }, semKey, slotIdx);
+          };
+          adminActions.appendChild(quickRedeemBtn);
+        }
+
+        const quickEditBtn = document.createElement('button');
+        quickEditBtn.className = 'cell-action-btn btn-action-edit';
+        quickEditBtn.title = '✏️ Sửa điểm trực tiếp';
+        quickEditBtn.innerHTML = '<i class="fa-solid fa-pen"></i>';
+        quickEditBtn.onclick = (e) => {
+          e.stopPropagation();
+          td.click();
+        };
+        adminActions.appendChild(quickEditBtn);
+        td.appendChild(adminActions);
+      };
+
+      // === HK1 Cells ===
+      const hk1 = grades.hk1 || { hs1: [null, null, null, null], hs2: null, hs3: null };
+      for (let i = 0; i < 4; i++) {
+        const td = document.createElement('td');
+        const val = hk1.hs1 ? hk1.hs1[i] : null;
+        renderGradeCell(td, val, true, (newVal) => {
+          if (!grades.hk1) grades.hk1 = { hs1: [null, null, null, null], hs2: null, hs3: null };
+          if (!grades.hk1.hs1) grades.hk1.hs1 = [null, null, null, null];
+          grades.hk1.hs1[i] = newVal;
+          saveGradesAndRefresh(cls.id, student, grades, document.createElement('div'), student.points || 0);
+          renderMasterTable();
+        });
+        setupHs1HoverActions(td, 'hk1', i, val);
+        tr.appendChild(td);
+      }
+
+      // HK1 HS2
+      const tdHk1Hs2 = document.createElement('td');
+      renderGradeCell(tdHk1Hs2, hk1.hs2, true, (newVal) => {
+        if (!grades.hk1) grades.hk1 = { hs1: [null, null, null, null], hs2: null, hs3: null };
+        grades.hk1.hs2 = newVal;
+        saveGradesAndRefresh(cls.id, student, grades, document.createElement('div'), student.points || 0);
+        renderMasterTable();
+      });
+      tr.appendChild(tdHk1Hs2);
+
+      // HK1 HS3
+      const tdHk1Hs3 = document.createElement('td');
+      renderGradeCell(tdHk1Hs3, hk1.hs3, true, (newVal) => {
+        if (!grades.hk1) grades.hk1 = { hs1: [null, null, null, null], hs2: null, hs3: null };
+        grades.hk1.hs3 = newVal;
+        saveGradesAndRefresh(cls.id, student, grades, document.createElement('div'), student.points || 0);
+        renderMasterTable();
+      });
+      tr.appendChild(tdHk1Hs3);
+
+      // HK1 TB
+      const tdHk1Avg = document.createElement('td');
+      const avg1 = calcSemesterAvg(hk1);
+      tdHk1Avg.style.fontWeight = '800';
+      tdHk1Avg.style.color = '#1d4ed8';
+      tdHk1Avg.textContent = avg1 !== null ? avg1.toFixed(2) : '—';
+      tr.appendChild(tdHk1Avg);
+
+      // === HK2 Cells ===
+      const hk2 = grades.hk2 || { hs1: [null, null, null, null], hs2: null, hs3: null };
+      for (let i = 0; i < 4; i++) {
+        const td = document.createElement('td');
+        const val = hk2.hs1 ? hk2.hs1[i] : null;
+        renderGradeCell(td, val, true, (newVal) => {
+          if (!grades.hk2) grades.hk2 = { hs1: [null, null, null, null], hs2: null, hs3: null };
+          if (!grades.hk2.hs1) grades.hk2.hs1 = [null, null, null, null];
+          grades.hk2.hs1[i] = newVal;
+          saveGradesAndRefresh(cls.id, student, grades, document.createElement('div'), student.points || 0);
+          renderMasterTable();
+        });
+        setupHs1HoverActions(td, 'hk2', i, val);
+        tr.appendChild(td);
+      }
+
+      // HK2 HS2
+      const tdHk2Hs2 = document.createElement('td');
+      renderGradeCell(tdHk2Hs2, hk2.hs2, true, (newVal) => {
+        if (!grades.hk2) grades.hk2 = { hs1: [null, null, null, null], hs2: null, hs3: null };
+        grades.hk2.hs2 = newVal;
+        saveGradesAndRefresh(cls.id, student, grades, document.createElement('div'), student.points || 0);
+        renderMasterTable();
+      });
+      tr.appendChild(tdHk2Hs2);
+
+      // HK2 HS3
+      const tdHk2Hs3 = document.createElement('td');
+      renderGradeCell(tdHk2Hs3, hk2.hs3, true, (newVal) => {
+        if (!grades.hk2) grades.hk2 = { hs1: [null, null, null, null], hs2: null, hs3: null };
+        grades.hk2.hs3 = newVal;
+        saveGradesAndRefresh(cls.id, student, grades, document.createElement('div'), student.points || 0);
+        renderMasterTable();
+      });
+      tr.appendChild(tdHk2Hs3);
+
+      // HK2 TB
+      const tdHk2Avg = document.createElement('td');
+      const avg2 = calcSemesterAvg(hk2);
+      tdHk2Avg.style.fontWeight = '800';
+      tdHk2Avg.style.color = '#047857';
+      tdHk2Avg.textContent = avg2 !== null ? avg2.toFixed(2) : '—';
+      tr.appendChild(tdHk2Avg);
+
+      // === Yearly Avg ===
+      const tdYearly = document.createElement('td');
+      tdYearly.style.fontWeight = '800';
+      tdYearly.style.color = '#c2410c';
+      let yAvg = null;
+      if (avg1 !== null && avg2 !== null) {
+        yAvg = Math.round(((avg1 + avg2 * 2) / 3) * 100) / 100;
+      } else if (avg2 !== null) {
+        yAvg = avg2;
+      } else if (avg1 !== null) {
+        yAvg = avg1;
+      }
+      tdYearly.textContent = yAvg !== null ? yAvg.toFixed(2) : '—';
+      tr.appendChild(tdYearly);
+
+      tbody.appendChild(tr);
+    });
+  }
+
+  searchInput.oninput = renderMasterTable;
+  renderMasterTable();
+}
+
 // ─── Event Wiring ─────────────────────────────────────────────────────────
 function setupListeners() {
   document.querySelectorAll('.section-tab').forEach(tab => {
     tab.addEventListener('click', () => switchSection(tab.dataset.section));
   });
+
+  const openAdminGradesBtn = document.getElementById('btn-open-admin-grades');
+  if (openAdminGradesBtn) {
+    openAdminGradesBtn.addEventListener('click', openAdminGradesModal);
+  }
 
   document.getElementById('history-search-input').addEventListener('input', () => {
     if (currentClassId) renderHistoryPanel(currentClassId);

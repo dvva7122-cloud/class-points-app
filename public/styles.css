@@ -4294,6 +4294,87 @@ body:not(.is-editing) #add-student-container {
     box-shadow: 0 4px 14px rgba(37, 99, 235, 0.45);
 }
 
+/* ── Admin Master Grade Table ── */
+#admin-grades-modal.show {
+    z-index: 50000 !important;
+}
+
+.admin-master-grade-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.86rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.admin-master-grade-table th {
+    background: #f8fafc;
+    color: #334155;
+    font-weight: 700;
+    padding: 8px 6px;
+    border-bottom: 2px solid #cbd5e1;
+    border-right: 1px solid #e2e8f0;
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+}
+
+.admin-master-grade-table td {
+    padding: 6px;
+    border-bottom: 1px solid #e2e8f0;
+    border-right: 1px solid #f1f5f9;
+    text-align: center;
+    position: relative;
+}
+
+.admin-master-grade-table tr:hover td {
+    background: #f8fafc;
+}
+
+.admin-master-student-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-align: left;
+    min-width: 150px;
+}
+
+.admin-master-pts-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #fff8f0;
+    border: 1px solid #ffedd5;
+    padding: 3px 6px;
+    border-radius: 8px;
+    font-weight: 800;
+    color: #d97706;
+}
+
+.admin-master-pts-btn {
+    border: none;
+    background: #f57c00;
+    color: white;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    font-size: 0.7rem;
+    font-weight: 800;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s;
+}
+.admin-master-pts-btn:hover {
+    transform: scale(1.15);
+    background: #e65100;
+}
+
+
 
 
 

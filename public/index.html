@@ -65,6 +65,7 @@
                 <button class="section-tab" data-section="notebook">📒 Sổ tay</button>
                 <button class="section-tab" data-section="conversion">🏆 Bảng quy đổi</button>
                 <button class="section-tab admin-only" data-section="games">🎲 Random</button>
+                <button class="section-tab admin-edit-only" id="btn-open-admin-grades" style="background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); color: #ffffff; border: none; font-weight: 800; border-radius: 12px; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);">📊 Điểm học sinh</button>
             </div>
 
             <!-- TAB PANELS -->
@@ -366,6 +367,24 @@
         <div class="modal-content" style="max-width: 960px; width: 96%; min-height: 420px; max-height: 92vh; display: flex; flex-direction: column; padding: 24px 28px;">
             <button class="close-modal" id="student-popup-close">&times;</button>
             <div id="student-popup-body" style="flex: 1; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <!-- Modal: Bảng Điểm Tổng Hợp Học Sinh (Dành cho Admin) -->
+    <div class="modal" id="admin-grades-modal" style="z-index: 9550;">
+        <div class="modal-content" style="max-width: 1240px; width: 98%; min-height: 500px; max-height: 94vh; display: flex; flex-direction: column; padding: 24px 28px; border-radius: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #E2E8F0; padding-bottom: 12px; gap: 16px;">
+                <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+                    <h3 style="margin: 0; color: #1e293b; font-size: 1.35rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-table-list" style="color: #4f46e5;"></i> BẢNG ĐIỂM TỔNG HỢP TOÀN LỚP
+                    </h3>
+                    <div style="position: relative; max-width: 260px; width: 100%;">
+                        <input type="text" id="admin-grades-search" placeholder="🔍 Tìm học sinh..." style="width: 100%; padding: 6px 12px; border-radius: 10px; border: 1px solid #cbd5e1; font-size: 0.88rem; outline: none;">
+                    </div>
+                </div>
+                <span class="close-modal" id="admin-grades-close" style="position: static; font-size: 1.8rem; cursor: pointer; color: #64748b;">&times;</span>
+            </div>
+            <div id="admin-grades-body" style="flex: 1; overflow-y: auto; padding-right: 4px;"></div>
         </div>
     </div>
 
