@@ -282,9 +282,7 @@ app.post('/api/classes/:cid/students/:sid/redeem-hs1', async (req, res) => {
     studentId: sid,
     studentName: student.name,
     change: -cost,
-    reason: password === 'ADMIN'
-      ? `Giáo viên quy đổi ${cost} 🍊 cho HS lấy +${numericDelta}đ HS1 (${semKey === 'hk1' ? 'HK1' : 'HK2'} - Ô ${targetIdx + 1})`
-      : `Tự đổi ${cost} 🍊 lấy +${numericDelta}đ HS1 (${semKey === 'hk1' ? 'HK1' : 'HK2'} - Ô ${targetIdx + 1})`,
+    reason: password === 'ADMIN' ? 'Giáo viên đổi điểm' : 'Học sinh đổi điểm',
     ts: Date.now()
   };
   cls.history.push(historyEntry);
