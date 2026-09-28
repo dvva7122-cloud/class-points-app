@@ -422,28 +422,29 @@ function showRedeemHs1Modal(classId, student, grades, points, studentPassword, o
   }
 
   function calcMaxPossibleGrade(mark, availablePoints) {
-    let cur = (mark === null || mark === undefined) ? 0 : mark;
-    cur = Math.max(0, cur);
-    let pts = availablePoints;
-    let totalCost = 0;
-    
+    const origMark = Math.max(0, (mark === null || mark === undefined) ? 0 : mark);
+    let cur = origMark;
+    let bestMark = origMark;
+    let bestCost = 0;
+
     while (cur < 10.0) {
       const nextMark = Math.min(10.0, Math.round((cur + 0.25) * 100) / 100);
-      const costForStep = getCostForDelta(cur, nextMark - cur);
-      if (totalCost + costForStep <= pts) {
-        totalCost += costForStep;
+      const delta = Math.round((nextMark - origMark) * 100) / 100;
+      const costForTotalDelta = getCostForDelta(origMark, delta);
+      if (costForTotalDelta <= availablePoints) {
+        bestMark = nextMark;
+        bestCost = costForTotalDelta;
         cur = nextMark;
       } else {
         break;
       }
     }
-    
-    const origMark = (mark === null || mark === undefined) ? 0 : mark;
-    const added = Math.round((cur - origMark) * 100) / 100;
-    
+
+    const added = Math.round((bestMark - origMark) * 100) / 100;
+
     return {
-      maxGrade: Math.round(cur * 100) / 100,
-      costUsed: totalCost,
+      maxGrade: Math.round(bestMark * 100) / 100,
+      costUsed: bestCost,
       addedPoints: added
     };
   }
