@@ -634,7 +634,7 @@ function showRedeemHs1Modal(classId, student, grades, points, studentPassword, o
 }
 
 // Import điểm từ Excel (Admin)
-function doImportGradesExcel(classId) {
+function doImportGradesExcel(classId, onComplete = null) {
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = '.xlsx,.xls';
@@ -715,9 +715,10 @@ function doImportGradesExcel(classId) {
 
         const res = await api('POST', `/api/classes/${classId}/import-grades`, { studentsGrades });
         alert(`✅ Đã cập nhật điểm cho ${res.updated} học sinh!`);
-        // Reload nếu popup đang mở
+        // Reload dữ liệu
         await loadAllData();
         renderCurrentClass();
+        if (onComplete) onComplete();
       } catch (err) {
         if (err.message !== 'Unauthorized') showError('Lỗi import: ' + err.message);
       }
@@ -3310,6 +3311,26 @@ function openAdminGradesModal() {
   modal.classList.add('show');
 
   closeBtn.onclick = () => modal.classList.remove('show');
+
+  // Toolbar buttons
+  const importBtn = document.getElementById('btn-admin-grades-import');
+  const templateBtn = document.getElementById('btn-admin-grades-template');
+
+  if (importBtn) {
+    importBtn.onclick = () => {
+      const cls = getCurrentClass();
+      if (!cls) return;
+      doImportGradesExcel(cls.id, () => renderMasterTable());
+    };
+  }
+  if (templateBtn) {
+    templateBtn.onclick = () => {
+      const cls = getCurrentClass();
+      if (!cls) return;
+      doDownloadGradeTemplate(cls.id);
+    };
+  }
+
 
   function renderMasterTable() {
     const cls = getCurrentClass();
