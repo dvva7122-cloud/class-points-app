@@ -163,8 +163,22 @@ body.theme-christmas .app-background {
 
 body.theme-halloween .app-background {
     background-image: url('https://img.freepik.com/free-vector/halloween-background-with-spooky-landscape_1048-11354.jpg?w=1380');
-    opacity: 0.48;
-    filter: saturate(0.8) brightness(0.68);
+    opacity: 0.55;
+    filter: saturate(0.9) brightness(0.82);
+}
+
+/* Tắt lớp phủ trắng trên Halloween (giữ không khí tối) */
+body.theme-halloween::before {
+    background: none;
+}
+
+body.theme-halloween .app-background::after {
+    background: linear-gradient(
+        180deg,
+        rgba(10, 5, 20, 0.18) 0%,
+        rgba(10, 5, 20, 0.08) 56%,
+        rgba(10, 5, 20, 0.22) 100%
+    );
 }
 
 body.custom-bg-active .app-background {
@@ -1477,6 +1491,38 @@ body:not(.is-editing) #add-student-container {
     50% {
         transform: translateY(-3px) rotate(3deg);
     }
+}
+
+/* ── Halloween: override thẻ "nổi bật" & "âm điểm" ── */
+/* Thẻ is-top mặc định có nền trắng/kem → chữ trắng biến mất → override sang nền tối vàng cam */
+body.theme-halloween .student-card.is-top {
+    background: linear-gradient(160deg, rgba(90, 55, 0, 0.97), rgba(70, 38, 0, 0.95)) !important;
+    border: 1px solid rgba(255, 160, 10, 0.75) !important;
+    box-shadow:
+        0 18px 42px rgba(255, 120, 0, 0.28),
+        0 0 0 3px rgba(255, 160, 10, 0.14),
+        inset 0 1px 0 rgba(255, 180, 60, 0.18) !important;
+}
+
+body.theme-halloween .student-card.is-top:hover {
+    box-shadow:
+        0 24px 50px rgba(255, 140, 0, 0.36),
+        0 0 0 4px rgba(255, 160, 10, 0.18),
+        inset 0 1px 0 rgba(255, 180, 60, 0.22) !important;
+}
+
+/* Thẻ is-negative trên Halloween: nền tối đỏ thay vì trắng đỏ */
+body.theme-halloween .student-card.is-negative {
+    background: linear-gradient(160deg, rgba(80, 15, 15, 0.97), rgba(60, 10, 10, 0.95)) !important;
+    border-color: #c0392b !important;
+    border-top-color: #e74c3c !important;
+}
+
+body.theme-halloween .student-card.is-negative:hover {
+    border-color: #e74c3c !important;
+    box-shadow:
+        0 12px 32px rgba(231, 76, 60, 0.22),
+        0 0 0 2px rgba(231, 76, 60, 0.15) !important;
 }
 
 @media (max-width: 1100px) {
