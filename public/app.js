@@ -5406,10 +5406,15 @@ function renderSeatingChart(cls) {
 /* ═══════════════════════════════════════════════════════
    MASCOT RÁI CÁ — Nhìn theo hướng chuột + Click reaction
    ═══════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   MASCOT RÁI CÁ — Nhìn theo hướng chuột + Click reaction
+   (Tách thân cố định & xoay/đổi hướng phần đầu)
+   ═══════════════════════════════════════════════════════ */
 (function initMascot() {
   const container = document.getElementById('mascot-container');
-  const sprite    = document.getElementById('mascot-sprite');
-  if (!container || !sprite) return;
+  const headWrap  = document.getElementById('mascot-head-wrap');
+  const head      = document.getElementById('mascot-head');
+  if (!container || !headWrap || !head) return;
 
   // ── Trạng thái ──────────────────────────────────────────────────────────
   let isReacting     = false;
@@ -5418,11 +5423,11 @@ function renderSeatingChart(cls) {
   let currentLookCol = 1;
   let lastLookKey    = '';
 
-  // Góc mượt (lerp): bắt đầu nhìn thẳng (90° = lên → chọn thẳng vì mascot ở dưới)
-  let smoothAngle    = 90;   // góc toán học (Y tăng lên), 90° = phía trên màn hình
+  // Góc mượt (lerp): bắt đầu nhìn thẳng (90° = lên)
+  let smoothAngle    = 90;
   let targetAngle    = 90;
   let mouseX         = window.innerWidth  / 2;
-  let mouseY         = 0;                        // mặc định chuột ở trên
+  let mouseY         = 0;
 
   // ── Các frame click ngẫu nhiên ──────────────────────────────────────────
   const CLICK_FRAMES = [
@@ -5432,7 +5437,6 @@ function renderSeatingChart(cls) {
   ];
 
   // ── Bản đồ góc toán học → [row, col] sprite ─────────────────────────────
-  // 0°=phải, 90°=lên, 180°=trái, 270°=xuống (theo chiều ngược kim đồng hồ)
   function angleToFrame(a) {
     a = ((a % 360) + 360) % 360;
     if (a >= 337.5 || a <  22.5) return [1, 2]; // Phải
@@ -5446,13 +5450,13 @@ function renderSeatingChart(cls) {
     return [1, 1];
   }
 
-  // Góc trung tâm của mỗi sector (để tính độ lệch micro-rotation)
+  // Góc trung tâm của mỗi sector
   const SECTOR_CENTER = {
     '1-2': 0, '0-2': 45, '0-1': 90, '0-0': 135,
     '1-0': 180, '2-0': 225, '2-1': 270, '2-2': 315, '1-1': 90
   };
 
-  // ── Lerp góc có xử lý wrap-around ±180 ──────────────────────────────────
+  // ── Lerp góc ────────────────────────────────────────────────────────────
   function lerpAngle(a, b, t) {
     let diff = b - a;
     while (diff >  180) diff -= 360;
@@ -5460,18 +5464,18 @@ function renderSeatingChart(cls) {
     return a + diff * t;
   }
 
-  // ── Cập nhật sprite frame + micro-rotation ───────────────────────────────
+  // ── Cập nhật sprite frame + micro-rotation trên wrapper đầu ──────────────
   function applyLookFrame(row, col, microDeg) {
     const key = `${row}-${col}`;
     if (key !== lastLookKey) {
       lastLookKey     = key;
       currentLookRow  = row;
       currentLookCol  = col;
-      sprite.className = `mascot-sprite mascot-look look-${row}-${col}`;
+      head.className  = `mascot-sprite mascot-look look-${row}-${col}`;
     }
-    // Micro-rotation: đầu xoay nhẹ trong phạm vi ±14° để cảm giác liên tục
-    const clamped = Math.max(-14, Math.min(14, microDeg));
-    sprite.style.transform = `rotate(${clamped}deg)`;
+    // Micro-rotation xoay nhẹ wrapper đầu xung quanh cổ, không ảnh hưởng lớp thân
+    const clamped = Math.max(-12, Math.min(12, microDeg));
+    headWrap.style.transform = `rotate(${clamped}deg)`;
   }
 
   // ── Vòng lặp animation chính (rAF loop) ─────────────────────────────────
@@ -5485,23 +5489,18 @@ function renderSeatingChart(cls) {
       const dist = Math.sqrt(dx * dx + dy * dy);
 
       if (dist > 18) {
-        // Góc toán học: -dy vì Y màn hình tăng xuống
         targetAngle = (Math.atan2(-dy, dx) * 180 / Math.PI + 360) % 360;
       }
 
-      // Lerp mượt (factor 0.10 ≈ 60fps → ~23 frame để đạt 90%)
       smoothAngle = lerpAngle(smoothAngle, targetAngle, 0.10);
 
       const [row, col] = angleToFrame(smoothAngle);
 
-      // Micro-rotation: độ lệch của smoothAngle so với tâm sector
-      const center    = SECTOR_CENTER[`${row}-${col}`] ?? 90;
-      let   delta     = smoothAngle - center;
+      const center = SECTOR_CENTER[`${row}-${col}`] ?? 90;
+      let   delta  = smoothAngle - center;
       while (delta >  180) delta -= 360;
       while (delta < -180) delta += 360;
-      // delta trong [-22.5, +22.5] — scale xuống thành micro-rotation màn hình
-      // Nhân -0.5: đảo chiều để góc nghiêng đúng chiều nhìn
-      const microRot  = -delta * 0.5;
+      const microRot = -delta * 0.4;
 
       applyLookFrame(row, col, microRot);
     }
@@ -5509,7 +5508,7 @@ function renderSeatingChart(cls) {
     requestAnimationFrame(tick);
   }
 
-  // ── Ghi nhận toạ độ chuột (không xử lý trong mousemove, chỉ lưu lại) ───
+  // ── Ghi nhận toạ độ chuột ──────────────────────────────────────────────
   window.addEventListener('mousemove', function(e) {
     mouseX = e.clientX;
     mouseY = e.clientY;
@@ -5520,17 +5519,17 @@ function renderSeatingChart(cls) {
     if (reactTimeout) clearTimeout(reactTimeout);
 
     const frame = CLICK_FRAMES[Math.floor(Math.random() * CLICK_FRAMES.length)];
-    sprite.className = `mascot-sprite mascot-click click-${frame[0]}-${frame[1]}`;
-    sprite.style.transform = '';   // Xoá micro-rotation khi react
+    head.className = `mascot-sprite mascot-click click-${frame[0]}-${frame[1]}`;
+    headWrap.style.transform = '';   // Xoá micro-rotation khi react
     isReacting = true;
 
     container.classList.remove('mascot-reacting');
-    void container.offsetWidth;   // Force reflow
+    void container.offsetWidth;     // Force reflow
     container.classList.add('mascot-reacting');
 
     reactTimeout = setTimeout(function() {
       isReacting  = false;
-      lastLookKey = '';            // Reset để applyLookFrame tái áp dụng frame
+      lastLookKey = '';              // Reset để applyLookFrame tái áp dụng frame
       container.classList.remove('mascot-reacting');
     }, 1500);
   });
