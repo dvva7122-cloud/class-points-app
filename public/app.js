@@ -5402,3 +5402,128 @@ function renderSeatingChart(cls) {
     }, 200); // Re-enable blur 200ms after touch ends
   }, { passive: true });
 })();
+
+/* ═══════════════════════════════════════════════════════
+   MASCOT RÁI CÁ — Nhìn theo hướng chuột + Click reaction
+   ═══════════════════════════════════════════════════════ */
+(function initMascot() {
+  const container = document.getElementById('mascot-container');
+  const sprite    = document.getElementById('mascot-sprite');
+  if (!container || !sprite) return;
+
+  // ── Trạng thái ──────────────────────────────────────
+  let isReacting     = false;   // Đang hiện click reaction
+  let reactTimeout   = null;    // Timer trở về trạng thái bình thường
+  let currentLookRow = 1;       // Mặc định nhìn thẳng (row 1, col 1)
+  let currentLookCol = 1;
+  let lastLookKey    = '1-1';   // Tránh đổi class liên tục khi không thay đổi frame
+  let rafPending     = false;   // Throttle bằng requestAnimationFrame
+
+  // ── Các frame click ngẫu nhiên ──────────────────────
+  // Sprite "click chuot.png" 3×3 — dùng cả 9 frame
+  const CLICK_FRAMES = [
+    [0,0],[0,1],[0,2],
+    [1,0],[1,1],[1,2],
+    [2,0],[2,1],[2,2]
+  ];
+
+  // ── Bản đồ góc → frame hướng ──────────────────────
+  // Ảnh "huong chuot.png":
+  //   Row 0 = nhìn lên (trên-trái, trên, trên-phải)
+  //   Row 1 = nhìn ngang (trái, thẳng, phải)
+  //   Row 2 = nhìn xuống (dưới-trái, dưới, dưới-phải)
+  function angleToFrame(angleDeg) {
+    // Chuẩn hoá góc vào [0, 360)
+    const a = ((angleDeg % 360) + 360) % 360;
+
+    // 8 vùng góc + trung tâm (xử lý riêng nếu chuột rất gần)
+    //   0° = phải, tính ngược chiều kim đồng hồ từ trục X dương
+    //   Nhưng ở màn hình Y tăng xuống, nên điều chỉnh:
+    //   atan2 trả về góc từ trục X dương, ngược chiều kim đồng hồ trong toán học
+    //   → ở màn hình, "lên" là góc âm (270°)
+
+    if (a >= 337.5 || a < 22.5)   return [1, 2]; // Phải
+    if (a >= 22.5  && a < 67.5)   return [0, 2]; // Trên-phải
+    if (a >= 67.5  && a < 112.5)  return [0, 1]; // Trên
+    if (a >= 112.5 && a < 157.5)  return [0, 0]; // Trên-trái
+    if (a >= 157.5 && a < 202.5)  return [1, 0]; // Trái
+    if (a >= 202.5 && a < 247.5)  return [2, 0]; // Dưới-trái
+    if (a >= 247.5 && a < 292.5)  return [2, 1]; // Dưới
+    if (a >= 292.5 && a < 337.5)  return [2, 2]; // Dưới-phải
+    return [1, 1]; // fallback: thẳng
+  }
+
+  // ── Cập nhật frame hướng ────────────────────────────
+  function setLookFrame(row, col) {
+    const key = `${row}-${col}`;
+    if (key === lastLookKey) return; // Không đổi nếu frame giống nhau
+    lastLookKey = key;
+
+    // Xóa tất cả class look-* cũ
+    sprite.className = sprite.className.replace(/\blook-\d-\d\b/g, '').trim();
+    sprite.classList.add('mascot-look', `look-${row}-${col}`);
+    currentLookRow = row;
+    currentLookCol = col;
+  }
+
+  // ── Xử lý MouseMove ────────────────────────────────
+  window.addEventListener('mousemove', function(e) {
+    if (isReacting) return; // Không đổi hướng khi đang react
+    if (rafPending) return;  // Throttle: chỉ tính 1 lần mỗi frame
+
+    rafPending = true;
+    requestAnimationFrame(function() {
+      rafPending = false;
+      const rect = container.getBoundingClientRect();
+      const cx = rect.left + rect.width  / 2;
+      const cy = rect.top  + rect.height / 2;
+      const dx = e.clientX - cx;
+      const dy = e.clientY - cy;
+
+      // Nếu chuột quá gần mascot (< 20px) → nhìn thẳng
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 20) {
+        setLookFrame(1, 1);
+        return;
+      }
+
+      // atan2 trả về radian [-π, π]; chuyển sang độ [0, 360)
+      // Lưu ý: atan2(y, x) với y tăng xuống màn hình
+      const angleRad = Math.atan2(dy, dx);
+      const angleDeg = (angleRad * 180 / Math.PI + 360) % 360;
+      const [row, col] = angleToFrame(angleDeg);
+      setLookFrame(row, col);
+    });
+  }, { passive: true });
+
+  // ── Xử lý Click mascot ────────────────────────────
+  container.addEventListener('click', function() {
+    if (reactTimeout) clearTimeout(reactTimeout);
+
+    // Chọn frame ngẫu nhiên từ sprite click
+    const frame = CLICK_FRAMES[Math.floor(Math.random() * CLICK_FRAMES.length)];
+
+    // Đổi sang sprite click
+    sprite.className = 'mascot-sprite mascot-click ' +
+                       `click-${frame[0]}-${frame[1]}`;
+    isReacting = true;
+
+    // Hiệu ứng nhún
+    container.classList.remove('mascot-reacting');
+    // Force reflow để restart animation
+    void container.offsetWidth;
+    container.classList.add('mascot-reacting');
+
+    // Sau 1.5s → trở về hướng đang nhìn
+    reactTimeout = setTimeout(function() {
+      isReacting = false;
+      sprite.className = 'mascot-sprite mascot-look ' +
+                         `look-${currentLookRow}-${currentLookCol}`;
+      container.classList.remove('mascot-reacting');
+      lastLookKey = ''; // Reset để cho phép re-set lại frame
+    }, 1500);
+  });
+
+  // Khởi tạo frame mặc định: nhìn thẳng (row 1, col 1)
+  setLookFrame(1, 1);
+})();

@@ -4423,5 +4423,85 @@ body.theme-halloween .student-card.is-negative:hover {
 
 
 
+/* ═══════════════════════════════════════════════════
+   MASCOT RÁI CÁ — Góc dưới trái màn hình
+   ═══════════════════════════════════════════════════ */
+#mascot-container {
+    position: fixed;
+    bottom: 0;
+    left: 24px;
+    width: 140px;
+    height: 140px;
+    z-index: 8000;
+    cursor: pointer;
+    pointer-events: auto;
+    animation: mascotBob 3.5s ease-in-out infinite;
+    filter: drop-shadow(0 8px 16px rgba(0,0,0,0.22));
+    transition: filter 0.2s ease;
+}
 
+#mascot-container:hover {
+    filter: drop-shadow(0 10px 22px rgba(0,0,0,0.32)) brightness(1.05);
+    animation-play-state: paused;
+}
+
+@keyframes mascotBob {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-7px); }
+}
+
+/* ─── Sprite chung ─── */
+.mascot-sprite {
+    width: 140px;
+    height: 140px;
+    background-repeat: no-repeat;
+    background-size: 420px 420px;
+    image-rendering: auto;
+    transition: background-position 0.07s ease;
+}
+
+/* ─── Sprite "hướng chuột" ─── */
+.mascot-sprite.mascot-look {
+    background-image: url('huong%20chuot.png');
+}
+
+/* ─── Sprite "click chuột" ─── */
+.mascot-sprite.mascot-click {
+    background-image: url('click%20chuot.png');
+    transition: background-position 0s;
+}
+
+/* ─── Mapping vị trí sprite hướng (3×3, mỗi cell 140px) ─── */
+.look-0-0 { background-position:    0px    0px; }
+.look-0-1 { background-position: -140px    0px; }
+.look-0-2 { background-position: -280px    0px; }
+.look-1-0 { background-position:    0px -140px; }
+.look-1-1 { background-position: -140px -140px; }
+.look-1-2 { background-position: -280px -140px; }
+.look-2-0 { background-position:    0px -280px; }
+.look-2-1 { background-position: -140px -280px; }
+.look-2-2 { background-position: -280px -280px; }
+
+/* ─── Mapping vị trí sprite click (3×3) ─── */
+.click-0-0 { background-position:    0px    0px; }
+.click-0-1 { background-position: -140px    0px; }
+.click-0-2 { background-position: -280px    0px; }
+.click-1-0 { background-position:    0px -140px; }
+.click-1-1 { background-position: -140px -140px; }
+.click-1-2 { background-position: -280px -140px; }
+.click-2-0 { background-position:    0px -280px; }
+.click-2-1 { background-position: -140px -280px; }
+.click-2-2 { background-position: -280px -280px; }
+
+/* ─── Hiệu ứng nhún khi click ─── */
+#mascot-container.mascot-reacting {
+    animation: mascotReact 0.28s ease-out forwards;
+}
+
+@keyframes mascotReact {
+    0%   { transform: translateY(0)   scale(1);    }
+    30%  { transform: translateY(6px) scale(0.92); }
+    65%  { transform: translateY(-5px) scale(1.07);}
+    100% { transform: translateY(0)   scale(1);    }
+}
 
