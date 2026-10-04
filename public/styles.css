@@ -4451,39 +4451,6 @@ body.theme-halloween .student-card.is-negative:hover {
     50%       { transform: translateY(-7px); }
 }
 
-/* ─── Lớp thân cố định ─── */
-#mascot-body {
-    position: absolute;
-    inset: 0;
-    width: 140px;
-    height: 140px;
-    background-image: url('huong%20chuot.png');
-    background-position: -140px -140px;
-    background-size: 420px 420px;
-    background-repeat: no-repeat;
-    z-index: 1;
-    pointer-events: none;
-}
-
-/* ─── Wrapper xoay riêng cho phần đầu ─── */
-#mascot-head-wrap {
-    position: absolute;
-    inset: 0;
-    width: 140px;
-    height: 140px;
-    z-index: 2;
-    transform-origin: 70px 88px;
-    clip-path: inset(0 0 25px 0);
-    transition: transform 0.06s ease-out;
-    pointer-events: none;
-}
-
-#mascot-head {
-    width: 140px;
-    height: 140px;
-    pointer-events: none;
-}
-
 /* ─── Sprite chung ─── */
 .mascot-sprite {
     width: 140px;
@@ -4501,7 +4468,6 @@ body.theme-halloween .student-card.is-negative:hover {
 /* ─── Sprite "click chuột" ─── */
 .mascot-sprite.mascot-click {
     background-image: url('click%20chuot.png');
-    transition: none;
 }
 
 /* ─── Mapping vị trí sprite hướng (3×3, mỗi cell 140px) ─── */
