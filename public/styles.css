@@ -4428,15 +4428,16 @@ body.theme-halloween .student-card.is-negative:hover {
    ═══════════════════════════════════════════════════ */
 #mascot-container {
     position: fixed;
-    bottom: 0;
+    bottom: -22px;      /* Bù vùng trắng rỗng ở dưới mỗi sprite cell */
     left: 24px;
     width: 140px;
     height: 140px;
     z-index: 8000;
     cursor: pointer;
     pointer-events: auto;
+    overflow: hidden;   /* Cắt phần trắng dư ở dưới */
     animation: mascotBob 3.5s ease-in-out infinite;
-    filter: drop-shadow(0 8px 16px rgba(0,0,0,0.22));
+    filter: drop-shadow(0 6px 14px rgba(0,0,0,0.28));
     transition: filter 0.2s ease;
 }
 
@@ -4457,7 +4458,9 @@ body.theme-halloween .student-card.is-negative:hover {
     background-repeat: no-repeat;
     background-size: 420px 420px;
     image-rendering: auto;
-    transition: background-position 0.07s ease;
+    /* KHÔNG dùng transition background-position — tránh trượt qua frame giữa chừng */
+    /* Micro-rotation được JS xử lý qua lerp, thêm transition nhẹ để mượt hơn */
+    transition: transform 0.06s ease-out;
 }
 
 /* ─── Sprite "hướng chuột" ─── */
@@ -4468,7 +4471,7 @@ body.theme-halloween .student-card.is-negative:hover {
 /* ─── Sprite "click chuột" ─── */
 .mascot-sprite.mascot-click {
     background-image: url('click%20chuot.png');
-    transition: background-position 0s;
+    transition: none; /* Đổi frame tức thì */
 }
 
 /* ─── Mapping vị trí sprite hướng (3×3, mỗi cell 140px) ─── */
