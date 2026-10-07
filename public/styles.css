@@ -1525,6 +1525,126 @@ body.theme-halloween .student-card.is-negative:hover {
         0 0 0 2px rgba(231, 76, 60, 0.15) !important;
 }
 
+/* ── Halloween: Fix Modals, Grade Tables & Inputs (Chống chữ trắng đè nền trắng) ── */
+
+/* 1. Modal Container & Content */
+body.theme-halloween .modal-content {
+    background: rgba(30, 30, 34, 0.96) !important;
+    border: 1px solid rgba(255, 138, 0, 0.4) !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 138, 0, 0.15) !important;
+    color: #f8f8f8 !important;
+}
+
+body.theme-halloween .modal-content h3,
+body.theme-halloween .modal-content h4,
+body.theme-halloween .modal-content p,
+body.theme-halloween .modal-content label {
+    color: #f8f8f8 !important;
+}
+
+body.theme-halloween .close-modal {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #ffb04a !important;
+}
+
+body.theme-halloween .close-modal:hover {
+    background: rgba(255, 138, 0, 0.3) !important;
+    color: #ffffff !important;
+}
+
+/* 2. Modal Inputs & Selects */
+body.theme-halloween .modal-content input[type="text"],
+body.theme-halloween .modal-content input[type="password"],
+body.theme-halloween .modal-content input[type="number"],
+body.theme-halloween .modal-content select,
+body.theme-halloween #admin-grades-search {
+    background: rgba(18, 18, 20, 0.9) !important;
+    color: #f8f8f8 !important;
+    border: 1px solid rgba(255, 138, 0, 0.4) !important;
+}
+
+body.theme-halloween .modal-content input::placeholder,
+body.theme-halloween #admin-grades-search::placeholder {
+    color: #94a3b8 !important;
+}
+
+/* 3. Bảng điểm cá nhân (Student Grade Report Table) */
+body.theme-halloween .grade-table thead th {
+    background: #2a2a2e !important;
+    color: #ffb04a !important;
+    border-bottom: 2px solid rgba(255, 138, 0, 0.4) !important;
+    border-right: 1.5px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+body.theme-halloween .grade-table thead th.col-group-header {
+    background: #1e1e22 !important;
+    color: #ff8a00 !important;
+    border-bottom: 1.5px solid rgba(255, 138, 0, 0.4) !important;
+}
+
+body.theme-halloween .grade-table tbody td {
+    background: #222226 !important;
+    color: #f8f8f8 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-right: 1.5px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body.theme-halloween .grade-table tbody tr:hover td {
+    background: #2e2e34 !important;
+}
+
+body.theme-halloween .grade-table tbody td.td-avg {
+    background: linear-gradient(135deg, #4a2800, #361c00) !important;
+    color: #ffb04a !important;
+}
+
+body.theme-halloween .grade-table tbody td.td-empty {
+    color: #808088 !important;
+}
+
+/* 4. Bảng điểm tổng hợp Admin (Admin Master Grade Table) */
+body.theme-halloween .admin-master-grade-table {
+    border: 1px solid rgba(255, 138, 0, 0.3) !important;
+}
+
+body.theme-halloween .admin-master-grade-table th,
+body.theme-halloween .admin-master-grade-table th[style] {
+    background: #2a2a2e !important;
+    color: #ffb04a !important;
+    border-bottom: 2px solid rgba(255, 138, 0, 0.4) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+body.theme-halloween .admin-master-grade-table td {
+    background: #222226 !important;
+    color: #f8f8f8 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body.theme-halloween .admin-master-grade-table tr:hover td {
+    background: #2e2e34 !important;
+}
+
+body.theme-halloween .admin-master-student-info div > div {
+    color: #f8f8f8 !important;
+}
+
+body.theme-halloween .admin-master-pts-box {
+    background: #2c2214 !important;
+    border-color: rgba(255, 138, 0, 0.4) !important;
+    color: #ffb04a !important;
+}
+
+/* 5. Custom Alert & Prompt Modals */
+body.theme-halloween #custom-alert-modal .modal-content,
+body.theme-halloween #custom-prompt-modal .modal-content,
+body.theme-halloween #password-modal .modal-content {
+    background: #242428 !important;
+    border: 1px solid #ff8a00 !important;
+    color: #f8f8f8 !important;
+}
+
 @media (max-width: 1100px) {
     .student-grid {
         grid-template-columns: repeat(4, minmax(0, 1fr));
