@@ -2504,6 +2504,12 @@ function doUpdatePoints(classId, studentId, change) {
   const student = cls && cls.students.find(s => s.id === studentId);
   if (!student) return;
 
+  // Kích hoạt biểu cảm Mascot (Cộng -> Quả cam trên đầu 🍊, Trừ -> Tức giận 😡)
+  if (typeof window.triggerMascotReaction === 'function') {
+    if (change > 0) window.triggerMascotReaction('plus');
+    else if (change < 0) window.triggerMascotReaction('minus');
+  }
+
   // Ghi vào lịch sử ngay lập tức (trước debounce)
   saveToHistory(classId, student.name, change);
 
@@ -5602,18 +5608,58 @@ function renderSeatingChart(cls) {
     requestAnimationFrame(tick);
   }
 
-  // ── Ghi nhận toạ độ chuột ──────────────────────────────────────────────
+  // ── Tự động random 1 biểu cảm sau mỗi 5 phút không di chuyển chuột ───────
+  const IDLE_TIME_MS = 5 * 60 * 1000; // 5 phút (300.000ms)
+  let idleTimer = null;
+
+  function resetIdleTimer() {
+    if (idleTimer) clearTimeout(idleTimer);
+    idleTimer = setTimeout(function() {
+      if (typeof window.triggerMascotReaction === 'function') {
+        window.triggerMascotReaction('random');
+      }
+      resetIdleTimer();
+    }, IDLE_TIME_MS);
+  }
+
+  resetIdleTimer();
+
+  // ── Ghi nhận toạ độ chuột & reset Idle Timer ────────────────────────────
   window.addEventListener('mousemove', function(e) {
     mouseX = e.clientX;
     mouseY = e.clientY;
+    resetIdleTimer();
   }, { passive: true });
 
-  // ── Xử lý Click mascot ──────────────────────────────────────────────────
-  container.addEventListener('click', function() {
+  window.addEventListener('keydown', function() {
+    resetIdleTimer();
+  }, { passive: true });
+
+  // ── Xử lý Biểu cảm Mascot (Cộng -> Quả cam trên đầu 🍊, Trừ -> Tức giận 😡) ──────
+  window.triggerMascotReaction = function(type) {
     if (reactTimeout) clearTimeout(reactTimeout);
 
-    const frame = CLICK_FRAMES[Math.floor(Math.random() * CLICK_FRAMES.length)];
-    sprite.className = `mascot-sprite mascot-click click-${frame[0]}-${frame[1]}`;
+    let clickClass = 'mascot-click-2';
+    let row = 0, col = 2; // Default 'plus': Quả cam trên đầu 🍊 (sheet 2, row 0, col 2)
+
+    if (type === 'minus') {
+      clickClass = 'mascot-click-2';
+      row = 1;
+      col = 0; // 'minus': Tức giận 😡 (sheet 2, row 1, col 0)
+    } else if (type === 'plus') {
+      clickClass = 'mascot-click-2';
+      row = 0;
+      col = 2; // 'plus': Quả cam trên đầu 🍊 (sheet 2, row 0, col 2)
+    } else {
+      // 'random': Ngẫu nhiên 1 trong 18 biểu cảm
+      const useSheet2 = Math.random() < 0.5;
+      clickClass = useSheet2 ? 'mascot-click-2' : 'mascot-click';
+      const frame = CLICK_FRAMES[Math.floor(Math.random() * CLICK_FRAMES.length)];
+      row = frame[0];
+      col = frame[1];
+    }
+
+    sprite.className = `mascot-sprite ${clickClass} click-${row}-${col}`;
     isReacting = true;
 
     container.classList.remove('mascot-reacting');
@@ -5624,7 +5670,11 @@ function renderSeatingChart(cls) {
       isReacting  = false;
       lastLookKey = '';              // Reset để applyLookFrame tái áp dụng frame hướng
       container.classList.remove('mascot-reacting');
-    }, 1500);
+    }, 5000);
+  };
+
+  container.addEventListener('click', function() {
+    window.triggerMascotReaction('random');
   });
 
   // Khởi động vòng lặp
