@@ -1640,6 +1640,17 @@ body.theme-halloween .admin-master-pts-box {
     color: #ffb04a !important;
 }
 
+body.theme-halloween .pts-text-display:hover {
+    background: rgba(255, 176, 74, 0.25) !important;
+    color: #ffb04a !important;
+}
+
+body.theme-halloween .admin-master-pts-input {
+    background: #1a1a1e !important;
+    color: #f8f8f8 !important;
+    border-color: #ff8a00 !important;
+}
+
 /* 5. Custom Alert & Prompt Modals */
 body.theme-halloween #custom-alert-modal .modal-content,
 body.theme-halloween #custom-prompt-modal .modal-content,
@@ -4628,6 +4639,14 @@ body.theme-halloween .redeem-max-card .max-text {
     border-radius: 8px;
     font-weight: 800;
     color: #d97706;
+}
+
+.pts-text-display {
+    transition: all 0.15s ease;
+}
+.pts-text-display:hover {
+    background: rgba(245, 124, 0, 0.15);
+    color: #e65100;
 }
 
 .admin-master-pts-btn {

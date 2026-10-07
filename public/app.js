@@ -3475,7 +3475,7 @@ function openAdminGradesModal() {
       tdPoints.innerHTML = `
         <div class="admin-master-pts-box">
           <button class="admin-master-pts-btn btn-minus-pts" title="Trừ 1 điểm 🍊">-</button>
-          <span>${ptsVal} 🍊</span>
+          <span class="pts-text-display" title="Bấm vào để nhập số điểm 🍊 trực tiếp" style="cursor: pointer; padding: 2px 5px; border-radius: 6px; font-weight: 800; user-select: none;">${ptsVal} 🍊</span>
           <button class="admin-master-pts-btn btn-plus-pts" title="Cộng 1 điểm 🍊">+</button>
         </div>
       `;
@@ -3489,6 +3489,50 @@ function openAdminGradesModal() {
         await doUpdatePoints(cls.id, student.id, 1);
         renderMasterTable();
       };
+
+      // Click trực tiếp vào số điểm để sửa bằng cách gõ số
+      const ptsDisplay = tdPoints.querySelector('.pts-text-display');
+      if (ptsDisplay) {
+        ptsDisplay.onclick = (e) => {
+          e.stopPropagation();
+          const input = document.createElement('input');
+          input.type = 'number';
+          input.className = 'admin-master-pts-input';
+          input.value = ptsVal;
+          input.min = '0';
+          input.style.cssText = 'width: 52px; text-align: center; font-weight: 800; font-size: 0.85rem; border: 1.5px solid #f57c00; border-radius: 6px; padding: 1px 2px; outline: none; background: #ffffff; color: #1e293b; margin: 0 2px;';
+
+          let submitted = false;
+          const finishEdit = async () => {
+            if (submitted) return;
+            submitted = true;
+            let targetVal = parseInt(input.value);
+            if (isNaN(targetVal) || targetVal < 0) targetVal = 0;
+            const delta = targetVal - ptsVal;
+            if (delta !== 0) {
+              await doUpdatePoints(cls.id, student.id, delta);
+            }
+            renderMasterTable();
+          };
+
+          input.onkeydown = (evt) => {
+            if (evt.key === 'Enter') {
+              evt.preventDefault();
+              finishEdit();
+            } else if (evt.key === 'Escape') {
+              submitted = true;
+              renderMasterTable();
+            }
+          };
+
+          input.onblur = finishEdit;
+
+          ptsDisplay.replaceWith(input);
+          input.focus();
+          input.select();
+        };
+      }
+
       tr.appendChild(tdPoints);
 
       // Grades data helper
