@@ -3315,6 +3315,42 @@ function openAdminGradesModal() {
   // Toolbar buttons
   const importBtn = document.getElementById('btn-admin-grades-import');
   const templateBtn = document.getElementById('btn-admin-grades-template');
+  const lockHk1Btn = document.getElementById('btn-admin-grades-lock-hk1');
+  const lockHk2Btn = document.getElementById('btn-admin-grades-lock-hk2');
+
+  function updateLockButtons() {
+    if (lockHk1Btn) {
+      if (globalSettings.lockRedeemHk1) {
+        lockHk1Btn.className = 'btn-grade-action btn-lock-active';
+        lockHk1Btn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+        lockHk1Btn.style.color = '#fff';
+        lockHk1Btn.style.boxShadow = '0 2px 8px rgba(239, 68, 68, 0.3)';
+        lockHk1Btn.innerHTML = '<i class="fa-solid fa-lock"></i> Đã khóa quy đổi HK1';
+      } else {
+        lockHk1Btn.className = 'btn-grade-action';
+        lockHk1Btn.style.background = 'linear-gradient(135deg, #3b82f6, #2563eb)';
+        lockHk1Btn.style.color = '#fff';
+        lockHk1Btn.style.boxShadow = '0 2px 8px rgba(59, 130, 246, 0.25)';
+        lockHk1Btn.innerHTML = '<i class="fa-solid fa-lock-open"></i> Khóa quy đổi HK1';
+      }
+    }
+
+    if (lockHk2Btn) {
+      if (globalSettings.lockRedeemHk2) {
+        lockHk2Btn.className = 'btn-grade-action btn-lock-active';
+        lockHk2Btn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+        lockHk2Btn.style.color = '#fff';
+        lockHk2Btn.style.boxShadow = '0 2px 8px rgba(239, 68, 68, 0.3)';
+        lockHk2Btn.innerHTML = '<i class="fa-solid fa-lock"></i> Đã khóa quy đổi HK2';
+      } else {
+        lockHk2Btn.className = 'btn-grade-action';
+        lockHk2Btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+        lockHk2Btn.style.color = '#fff';
+        lockHk2Btn.style.boxShadow = '0 2px 8px rgba(16, 185, 129, 0.25)';
+        lockHk2Btn.innerHTML = '<i class="fa-solid fa-lock-open"></i> Khóa quy đổi HK2';
+      }
+    }
+  }
 
   if (importBtn) {
     importBtn.onclick = () => {
@@ -3331,6 +3367,32 @@ function openAdminGradesModal() {
     };
   }
 
+  if (lockHk1Btn) {
+    lockHk1Btn.onclick = async () => {
+      try {
+        const patchRes = await api('PATCH', '/api/settings', { lockRedeemHk1: !globalSettings.lockRedeemHk1 });
+        globalSettings.lockRedeemHk1 = patchRes.lockRedeemHk1;
+        showSuccess(`Đã ${globalSettings.lockRedeemHk1 ? 'KHÓA' : 'MỞ'} quy đổi điểm cho Học kỳ I.`);
+        updateLockButtons();
+        renderMasterTable();
+      } catch (err) { showError(err.message); }
+    };
+  }
+
+  if (lockHk2Btn) {
+    lockHk2Btn.onclick = async () => {
+      try {
+        const patchRes = await api('PATCH', '/api/settings', { lockRedeemHk2: !globalSettings.lockRedeemHk2 });
+        globalSettings.lockRedeemHk2 = patchRes.lockRedeemHk2;
+        showSuccess(`Đã ${globalSettings.lockRedeemHk2 ? 'KHÓA' : 'MỞ'} quy đổi điểm cho Học kỳ II.`);
+        updateLockButtons();
+        renderMasterTable();
+      } catch (err) { showError(err.message); }
+    };
+  }
+
+  updateLockButtons();
+
 
   function renderMasterTable() {
     const cls = getCurrentClass();
@@ -3345,14 +3407,17 @@ function openAdminGradesModal() {
       return (s.name || '').toLowerCase().includes(searchTerm) || (s.code || '').toLowerCase().includes(searchTerm);
     });
 
+    const hk1LockBadge = globalSettings.lockRedeemHk1 ? ' <span style="color: #ef4444; font-size: 0.85rem;" title="Đã khóa quy đổi/cộng điểm HK1"><i class="fa-solid fa-lock"></i></span>' : '';
+    const hk2LockBadge = globalSettings.lockRedeemHk2 ? ' <span style="color: #ef4444; font-size: 0.85rem;" title="Đã khóa quy đổi/cộng điểm HK2"><i class="fa-solid fa-lock"></i></span>' : '';
+
     let html = `
       <table class="admin-master-grade-table">
         <thead>
           <tr>
             <th rowspan="2" style="min-width: 170px;">STT & Học sinh</th>
             <th rowspan="2" style="min-width: 100px;">Điểm thưởng 🍊</th>
-            <th colspan="7" style="background: #eff6ff; color: #1d4ed8;">HỌC KỲ I</th>
-            <th colspan="7" style="background: #ecfdf5; color: #047857;">HỌC KỲ II</th>
+            <th colspan="7" style="background: #eff6ff; color: #1d4ed8;">HỌC KỲ I${hk1LockBadge}</th>
+            <th colspan="7" style="background: #ecfdf5; color: #047857;">HỌC KỲ II${hk2LockBadge}</th>
             <th rowspan="2" style="min-width: 70px; background: #fff7ed; color: #c2410c;">TB NĂM</th>
           </tr>
           <tr>
@@ -3434,7 +3499,9 @@ function openAdminGradesModal() {
         const adminActions = document.createElement('div');
         adminActions.className = 'admin-cell-hover-actions';
 
-        if ((student.points || 0) > 0 && (val === null || val < 10.0)) {
+        const isSemLocked = (semKey === 'hk1' && globalSettings.lockRedeemHk1) || (semKey === 'hk2' && globalSettings.lockRedeemHk2);
+
+        if (!isSemLocked && (student.points || 0) > 0 && (val === null || val < 10.0)) {
           const quickRedeemBtn = document.createElement('button');
           quickRedeemBtn.className = 'cell-action-btn btn-action-redeem';
           quickRedeemBtn.title = '🍊 Quy đổi điểm thưởng cho học sinh';
