@@ -1204,7 +1204,11 @@ body.theme-christmas .student-card.with-frame {
 }
 
 .conversion-content {
-    padding: 8px 0;
+    background: rgba(255, 255, 255, 0.94);
+    border: 1px solid #FFE0A0;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    padding: 20px;
+    border-radius: 16px;
 }
 
 .conversion-row {
@@ -1642,6 +1646,112 @@ body.theme-halloween #custom-prompt-modal .modal-content,
 body.theme-halloween #password-modal .modal-content {
     background: #242428 !important;
     border: 1px solid #ff8a00 !important;
+    color: #f8f8f8 !important;
+}
+
+/* 6. Bảng quy đổi điểm (Tab Quy đổi) */
+body.theme-halloween .conversion-content {
+    background: rgba(30, 30, 34, 0.96) !important;
+    border: 1px solid rgba(255, 138, 0, 0.4) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6) !important;
+}
+
+body.theme-halloween .conversion-row {
+    border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+body.theme-halloween .conversion-row .score {
+    color: #ffb04a !important;
+    border-right-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+body.theme-halloween .conversion-row .points {
+    color: #f8f8f8 !important;
+}
+
+/* 7. Modal Quy đổi điểm thưởng (Redeem Modal Popup) */
+body.theme-halloween .redeem-modal-card {
+    background: #1e1e22 !important;
+    border: 1px solid rgba(255, 138, 0, 0.4) !important;
+    color: #f8f8f8 !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 138, 0, 0.15) !important;
+}
+
+body.theme-halloween .redeem-modal-header {
+    background: linear-gradient(135deg, #382008 0%, #261403 100%) !important;
+    border-bottom: 1px solid rgba(255, 138, 0, 0.3) !important;
+}
+
+body.theme-halloween .redeem-modal-header h3 {
+    color: #ffb04a !important;
+}
+
+body.theme-halloween .redeem-modal-close {
+    color: #ffb04a !important;
+}
+
+body.theme-halloween .redeem-sem-selector {
+    background: #141416 !important;
+}
+
+body.theme-halloween .redeem-info-banner {
+    background: #2a1f14 !important;
+    border: 1px solid rgba(255, 138, 0, 0.3) !important;
+    color: #ffb04a !important;
+}
+
+body.theme-halloween .redeem-section-title {
+    color: #ffb04a !important;
+}
+
+body.theme-halloween .redeem-option-card {
+    background: #26262a !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+body.theme-halloween .redeem-option-card .option-label {
+    color: #f8f8f8 !important;
+}
+
+body.theme-halloween .redeem-option-card .option-cost {
+    color: #ff9800 !important;
+}
+
+body.theme-halloween .redeem-option-card:hover:not(.disabled) {
+    background: #323238 !important;
+    border-color: #ff8a00 !important;
+}
+
+body.theme-halloween .redeem-option-card.selected {
+    background: #3d2508 !important;
+    border-color: #ff8a00 !important;
+}
+
+body.theme-halloween .redeem-option-card.selected .option-label {
+    color: #ffb04a !important;
+}
+
+body.theme-halloween .redeem-option-card.max-option-highlight {
+    background: linear-gradient(135deg, #422900 0%, #301d00 100%) !important;
+    border-color: #f59e0b !important;
+}
+
+body.theme-halloween .redeem-option-card.max-option-highlight .option-label {
+    color: #fbbf24 !important;
+}
+
+body.theme-halloween .redeem-option-card.max-option-highlight .option-cost {
+    color: #f59e0b !important;
+}
+
+body.theme-halloween .redeem-preview-card,
+body.theme-halloween .redeem-max-card {
+    background: #26262a !important;
+    border-color: rgba(255, 138, 0, 0.3) !important;
+    color: #f8f8f8 !important;
+}
+
+body.theme-halloween .redeem-max-card .max-text {
     color: #f8f8f8 !important;
 }
 
