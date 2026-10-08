@@ -5608,8 +5608,8 @@ function renderSeatingChart(cls) {
     requestAnimationFrame(tick);
   }
 
-  // ── Tự động random 1 biểu cảm sau mỗi 2 phút không di chuyển chuột ───────
-  const IDLE_TIME_MS = 2 * 60 * 1000; // 2 phút (120.000ms)
+  // ── Tự động random 1 biểu cảm sau mỗi 1 phút không di chuyển chuột ───────
+  const IDLE_TIME_MS = 1 * 60 * 1000; // 1 phút (60.000ms)
   let idleTimer = null;
 
   function resetIdleTimer() {
