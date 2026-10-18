@@ -7,6 +7,7 @@ const http       = require('http');
 const bcrypt     = require('bcryptjs');
 const jwt        = require('jsonwebtoken');
 const rateLimit  = require('express-rate-limit');
+const compression= require('compression');
 const path       = require('path');
 const db         = require('./database');
 
@@ -26,8 +27,21 @@ const PORT = process.env.PORT || 3000;
 
 
 // ─── Middleware chung ─────────────────────────────────────────────────────
+// Bật nén Gzip/Brotli cho toàn bộ response (giảm 70% dung lượng truyền qua mạng)
+app.use(compression());
 app.use(express.json({ limit: '10mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
+
+// Cấu hình Cache-Control cho file tĩnh (tiết kiệm băng thông Render)
+app.use(express.static(path.join(__dirname, 'public'), {
+  maxAge: '14d',
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+    } else {
+      res.setHeader('Cache-Control', 'public, max-age=1209600, immutable');
+    }
+  }
+}));
 
 // ─── Rate limiter: tối đa 5 lần thử/15 phút per IP ──────────────────────
 const loginLimiter = rateLimit({
@@ -1105,6 +1119,7 @@ app.use((req, res) => {
     return res.status(404).json({ error: 'API không tồn tại.' });
   }
   // SPA fallback
+  res.setHeader('Cache-Control', 'no-cache, must-revalidate');
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 

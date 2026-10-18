@@ -687,7 +687,8 @@ function doImportGradesExcel(classId, onComplete = null) {
 
           const g = (idx) => {
             if (idx === -1 || row[idx] === undefined || row[idx] === null || row[idx] === '') return null;
-            const n = parseFloat(row[idx]);
+            const str = String(row[idx]).replace(',', '.').trim();
+            const n = parseFloat(str);
             return (!isNaN(n) && n >= 0 && n <= 10) ? Math.round(n * 100) / 100 : null;
           };
 
@@ -739,23 +740,33 @@ function doDownloadGradeTemplate(classId) {
     'HK2 Giữa kì', 'HK2 Cuối kì'
   ];
 
+  // Helper định dạng điểm số dạng text/chuỗi luôn có dấu chấm (.)
+  const formatGrade = (val) => {
+    if (val === null || val === undefined || val === '') return '';
+    const n = typeof val === 'number' ? val : parseFloat(String(val).replace(',', '.'));
+    if (isNaN(n)) return '';
+    return String(n); // Chuỗi với dấu chấm, ví dụ "8.5", "9"
+  };
+
   const data = [];
   if (cls && cls.students) {
     cls.students.forEach(s => {
       const g = s.grades || { hk1: { hs1: [null,null,null,null], hs2: null, hs3: null }, hk2: { hs1: [null,null,null,null], hs2: null, hs3: null } };
+      const hk1Hs1 = (g.hk1 && g.hk1.hs1) || [null,null,null,null];
+      const hk2Hs1 = (g.hk2 && g.hk2.hs1) || [null,null,null,null];
       data.push([
         s.code || '', s.name,
-        ...(g.hk1.hs1 || [null,null,null,null]),
-        g.hk1.hs2, g.hk1.hs3,
-        ...(g.hk2.hs1 || [null,null,null,null]),
-        g.hk2.hs2, g.hk2.hs3
+        formatGrade(hk1Hs1[0]), formatGrade(hk1Hs1[1]), formatGrade(hk1Hs1[2]), formatGrade(hk1Hs1[3]),
+        formatGrade(g.hk1 ? g.hk1.hs2 : null), formatGrade(g.hk1 ? g.hk1.hs3 : null),
+        formatGrade(hk2Hs1[0]), formatGrade(hk2Hs1[1]), formatGrade(hk2Hs1[2]), formatGrade(hk2Hs1[3]),
+        formatGrade(g.hk2 ? g.hk2.hs2 : null), formatGrade(g.hk2 ? g.hk2.hs3 : null)
       ]);
     });
   }
 
-  // Thêm dòng mẫu nếu lớp rỗng
+  // Thêm dòng mẫu nếu lớp rỗng (dạng chuỗi với dấu chấm)
   if (data.length === 0) {
-    data.push(['HS001', 'Nguyễn Văn A', 8.5, 9.0, 7.5, 8.0, 8.5, 9.0, 8.0, 8.5, 9.0, 8.5, 8.5, 9.5]);
+    data.push(['HS001', 'Nguyễn Văn A', '8.5', '9.0', '7.5', '8.0', '8.5', '9.0', '8.0', '8.5', '9.0', '8.5', '8.5', '9.5']);
   }
 
   const wb = XLSX.utils.book_new();
@@ -770,6 +781,20 @@ function doDownloadGradeTemplate(classId) {
       fill: { fgColor: { rgb: c < 2 ? "475569" : (c < 8 ? "3B82F6" : "10B981") } },
       alignment: { horizontal: "center" }
     };
+  }
+
+  // Đảm bảo tất cả các ô điểm từ cột thứ 3 trở đi đều có định dạng Text dạng chuỗi với dấu chấm (.)
+  for (let r = 1; r <= data.length; r++) {
+    for (let c = 2; c < 14; c++) {
+      const cellRef = XLSX.utils.encode_cell({ r, c });
+      if (ws[cellRef]) {
+        const strVal = String(ws[cellRef].v !== undefined && ws[cellRef].v !== null ? ws[cellRef].v : '').replace(',', '.');
+        ws[cellRef].t = 's'; // Ép kiểu string/text
+        ws[cellRef].v = strVal;
+        ws[cellRef].w = strVal;
+        ws[cellRef].z = '@'; // Format Text trong Excel
+      }
+    }
   }
 
   ws['!cols'] = [

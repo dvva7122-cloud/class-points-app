@@ -13,6 +13,7 @@ const express   = require('express');
 const bcrypt    = require('bcryptjs');
 const jwt       = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
+const compression = require('compression');
 const path      = require('path');
 const fs        = require('fs');
 
@@ -45,8 +46,18 @@ function saveLocal() {
 }
 
 // ─── Middleware ───────────────────────────────────────────────────────────
+app.use(compression());
 app.use(express.json({ limit: '2mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {
+  maxAge: '14d',
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+    } else {
+      res.setHeader('Cache-Control', 'public, max-age=1209600, immutable');
+    }
+  }
+}));
 
 const loginLimiter = rateLimit({ windowMs: 15*60*1000, max: 10 });
 
@@ -289,6 +300,36 @@ app.post('/api/classes/:cid/students/:sid/redeem-hs1', async (req, res) => {
 
   saveLocal();
   res.json({ success: true, points: student.points, grades: student.grades, historyEntry });
+});
+
+app.post('/api/classes/:classId/import-grades', requireAdmin, (req, res) => {
+  const { classId } = req.params;
+  const { studentsGrades } = req.body;
+  if (!Array.isArray(studentsGrades) || studentsGrades.length === 0) {
+    return res.status(400).json({ error: 'Dữ liệu điểm không hợp lệ.' });
+  }
+
+  const cls = (localData.classes || []).find(c => c.id === classId);
+  if (!cls) return res.status(404).json({ error: 'Không tìm thấy lớp.' });
+
+  let updated = 0;
+  for (const item of studentsGrades) {
+    let student = null;
+    if (item.code) {
+      student = (cls.students || []).find(s => s.code && s.code.toLowerCase() === String(item.code).toLowerCase().trim());
+    }
+    if (!student && item.name) {
+      const searchName = String(item.name).trim().toLowerCase();
+      student = (cls.students || []).find(s => s.name && s.name.toLowerCase() === searchName);
+    }
+    if (!student) continue;
+
+    student.grades = item.grades;
+    updated++;
+  }
+
+  saveLocal();
+  res.json({ success: true, updated });
 });
 
 app.use((req,res)=>{
