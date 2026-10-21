@@ -137,6 +137,19 @@ app.delete('/api/classes/:id', requireAdmin, (req, res) => {
   localData.classes.splice(i,1); saveLocal(); res.json({ success:true });
 });
 
+app.patch('/api/classes/:id/students/reorder', requireAdmin, (req, res) => {
+  const cls = localData.classes.find(c => c.id === req.params.id);
+  if (!cls) return res.status(404).json({ error: 'Không tìm thấy.' });
+  const { studentIds } = req.body;
+  if (!Array.isArray(studentIds)) return res.status(400).json({ error: 'Không hợp lệ.' });
+  const studentMap = new Map(cls.students.map(s => [s.id, s]));
+  const reordered = studentIds.map(id => studentMap.get(id)).filter(Boolean);
+  cls.students.forEach(s => { if (!studentIds.includes(s.id)) reordered.push(s); });
+  cls.students = reordered;
+  saveLocal();
+  res.json({ success: true });
+});
+
 app.post('/api/classes/:id/students', requireAdmin, (req, res) => {
   const cls = localData.classes.find(c=>c.id===req.params.id);
   if (!cls) return res.status(404).json({ error: 'Không tìm thấy.' });

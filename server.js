@@ -393,6 +393,32 @@ app.patch('/api/classes/reorder', requireAdmin, async (req, res) => {
 //  API: HỌC SINH
 // ═══════════════════════════════════════════════════════════════════════════
 
+// PATCH /api/classes/:classId/students/reorder (admin) - Đổi thứ tự học sinh
+app.patch('/api/classes/:classId/students/reorder', requireAdmin, async (req, res) => {
+  const { classId } = req.params;
+  const { studentIds } = req.body;
+  if (!Array.isArray(studentIds)) {
+    return res.status(400).json({ error: 'Dữ liệu không hợp lệ.' });
+  }
+  try {
+    const classesColl = db.getClassesCollection();
+    const cls = await classesColl.findOne({ id: classId });
+    if (!cls) return res.status(404).json({ error: 'Không tìm thấy lớp.' });
+
+    // Sắp xếp lại mảng students theo thứ tự studentIds
+    const studentMap = new Map(cls.students.map(s => [s.id, s]));
+    const reordered = studentIds.map(id => studentMap.get(id)).filter(Boolean);
+    // Thêm các học sinh không có trong studentIds vào cuối (nếu có)
+    cls.students.forEach(s => { if (!studentIds.includes(s.id)) reordered.push(s); });
+
+    await classesColl.updateOne({ id: classId }, { $set: { students: reordered } });
+    broadcast({ type: 'DATA_CHANGED' });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Lỗi server' });
+  }
+});
+
 // POST /api/classes/:classId/students  (admin) - Thêm 1 học sinh
 app.post('/api/classes/:classId/students', requireAdmin, async (req, res) => {
   const { classId } = req.params;

@@ -1085,6 +1085,67 @@ function renderCurrentClass() {
     // If all students have the same score, set maxPts to -1 so nobody gets the crown
     const effectiveMax = allSame ? -1 : maxPts;
     cls.students.forEach(student => renderStudentCard(student, cls.id, effectiveMax));
+
+    // ─── Drag-to-reorder học sinh (chỉ khi admin bật chỉnh sửa) ───
+    if (isAdmin && isEditingMode) {
+      let dragSrcId = null;
+
+      gridEl.querySelectorAll('.student-card').forEach(card => {
+        card.setAttribute('draggable', 'true');
+
+        card.addEventListener('dragstart', function(e) {
+          dragSrcId = this.dataset.studentId;
+          setTimeout(() => this.classList.add('student-dragging'), 0);
+          e.dataTransfer.effectAllowed = 'move';
+        });
+
+        card.addEventListener('dragend', function() {
+          this.classList.remove('student-dragging');
+          gridEl.querySelectorAll('.student-card').forEach(c => c.classList.remove('student-drag-over'));
+          dragSrcId = null;
+        });
+
+        card.addEventListener('dragover', function(e) {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          if (this.dataset.studentId !== dragSrcId) {
+            gridEl.querySelectorAll('.student-card').forEach(c => c.classList.remove('student-drag-over'));
+            this.classList.add('student-drag-over');
+          }
+        });
+
+        card.addEventListener('dragleave', function() {
+          this.classList.remove('student-drag-over');
+        });
+
+        card.addEventListener('drop', async function(e) {
+          e.preventDefault();
+          this.classList.remove('student-drag-over');
+          const toId = this.dataset.studentId;
+          if (!dragSrcId || dragSrcId === toId) return;
+
+          // Reorder locally
+          const clsObj = appData.find(c => c.id === cls.id);
+          if (!clsObj) return;
+          const fromIdx = clsObj.students.findIndex(s => s.id === dragSrcId);
+          const toIdx   = clsObj.students.findIndex(s => s.id === toId);
+          if (fromIdx === -1 || toIdx === -1) return;
+          const [moved] = clsObj.students.splice(fromIdx, 1);
+          clsObj.students.splice(toIdx, 0, moved);
+
+          // Re-render ngay lập tức (không cần chờ server)
+          renderCurrentClass();
+
+          // Sync lên server
+          try {
+            const studentIds = clsObj.students.map(s => s.id);
+            await api('PATCH', `/api/classes/${cls.id}/students/reorder`, { studentIds });
+          } catch (err) {
+            if (err.message !== 'Unauthorized') showError('Lỗi khi lưu thứ tự học sinh: ' + err.message);
+          }
+        });
+      });
+    }
   }
   
   renderSeatingChart(cls);

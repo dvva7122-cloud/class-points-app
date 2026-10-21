@@ -591,6 +591,27 @@ body.custom-bg-active .app-background {
     cursor: default;
 }
 
+/* ─── Student Card Drag-to-reorder (chỉ khi is-editing) ─── */
+body.is-editing .student-card {
+    cursor: grab;
+}
+body.is-editing .student-card:active {
+    cursor: grabbing;
+}
+body.is-editing .student-card.student-dragging {
+    opacity: 0.45;
+    transform: scale(0.96);
+    box-shadow: 0 8px 24px rgba(255, 152, 0, 0.3);
+    border-top-color: #ff9800;
+}
+body.is-editing .student-card.student-drag-over {
+    border: 2.5px dashed #ff9800;
+    border-top: 4px solid #ff9800;
+    background: #fff8ee;
+    transform: scale(1.03);
+    box-shadow: 0 6px 20px rgba(255, 152, 0, 0.2);
+}
+
 .student-card::after {
     content: "";
     position: absolute;
