@@ -1094,6 +1094,11 @@ function renderCurrentClass() {
         card.setAttribute('draggable', 'true');
 
         card.addEventListener('dragstart', function(e) {
+          // Không kích hoạt kéo thả thẻ nếu người dùng đang bấm nút hoặc input
+          if (e.target.closest('button') || e.target.tagName === 'INPUT') {
+            e.preventDefault();
+            return;
+          }
           dragSrcId = this.dataset.studentId;
           setTimeout(() => this.classList.add('student-dragging'), 0);
           e.dataTransfer.effectAllowed = 'move';
@@ -2240,6 +2245,32 @@ async function doDeleteEvent(classId, eventId) {
   }
 }
 
+async function doMoveStudent(classId, studentId, direction) {
+  const cls = appData.find(c => c.id === classId);
+  if (!cls || !cls.students || cls.students.length <= 1) return;
+
+  const curIdx = cls.students.findIndex(s => s.id === studentId);
+  if (curIdx === -1) return;
+
+  const targetIdx = curIdx + direction;
+  if (targetIdx < 0 || targetIdx >= cls.students.length) return; // Đã ở đầu hoặc cuối danh sách
+
+  // Hoán đổi vị trí trong mảng cls.students
+  const moved = cls.students.splice(curIdx, 1)[0];
+  cls.students.splice(targetIdx, 0, moved);
+
+  // Render lại giao diện ngay lập tức
+  renderCurrentClass();
+
+  // Đồng bộ lên server
+  try {
+    const studentIds = cls.students.map(s => s.id);
+    await api('PATCH', `/api/classes/${classId}/students/reorder`, { studentIds });
+  } catch (err) {
+    if (err.message !== 'Unauthorized') showError('Lỗi lưu thứ tự học sinh: ' + err.message);
+  }
+}
+
 function renderStudentCard(student, classId, maxPts) {
   const gridEl   = document.getElementById('student-grid');
   const isTop    = maxPts > 0 && student.points === maxPts;
@@ -2263,17 +2294,62 @@ function renderStudentCard(student, classId, maxPts) {
   });
   card.dataset.studentId = student.id;
 
-  // Tầng 0: Nút sửa/xóa lơ lửng
+  // Tầng 0: Nút sửa / di chuyển / xóa lơ lửng
   const absLayer = createEl('div', { className: 'absolute-buttons admin-edit-only' });
+  
+  // 1. Nút Sửa tên
   const editBtn = createEl('button', { className: 'action-icon edit-icon', title: 'Đổi tên' });
   editBtn.innerHTML = '<i class="fa-solid fa-pen"></i>';
-  editBtn.addEventListener('click', () => doEditStudentName(classId, student.id, student.name));
+  editBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    doEditStudentName(classId, student.id, student.name);
+  });
   
+  // 2. Tab Di chuyển ở GIỮA (giữa nút sửa tên và xóa)
+  const moveTab = createEl('div', { className: 'student-move-tab', title: 'Di chuyển vị trí học sinh' });
+  
+  const moveLeftBtn = createEl('button', {
+    className: 'move-nav-btn move-left-btn',
+    title: 'Di chuyển sang trái (lên trước)',
+    type: 'button'
+  });
+  moveLeftBtn.innerHTML = '<i class="fa-solid fa-caret-left"></i>';
+  moveLeftBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    doMoveStudent(classId, student.id, -1);
+  });
+
+  const dragGrip = createEl('div', {
+    className: 'move-drag-grip',
+    title: 'Kéo giữ để đổi vị trí tự do'
+  });
+  dragGrip.innerHTML = '<i class="fa-solid fa-grip-vertical"></i>';
+
+  const moveRightBtn = createEl('button', {
+    className: 'move-nav-btn move-right-btn',
+    title: 'Di chuyển sang phải (về sau)',
+    type: 'button'
+  });
+  moveRightBtn.innerHTML = '<i class="fa-solid fa-caret-right"></i>';
+  moveRightBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    doMoveStudent(classId, student.id, 1);
+  });
+
+  moveTab.appendChild(moveLeftBtn);
+  moveTab.appendChild(dragGrip);
+  moveTab.appendChild(moveRightBtn);
+
+  // 3. Nút Xóa
   const delBtn = createEl('button', { className: 'action-icon delete-icon', title: 'Xóa học sinh' });
   delBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
-  delBtn.addEventListener('click', () => doDeleteStudent(classId, student.id, student.name));
+  delBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    doDeleteStudent(classId, student.id, student.name);
+  });
   
   absLayer.appendChild(editBtn);
+  absLayer.appendChild(moveTab);
   absLayer.appendChild(delBtn);
   card.appendChild(absLayer);
 
@@ -2348,8 +2424,9 @@ function renderStudentCard(student, classId, maxPts) {
 
   // Click handler cho thẻ học sinh -> Mở hộp bí mật (trừ khi click vào input hoặc các nút thao tác)
   card.addEventListener('click', (e) => {
+    if (isEditingMode) return; // Không mở popup học sinh khi đang bật chế độ chỉnh sửa
     // Bỏ qua nếu click vào các thành phần thao tác
-    if (e.target.closest('button') || e.target.closest('.points-display') || e.target.tagName === 'INPUT') return;
+    if (e.target.closest('button') || e.target.closest('.points-display') || e.target.closest('.student-move-tab') || e.target.tagName === 'INPUT') return;
     doStudentPrivatePopup(classId, student);
   });
 
@@ -3543,14 +3620,35 @@ function openAdminGradesModal() {
       // 1. Info Cell
       const tdInfo = document.createElement('td');
       tdInfo.innerHTML = `
-        <div class="admin-master-student-info">
-          <span style="font-size: 0.75rem; font-weight: 800; color: #94a3b8; width: 18px;">${idx + 1}</span>
+        <div class="admin-master-student-info" style="display: flex; align-items: center; gap: 8px;">
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 22px;">
+            <button class="btn-master-move-up" title="Đẩy học sinh lên trên" style="border:none; background:none; cursor:pointer; color:#94a3b8; font-size:11px; padding:0; line-height:1; ${idx === 0 ? 'visibility:hidden;' : ''}"><i class="fa-solid fa-chevron-up"></i></button>
+            <span style="font-size: 0.75rem; font-weight: 800; color: #94a3b8; line-height: 1.2;">${idx + 1}</span>
+            <button class="btn-master-move-down" title="Đẩy học sinh xuống dưới" style="border:none; background:none; cursor:pointer; color:#94a3b8; font-size:11px; padding:0; line-height:1; ${idx === filteredStudents.length - 1 ? 'visibility:hidden;' : ''}"><i class="fa-solid fa-chevron-down"></i></button>
+          </div>
           <div>
             <div style="font-weight: 800; color: #1e293b; cursor: pointer;" title="Bấm để xem chi tiết học sinh">${student.name}</div>
             ${student.code ? `<div style="font-size: 0.72rem; color: #64748b;">Mã: ${student.code}</div>` : ''}
           </div>
         </div>
       `;
+
+      const btnMoveUp = tdInfo.querySelector('.btn-master-move-up');
+      if (btnMoveUp) {
+        btnMoveUp.onclick = async (e) => {
+          e.stopPropagation();
+          await doMoveStudent(cls.id, student.id, -1);
+          renderMasterTable();
+        };
+      }
+      const btnMoveDown = tdInfo.querySelector('.btn-master-move-down');
+      if (btnMoveDown) {
+        btnMoveDown.onclick = async (e) => {
+          e.stopPropagation();
+          await doMoveStudent(cls.id, student.id, 1);
+          renderMasterTable();
+        };
+      }
       tdInfo.querySelector('div > div').onclick = () => {
         const popupModal = document.getElementById('student-popup-modal');
         const popupBody = document.getElementById('student-popup-body');

@@ -699,12 +699,91 @@ body.theme-christmas .student-card.with-frame {
     right: 12px;
     display: flex;
     justify-content: space-between;
+    align-items: center;
     pointer-events: none;
     z-index: 10;
 }
 
 .absolute-buttons > * {
     pointer-events: auto;
+}
+
+/* ─── Tab di chuyển ở giữa thẻ học sinh khi admin bật chỉnh sửa ─── */
+.student-move-tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1.5px solid #fed7aa;
+    border-radius: 9px;
+    padding: 2px 4px;
+    gap: 3px;
+    box-shadow: 0 2px 8px rgba(245, 124, 0, 0.15);
+    height: 32px;
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+body.theme-halloween .student-move-tab {
+    background: rgba(30, 30, 35, 0.95);
+    border-color: #f97316;
+}
+
+.move-nav-btn {
+    width: 22px;
+    height: 24px;
+    border: none;
+    background: #fff7ed;
+    color: #ea580c;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    transition: all 0.15s ease;
+    padding: 0;
+}
+
+.move-nav-btn:hover {
+    background: #ea580c;
+    color: #ffffff;
+    transform: scale(1.12);
+}
+
+.move-nav-btn:active {
+    transform: scale(0.92);
+}
+
+body.theme-halloween .move-nav-btn {
+    background: #431407;
+    color: #fb923c;
+}
+
+body.theme-halloween .move-nav-btn:hover {
+    background: #f97316;
+    color: #ffffff;
+}
+
+.move-drag-grip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    color: #f97316;
+    font-size: 0.82rem;
+    padding: 2px 3px;
+    border-radius: 4px;
+    transition: background 0.15s;
+}
+
+.move-drag-grip:hover {
+    background: #ffedd5;
+}
+
+.move-drag-grip:active {
+    cursor: grabbing;
 }
 
 .student-name-container {
