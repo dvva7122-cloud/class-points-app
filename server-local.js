@@ -196,6 +196,16 @@ app.patch('/api/classes/:cid/students/:sid/points', requireAdmin, (req, res) => 
   const change = parseInt(req.body.change,10);
   if (isNaN(change)||change===0||Math.abs(change)>100) return res.status(400).json({ error: 'Không hợp lệ.' });
   stu.points = Math.max(0, stu.points+change);
+  if (!cls.history) cls.history = [];
+  const historyEntry = {
+    historyId: Date.now().toString() + '_' + Math.floor(Math.random() * 10000),
+    studentId: stu.id,
+    studentName: stu.name,
+    change,
+    reason: '',
+    ts: Date.now()
+  };
+  cls.history.push(historyEntry);
   saveLocal(); res.json({ id:req.params.sid, points:stu.points });
 });
 

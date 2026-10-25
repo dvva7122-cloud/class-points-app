@@ -2471,20 +2471,53 @@ function _formatDateYYYYMMDD(timestamp) {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-function saveToHistory(classId, studentName, change) {
+function saveToHistory(classId, studentName, change, studentId = null, pendingObj = null) {
   const cls = appData.find(c => c.id === classId);
   if (!cls) return;
   if (!cls.history) cls.history = [];
 
-  // Thêm optimistic vào mảng local để render ngay
-  cls.history.push({
-    historyId: 'opt_' + Date.now(),
-    studentId: 'optimistic',
-    studentName: studentName,
-    change: change,
-    reason: '',
-    ts: Date.now()
-  });
+  // Nếu có pendingObj thì tự động gộp lịch sử theo chuỗi bấm liên tiếp
+  if (pendingObj) {
+    const accumulated = pendingObj.accumulated;
+
+    // Nếu điểm tổng kết sau khi bấm về 0 (ví dụ bấm +1 rồi -1):
+    if (accumulated === 0) {
+      if (pendingObj.historyEntry) {
+        const idx = cls.history.indexOf(pendingObj.historyEntry);
+        if (idx !== -1) cls.history.splice(idx, 1);
+        pendingObj.historyEntry = null;
+      }
+      renderHistoryPanel(classId);
+      return;
+    }
+
+    // Nếu đã có dòng lịch sử trong đợt bấm này -> cập nhật điểm cộng dồn (thay vì sinh dòng mới)
+    if (pendingObj.historyEntry && cls.history.includes(pendingObj.historyEntry)) {
+      pendingObj.historyEntry.change = accumulated;
+      pendingObj.historyEntry.ts = Date.now();
+    } else {
+      // Tạo dòng lịch sử mới cho đợt bấm này
+      const newEntry = {
+        historyId: 'opt_' + Date.now(),
+        studentId: studentId || 'optimistic',
+        studentName: studentName,
+        change: accumulated,
+        reason: '',
+        ts: Date.now()
+      };
+      cls.history.push(newEntry);
+      pendingObj.historyEntry = newEntry;
+    }
+  } else {
+    cls.history.push({
+      historyId: 'opt_' + Date.now(),
+      studentId: studentId || 'optimistic',
+      studentName: studentName,
+      change: change,
+      reason: '',
+      ts: Date.now()
+    });
+  }
 
   renderHistoryPanel(classId);
 }
@@ -2673,9 +2706,6 @@ function doUpdatePoints(classId, studentId, change) {
     else if (change < 0) window.triggerMascotReaction('minus');
   }
 
-  // Ghi vào lịch sử ngay lập tức (trước debounce)
-  saveToHistory(classId, student.name, change);
-
   // 1. Cập nhật state local & DOM ngay lập tức (không chờ server)
   student.points = student.points + change;
   const display = document.getElementById(`points-${studentId}`);
@@ -2694,11 +2724,19 @@ function doUpdatePoints(classId, studentId, change) {
     else cardEl.classList.remove('is-negative');
   }
 
-  // 2. Gom thay đổi vào hàng chờ
+  // 2. Gom thay đổi vào hàng chờ (Debounce)
   if (!pendingPointsChange[studentId]) {
-    pendingPointsChange[studentId] = { classId, accumulated: 0, timer: null };
+    pendingPointsChange[studentId] = {
+      classId,
+      accumulated: 0,
+      timer: null,
+      historyEntry: null
+    };
   }
   pendingPointsChange[studentId].accumulated += change;
+
+  // Tự động gộp lịch sử điểm theo đợt bấm liên tiếp (+ rồi + tự thành +2)
+  saveToHistory(classId, student.name, change, studentId, pendingPointsChange[studentId]);
 
   // 3. Debounce: hủy timer cũ, đặt timer mới 800ms
   clearTimeout(pendingPointsChange[studentId].timer);
