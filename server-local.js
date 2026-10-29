@@ -47,7 +47,7 @@ function saveLocal() {
 
 // ─── Middleware ───────────────────────────────────────────────────────────
 app.use(compression());
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public'), {
   maxAge: '14d',
   setHeaders: (res, filePath) => {
@@ -353,6 +353,49 @@ app.post('/api/classes/:classId/import-grades', requireAdmin, (req, res) => {
 
   saveLocal();
   res.json({ success: true, updated });
+});
+
+// ─── Events (Sổ tay lớp học) ────────────────────────────────────────────────
+app.post('/api/classes/:classId/events', requireAdmin, (req, res) => {
+  const { classId } = req.params;
+  const { imageUrl } = req.body;
+  if (!imageUrl || typeof imageUrl !== 'string' || !imageUrl.startsWith('data:image/')) {
+    return res.status(400).json({ error: 'Ảnh sự kiện không hợp lệ.' });
+  }
+  const cls = (localData.classes || []).find(c => c.id === classId);
+  if (!cls) return res.status(404).json({ error: 'Không tìm thấy lớp.' });
+  if (!cls.events) cls.events = [];
+  const newEvent = { id: generateId('e'), imageUrl, created_at: Date.now() };
+  cls.events.push(newEvent);
+  saveLocal();
+  res.status(201).json(newEvent);
+});
+
+app.patch('/api/classes/:classId/events/:eventId', requireAdmin, (req, res) => {
+  const { classId, eventId } = req.params;
+  const { imageUrl } = req.body;
+  if (!imageUrl || typeof imageUrl !== 'string' || !imageUrl.startsWith('data:image/')) {
+    return res.status(400).json({ error: 'imageUrl không hợp lệ.' });
+  }
+  const cls = (localData.classes || []).find(c => c.id === classId);
+  if (!cls) return res.status(404).json({ error: 'Không tìm thấy lớp.' });
+  const evt = (cls.events || []).find(e => e.id === eventId);
+  if (!evt) return res.status(404).json({ error: 'Không tìm thấy sự kiện.' });
+  evt.imageUrl = imageUrl;
+  saveLocal();
+  res.json({ success: true });
+});
+
+app.delete('/api/classes/:classId/events/:eventId', requireAdmin, (req, res) => {
+  const { classId, eventId } = req.params;
+  const cls = (localData.classes || []).find(c => c.id === classId);
+  if (!cls) return res.status(404).json({ error: 'Không tìm thấy lớp.' });
+  if (!cls.events) cls.events = [];
+  const idx = cls.events.findIndex(e => e.id === eventId);
+  if (idx === -1) return res.status(404).json({ error: 'Không tìm thấy sự kiện.' });
+  cls.events.splice(idx, 1);
+  saveLocal();
+  res.json({ success: true });
 });
 
 app.use((req,res)=>{

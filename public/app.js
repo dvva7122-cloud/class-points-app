@@ -2223,8 +2223,13 @@ async function doAddEvent(classId, file) {
         const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
 
         try {
-          await api('POST', `/api/classes/${classId}/events`, { imageUrl: dataUrl });
-          // SSE sẽ tự động cập nhật
+          const newEvent = await api('POST', `/api/classes/${classId}/events`, { imageUrl: dataUrl });
+          const cls = appData.find(c => c.id === classId);
+          if (cls) {
+            if (!cls.events) cls.events = [];
+            cls.events.push(newEvent);
+            renderEvents(cls);
+          }
         } catch (err) {
           showError(err.message);
         }
@@ -2240,6 +2245,11 @@ async function doAddEvent(classId, file) {
 async function doDeleteEvent(classId, eventId) {
   try {
     await api('DELETE', `/api/classes/${classId}/events/${eventId}`);
+    const cls = appData.find(c => c.id === classId);
+    if (cls && cls.events) {
+      cls.events = cls.events.filter(e => e.id !== eventId);
+      renderEvents(cls);
+    }
   } catch (err) {
     showError(err.message);
   }
