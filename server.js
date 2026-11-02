@@ -27,8 +27,13 @@ const PORT = process.env.PORT || 3000;
 
 
 // ─── Middleware chung ─────────────────────────────────────────────────────
-// Bật nén Gzip/Brotli cho toàn bộ response (giảm 70% dung lượng truyền qua mạng)
-app.use(compression());
+// Bật nén Gzip/Brotli cho toàn bộ response (bỏ qua SSE để tránh bị proxy buffer làm trễ real-time)
+app.use(compression({
+  filter: (req, res) => {
+    if (req.path === '/api/events') return false;
+    return compression.filter(req, res);
+  }
+}));
 app.use(express.json({ limit: '10mb' }));
 
 // Cấu hình Cache-Control cho file tĩnh (tiết kiệm băng thông Render)
@@ -128,17 +133,35 @@ let clients = [];
 
 function broadcast(data) {
   const payload = `data: ${JSON.stringify(data)}\n\n`;
-  clients.forEach(client => client.res.write(payload));
+  clients.forEach(client => {
+    try {
+      client.res.write(payload);
+    } catch (_) {}
+  });
 }
 
-// Note: SSE endpoint retained for backward compatibility (optional)
+// Định kỳ gửi gói tin giữ kết nối (Heartbeat / Keep-alive) mỗi 20s
+// Giúp tránh bị proxy Render / Nginx tự động ngắt kết nối khi không có hoạt động
+setInterval(() => {
+  clients.forEach(client => {
+    try {
+      client.res.write(':keepalive\n\n');
+    } catch (_) {}
+  });
+}, 20000);
+
+// Endpoint SSE phục vụ Real-time đồng bộ tức thì đa thiết bị
 app.get('/api/events', (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
   res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no'); // Tắt buffer proxy trên Nginx/Cloud
   res.flushHeaders();
   
-  const client = { id: Date.now(), res };
+  // Gửi thông báo kết nối thành công ngay lập tức
+  res.write(':connected\n\n');
+  
+  const client = { id: Date.now() + Math.random(), res };
   clients.push(client);
   
   // Khi kết nối bị đóng, xóa client khỏi mảng

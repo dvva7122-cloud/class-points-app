@@ -4830,29 +4830,102 @@ async function loadSettings() {
   } catch (_) {}
 }
 
-// ─── Lắng nghe sự kiện Real-time (SSE) ───────────────────────────────────
+// ─── Lắng nghe sự kiện Real-time (SSE) & Đồng bộ đa thiết bị ──────────────
 let isRealtimeSetup = false;
-function setupRealtime() {
-  if (isRealtimeSetup) return;
-  isRealtimeSetup = true;
-  
-  const evtSource = new EventSource('/api/events');
-  evtSource.onmessage = async (e) => {
+let sseSource = null;
+let sseReconnectTimer = null;
+let lastSyncTimestamp = Date.now();
+
+// Hàm làm mới dữ liệu thông minh khi có thay đổi từ thiết bị khác
+async function refreshAppDataSafely() {
+  try {
+    await loadAllData();
+    // Nếu đang có thay đổi điểm cục bộ chưa gửi xong (debounce), không đè lại DOM tránh giật điểm
+    if (Object.keys(pendingPointsChange).length > 0) return;
+    renderClassTabs();
+    renderCurrentClass();
+  } catch (_) {}
+}
+
+function connectSSE() {
+  if (sseSource) {
+    try { sseSource.close(); } catch (_) {}
+    sseSource = null;
+  }
+
+  sseSource = new EventSource('/api/events');
+
+  sseSource.onopen = () => {
+    lastSyncTimestamp = Date.now();
+  };
+
+  sseSource.onmessage = async (e) => {
     try {
       const data = JSON.parse(e.data);
       if (data.type === 'DATA_CHANGED') {
-        await loadAllData();
-        // Nếu đang có thay đổi điểm chưa gửi (debounce đang chờ),
-        // KHÔNG render lại để tránh flash lại giá trị cũ từ server.
-        // Khi debounce gửi xong, updateCrowns() sẽ tự đồng bộ DOM.
-        if (Object.keys(pendingPointsChange).length > 0) return;
-        renderClassTabs();
-        renderCurrentClass();
+        lastSyncTimestamp = Date.now();
+        await refreshAppDataSafely();
       } else if (data.type === 'SETTINGS_CHANGED') {
         await loadSettings();
       }
-    } catch (err) {}
+    } catch (_) {}
   };
+
+  sseSource.onerror = () => {
+    try { sseSource.close(); } catch (_) {}
+    sseSource = null;
+    // Tự động thử kết nối lại sau 4 giây nếu bị đứt mạng/proxy Render ngắt
+    clearTimeout(sseReconnectTimer);
+    sseReconnectTimer = setTimeout(connectSSE, 4000);
+  };
+}
+
+function setupRealtime() {
+  if (isRealtimeSetup) return;
+  isRealtimeSetup = true;
+
+  connectSSE();
+
+  // 1. Tự động đồng bộ ngay khi người dùng chuyển sang cửa sổ/tab laptop
+  // Rất hữu ích khi vừa chụp ảnh trên điện thoại xong quay lại nhìn laptop
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      // Nếu đã quá 5 giây chưa đồng bộ hoặc kết nối SSE bị ngắt, tải lại dữ liệu ngay
+      if (Date.now() - lastSyncTimestamp > 5000 || !sseSource) {
+        if (!sseSource) connectSSE();
+        refreshAppDataSafely();
+      }
+    }
+  });
+
+  window.addEventListener('focus', () => {
+    if (Date.now() - lastSyncTimestamp > 5000) {
+      refreshAppDataSafely();
+    }
+  });
+
+  // 2. Fallback Polling dự phòng nhẹ (mỗi 12 giây):
+  // Đảm bảo ngay cả khi SSE bị mạng chặn tường lửa, máy tính vẫn tự bắt được ảnh mới từ điện thoại
+  setInterval(async () => {
+    // Chỉ kiểm tra khi tab đang mở (tránh tốn tài nguyên nền)
+    if (document.visibilityState === 'visible') {
+      try {
+        const latest = await api('GET', '/api/classes');
+        const curCls = latest && latest.find(c => c.id === currentClassId);
+        const oldCls = appData && appData.find(c => c.id === currentClassId);
+        
+        // Kiểm tra xem số lượng ảnh sổ tay hoặc danh sách học sinh có khác không
+        const eventsChanged = (curCls?.events?.length !== oldCls?.events?.length) ||
+          JSON.stringify(curCls?.events?.map(e => e.id)) !== JSON.stringify(oldCls?.events?.map(e => e.id));
+        const studentsChanged = curCls?.students?.length !== oldCls?.students?.length;
+
+        if (eventsChanged || studentsChanged) {
+          appData = latest;
+          renderCurrentClass();
+        }
+      } catch (_) {}
+    }
+  }, 12000);
 }
 
 async function init() {
