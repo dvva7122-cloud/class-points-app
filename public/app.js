@@ -2104,6 +2104,7 @@ function renderEvents(cls) {
 
   if (isAdmin) {
     const addBtn = createEl('button', { className: 'add-event-btn admin-only', text: '+ Thêm ảnh' });
+    addBtn.id = `add-event-btn-${cls.id}`;
     addBtn.addEventListener('click', () => {
       const input = document.createElement('input');
       input.type = 'file';
@@ -2190,55 +2191,88 @@ function renderEvents(cls) {
 }
 
 async function doAddEvent(classId, file) {
-  try {
-    // Đọc và nén ảnh bằng canvas
-    const reader = new FileReader();
-    reader.onload = (e) => {
+  if (!file) return;
+
+  // Hiển thị trạng thái đang xử lý trên nút để tránh người dùng bấm liên tục
+  const addBtn = document.getElementById(`add-event-btn-${classId}`) || document.querySelector('.add-event-btn');
+  const originalText = addBtn ? addBtn.innerHTML : '+ Thêm ảnh';
+  if (addBtn) {
+    addBtn.disabled = true;
+    addBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang tải...';
+  }
+
+  // Helper hàm nén ảnh chống tràn bộ nhớ trên điện thoại
+  const compressImageFile = (imageFile) => {
+    return new Promise((resolve, reject) => {
+      // Dùng ObjectURL thay vì FileReader.readAsDataURL để tránh ngốn RAM khi file ảnh gốc 10MB-20MB
+      const objectUrl = URL.createObjectURL(imageFile);
       const img = new Image();
-      img.onload = async () => {
-        const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 800;
-        const MAX_HEIGHT = 800;
-        let width = img.width;
-        let height = img.height;
 
-        if (width > height) {
-          if (width > MAX_WIDTH) {
-            height = Math.round((height *= MAX_WIDTH / width));
-            width = MAX_WIDTH;
-          }
-        } else {
-          if (height > MAX_HEIGHT) {
-            width = Math.round((width *= MAX_HEIGHT / height));
-            height = MAX_HEIGHT;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-
-        // Nén jpeg chất lượng 0.7
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-
+      img.onload = () => {
         try {
-          const newEvent = await api('POST', `/api/classes/${classId}/events`, { imageUrl: dataUrl });
-          const cls = appData.find(c => c.id === classId);
-          if (cls) {
-            if (!cls.events) cls.events = [];
-            cls.events.push(newEvent);
-            renderEvents(cls);
+          URL.revokeObjectURL(objectUrl); // Giải phóng RAM điện thoại ngay lập tức
+
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 1200;
+          const MAX_HEIGHT = 1200;
+          let width = img.naturalWidth || img.width;
+          let height = img.naturalHeight || img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height = Math.round((height * MAX_WIDTH) / width);
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width = Math.round((width * MAX_HEIGHT) / height);
+              height = MAX_HEIGHT;
+            }
           }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            throw new Error('Trình duyệt không hỗ trợ xử lý ảnh.');
+          }
+
+          // Vẽ ảnh lên canvas
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Nén chuẩn JPEG chất lượng 0.75 (dung lượng chỉ ~150KB - 300KB)
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
+          resolve(dataUrl);
         } catch (err) {
-          showError(err.message);
+          reject(err);
         }
       };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
+
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error('Không thể đọc file ảnh từ camera. Vui lòng thử lại.'));
+      };
+
+      img.src = objectUrl;
+    });
+  };
+
+  try {
+    const dataUrl = await compressImageFile(file);
+    const newEvent = await api('POST', `/api/classes/${classId}/events`, { imageUrl: dataUrl });
+    const cls = appData.find(c => c.id === classId);
+    if (cls) {
+      if (!cls.events) cls.events = [];
+      cls.events.push(newEvent);
+      renderEvents(cls);
+    }
   } catch (err) {
-    showError('Không thể đọc ảnh');
+    showError(err.message || 'Lỗi khi tải ảnh lên. Vui lòng kiểm tra kết nối mạng và thử lại.');
+  } finally {
+    if (addBtn) {
+      addBtn.disabled = false;
+      addBtn.innerHTML = originalText;
+    }
   }
 }
 
