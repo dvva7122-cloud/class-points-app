@@ -131,9 +131,13 @@ function sanitizeGrades(raw) {
 
 let clients = [];
 
-function broadcast(data) {
+function broadcast(data, excludeClientId = null) {
   const payload = `data: ${JSON.stringify(data)}\n\n`;
   clients.forEach(client => {
+    // Không gửi lại cho chính client vừa kích hoạt thao tác cộng điểm
+    if (excludeClientId && client.clientId && client.clientId === excludeClientId) {
+      return;
+    }
     try {
       client.res.write(payload);
     } catch (_) {}
@@ -161,7 +165,8 @@ app.get('/api/events', (req, res) => {
   // Gửi thông báo kết nối thành công ngay lập tức
   res.write(':connected\n\n');
   
-  const client = { id: Date.now() + Math.random(), res };
+  const queryClientId = req.query.clientId || null;
+  const client = { id: Date.now() + Math.random(), clientId: queryClientId, res };
   clients.push(client);
   
   // Khi kết nối bị đóng, xóa client khỏi mảng
@@ -984,7 +989,10 @@ app.patch('/api/classes/:classId/students/:studentId/points', requireAdmin, asyn
       historyEntry.studentName = updatedStudent.name;
     }
 
-    broadcast({ type: 'DATA_CHANGED' });
+    // Không broadcast lại cho người vừa ấn cộng điểm (họ đã cập nhật giao diện ngay lập tức)
+    // Giúp loại bỏ hoàn toàn hiện tượng nghẽn tải lại dữ liệu vòng lặp
+    const senderClientId = req.headers['x-client-id'] || null;
+    broadcast({ type: 'DATA_CHANGED' }, senderClientId);
     res.json({ id: studentId, points: finalPoints });
   } catch (err) {
     res.status(500).json({ error: 'Lỗi server: ' + err.message });

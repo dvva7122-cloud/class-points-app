@@ -820,9 +820,16 @@ function clearToken() {
   sessionStorage.removeItem('adminToken');
 }
 
+// Định danh phiên làm việc của trình duyệt này (Client ID)
+// Giúp server nhận biết để không gửi ngược SSE về chính máy đang thao tác
+const currentSessionClientId = 'client_' + Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
+
 // --- API helper ---
 async function api(method, path, body) {
-  const headers = { 'Content-Type': 'application/json' };
+  const headers = { 
+    'Content-Type': 'application/json',
+    'x-client-id': currentSessionClientId
+  };
   const token   = getToken();
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
@@ -2796,7 +2803,7 @@ function doUpdatePoints(classId, studentId, change) {
       const res = await api('PATCH', `/api/classes/${classId}/students/${studentId}/points`, { change: totalChange });
       // Đồng bộ lại điểm chính xác từ server (phòng trường hợp lệch)
       const s = cls && cls.students.find(s => s.id === studentId);
-      if (s && res.points !== s.points) {
+      if (s && typeof res.points === 'number' && res.points !== s.points) {
         s.points = res.points;
         const d = document.getElementById(`points-${studentId}`);
         if (d) d.querySelector('.point-val').textContent = res.points;
@@ -2804,10 +2811,12 @@ function doUpdatePoints(classId, studentId, change) {
       // Cập nhật crown trực tiếp trên DOM mà không vẽ lại cả trang (chống nháy)
       updateCrowns(cls);
     } catch (err) {
-      if (err.message !== 'Unauthorized') showError(err.message);
-      // Rollback điểm về giá trị server nếu thất bại
-      await loadAllData();
-      renderCurrentClass();
+      if (err.message !== 'Unauthorized') {
+        showError('Lỗi cập nhật điểm: ' + err.message);
+        // Chỉ tải lại dữ liệu khi thực sự xảy ra lỗi mạng/server
+        await loadAllData();
+        renderCurrentClass();
+      }
     }
   }, 350);
 }
@@ -4888,7 +4897,7 @@ function connectSSE() {
     sseSource = null;
   }
 
-  sseSource = new EventSource('/api/events');
+  sseSource = new EventSource(`/api/events?clientId=${encodeURIComponent(currentSessionClientId)}`);
 
   sseSource.onopen = () => {
     lastSyncTimestamp = Date.now();
