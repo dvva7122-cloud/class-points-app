@@ -2758,8 +2758,9 @@ function doUpdatePoints(classId, studentId, change) {
     const emojiSpan = display.querySelector('.orange-emoji');
     if (emojiSpan) emojiSpan.textContent = student.points < 0 ? '🍄' : '🍊';
     display.classList.remove('pop');
-    void display.offsetWidth;
-    display.classList.add('pop');
+    requestAnimationFrame(() => {
+      display.classList.add('pop');
+    });
   }
   
   const cardEl = document.getElementById(`student-card-${studentId}`);
@@ -2782,7 +2783,7 @@ function doUpdatePoints(classId, studentId, change) {
   // Tự động gộp lịch sử điểm theo đợt bấm liên tiếp (+ rồi + tự thành +2)
   saveToHistory(classId, student.name, change, studentId, pendingPointsChange[studentId]);
 
-  // 3. Debounce: hủy timer cũ, đặt timer mới 800ms
+  // 3. Debounce tối ưu: 350ms (vừa gộp nhanh vừa phản hồi mượt mà lên server)
   clearTimeout(pendingPointsChange[studentId].timer);
   pendingPointsChange[studentId].timer = setTimeout(async () => {
     const pending = pendingPointsChange[studentId];
@@ -2808,7 +2809,7 @@ function doUpdatePoints(classId, studentId, change) {
       await loadAllData();
       renderCurrentClass();
     }
-  }, 800);
+  }, 350);
 }
 
 // Cập nhật biểu tượng vương miện và hiệu ứng card mà KHÔNG làm nháy trang (No DOM rebuild)
@@ -4941,8 +4942,8 @@ function setupRealtime() {
   // 2. Fallback Polling dự phòng nhẹ (mỗi 12 giây):
   // Đảm bảo ngay cả khi SSE bị mạng chặn tường lửa, máy tính vẫn tự bắt được ảnh mới từ điện thoại
   setInterval(async () => {
-    // Chỉ kiểm tra khi tab đang mở (tránh tốn tài nguyên nền)
-    if (document.visibilityState === 'visible') {
+    // Chỉ kiểm tra khi tab đang mở và KHÔNG có thao tác cộng điểm nào đang chờ (tránh giật điểm)
+    if (document.visibilityState === 'visible' && Object.keys(pendingPointsChange).length === 0) {
       try {
         const latest = await api('GET', '/api/classes');
         const curCls = latest && latest.find(c => c.id === currentClassId);

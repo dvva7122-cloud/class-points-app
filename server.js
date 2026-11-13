@@ -952,39 +952,42 @@ app.patch('/api/classes/:classId/students/:studentId/points', requireAdmin, asyn
 
   try {
     const classesColl = db.getClassesCollection();
-    
-    // First, find the current points to ensure they don't go below 0
-    const cls = await classesColl.findOne({ id: classId, 'students.id': studentId }, { projection: { 'students.$': 1 } });
-    if (!cls || !cls.students || cls.students.length === 0) {
-      return res.status(404).json({ error: 'Không tìm thấy học sinh.' });
-    }
-    
-    let currentPoints = cls.students[0].points || 0;
-    let studentName = cls.students[0].name || 'Học sinh';
-    let newPoints = currentPoints + change;
 
     const historyEntry = {
       historyId: Date.now().toString() + '_' + Math.floor(Math.random() * 10000),
       studentId,
-      studentName,
+      studentName: 'Học sinh',
       change,
       reason: '',
       ts: Date.now()
     };
 
+    // Dùng $inc nguyên tử để chống Race Condition khi cộng điểm dồn dập
     const result = await classesColl.findOneAndUpdate(
       { id: classId, 'students.id': studentId },
       { 
-        $set: { 'students.$.points': newPoints },
+        $inc: { 'students.$.points': change },
         $push: { history: historyEntry }
       },
       { returnDocument: 'after' }
     );
 
+    if (!result) {
+      return res.status(404).json({ error: 'Không tìm thấy học sinh.' });
+    }
+
+    const updatedStudent = result.students && result.students.find(s => s.id === studentId);
+    const finalPoints = updatedStudent ? updatedStudent.points : 0;
+
+    // Cập nhật tên chuẩn vào historyEntry nếu có
+    if (updatedStudent && updatedStudent.name) {
+      historyEntry.studentName = updatedStudent.name;
+    }
+
     broadcast({ type: 'DATA_CHANGED' });
-    res.json({ id: studentId, points: newPoints });
+    res.json({ id: studentId, points: finalPoints });
   } catch (err) {
-    res.status(500).json({ error: 'Lỗi server' });
+    res.status(500).json({ error: 'Lỗi server: ' + err.message });
   }
 });
 

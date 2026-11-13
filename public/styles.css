@@ -874,6 +874,10 @@ body.theme-halloween .move-nav-btn:hover {
     display: flex;
     justify-content: center;
     align-items: center;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .btn-action:hover {
