@@ -977,11 +977,13 @@ app.patch('/api/classes/:classId/students/:studentId/points', requireAdmin, asyn
       { returnDocument: 'after' }
     );
 
-    if (!result) {
+    // Support cả MongoDB driver v3 (result.value) và v4/v5 (result trực tiếp)
+    const doc = result && result.value ? result.value : result;
+    if (!doc) {
       return res.status(404).json({ error: 'Không tìm thấy học sinh.' });
     }
 
-    const updatedStudent = result.students && result.students.find(s => s.id === studentId);
+    const updatedStudent = doc.students && doc.students.find(s => s.id === studentId);
     const finalPoints = updatedStudent ? updatedStudent.points : 0;
 
     // Cập nhật tên chuẩn vào historyEntry nếu có
