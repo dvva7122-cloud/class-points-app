@@ -955,13 +955,32 @@ app.patch('/api/classes/:classId/students/:studentId/points', requireAdmin, asyn
     return res.status(400).json({ error: 'Thay đổi điểm không hợp lệ.' });
   }
 
+  // Lấy tên học sinh từ body gửi lên (nếu có)
+  const reqStudentName = (typeof req.body.studentName === 'string' && req.body.studentName.trim()) 
+    ? req.body.studentName.trim() 
+    : '';
+
   try {
     const classesColl = db.getClassesCollection();
+
+    // Tìm tên học sinh trong DB nếu client không truyền lên
+    let studentName = reqStudentName;
+    if (!studentName) {
+      const existingClass = await classesColl.findOne(
+        { id: classId, 'students.id': studentId },
+        { projection: { 'students.$': 1 } }
+      );
+      if (existingClass && existingClass.students && existingClass.students[0]) {
+        studentName = existingClass.students[0].name || 'Học sinh';
+      } else {
+        studentName = 'Học sinh';
+      }
+    }
 
     const historyEntry = {
       historyId: Date.now().toString() + '_' + Math.floor(Math.random() * 10000),
       studentId,
-      studentName: 'Học sinh',
+      studentName,
       change,
       reason: '',
       ts: Date.now()
@@ -985,11 +1004,6 @@ app.patch('/api/classes/:classId/students/:studentId/points', requireAdmin, asyn
 
     const updatedStudent = doc.students && doc.students.find(s => s.id === studentId);
     const finalPoints = updatedStudent ? updatedStudent.points : 0;
-
-    // Cập nhật tên chuẩn vào historyEntry nếu có
-    if (updatedStudent && updatedStudent.name) {
-      historyEntry.studentName = updatedStudent.name;
-    }
 
     // Không broadcast lại cho người vừa ấn cộng điểm (họ đã cập nhật giao diện ngay lập tức)
     // Giúp loại bỏ hoàn toàn hiện tượng nghẽn tải lại dữ liệu vòng lặp

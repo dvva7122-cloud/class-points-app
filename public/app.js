@@ -2655,7 +2655,15 @@ function renderHistoryPanel(classId) {
 
       const name = document.createElement('span');
       name.className = 'history-entry-name';
-      name.textContent = entry.studentName || entry.name;
+      // Nếu tên đang là placeholder "Học sinh" hoặc bị rỗng, tự động tra cứu tên thật theo studentId
+      let displayName = entry.studentName || entry.name;
+      if (!displayName || displayName === 'Học sinh') {
+        const foundStudent = cls && cls.students && cls.students.find(s => s.id === entry.studentId);
+        if (foundStudent && foundStudent.name) {
+          displayName = foundStudent.name;
+        }
+      }
+      name.textContent = displayName || 'Học sinh';
 
       const change = document.createElement('span');
       const isPositive = entry.change > 0;
@@ -2800,7 +2808,10 @@ function doUpdatePoints(classId, studentId, change) {
     delete pendingPointsChange[studentId]; // xóa khỏi hàng chờ
 
     try {
-      const res = await api('PATCH', `/api/classes/${classId}/students/${studentId}/points`, { change: totalChange });
+      const res = await api('PATCH', `/api/classes/${classId}/students/${studentId}/points`, { 
+        change: totalChange,
+        studentName: student.name 
+      });
       // Đồng bộ lại điểm chính xác từ server (phòng trường hợp lệch)
       const s = cls && cls.students.find(s => s.id === studentId);
       if (s && typeof res.points === 'number' && res.points !== s.points) {
