@@ -5008,8 +5008,8 @@ async function init() {
   updateAdminUI();
 
   try {
-    await loadSettings(); // tải title + theme + bg từ server
-    await loadAllData();
+    // Tải Settings và Classes song song → tiết kiệm 1 round-trip MongoDB
+    await Promise.all([loadSettings(), loadAllData()]);
   } catch (err) {
     if (err.message !== 'Unauthorized') {
       // Server đang khởi động (Cold Start Render) -> Không hiển thị alert gây khó chịu
