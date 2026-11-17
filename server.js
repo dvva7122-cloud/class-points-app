@@ -144,6 +144,16 @@ function broadcast(data, excludeClientId = null) {
   });
 }
 
+// Phát số người đang online đến TẤT CẢ client (admin sẽ tự lọc hiển thị ở frontend)
+function broadcastOnlineCount() {
+  const payload = `data: ${JSON.stringify({ type: 'ONLINE_COUNT', count: clients.length })}\n\n`;
+  clients.forEach(client => {
+    try {
+      client.res.write(payload);
+    } catch (_) {}
+  });
+}
+
 // Định kỳ gửi gói tin giữ kết nối (Heartbeat / Keep-alive) mỗi 20s
 // Giúp tránh bị proxy Render / Nginx tự động ngắt kết nối khi không có hoạt động
 setInterval(() => {
@@ -169,9 +179,14 @@ app.get('/api/events', (req, res) => {
   const client = { id: Date.now() + Math.random(), clientId: queryClientId, res };
   clients.push(client);
   
+  // Thông báo số người online mới cho tất cả (bao gồm client mới vừa kết nối)
+  broadcastOnlineCount();
+
   // Khi kết nối bị đóng, xóa client khỏi mảng
   req.on('close', () => {
     clients = clients.filter(c => c.id !== client.id);
+    // Cập nhật lại số người online sau khi client ngắt kết nối
+    broadcastOnlineCount();
   });
 });
 

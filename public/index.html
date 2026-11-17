@@ -6,7 +6,7 @@
     <title>DGS orange</title>
     <!-- Favicon quả cam -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍊</text></svg>">
-    <link rel="stylesheet" href="styles.css?v=3.0">
+    <link rel="stylesheet" href="styles.css?v=3.1">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- SheetJS dùng để parse Excel, KHÔNG gọi server -->
@@ -30,6 +30,11 @@
                     <button id="edit-title-btn" class="action-icon edit-icon admin-edit-only" title="Đổi tiêu đề"><i class="fa-solid fa-pen"></i></button>
                 </div>
                 <div class="header-controls">
+                    <!-- Badge đếm người online: chỉ hiện khi admin BẬT chế độ chỉnh sửa -->
+                    <span id="online-counter" class="online-counter admin-edit-only" title="Số người đang truy cập">
+                        <i class="fa-solid fa-circle" style="color: #22c55e; font-size: 0.55em; vertical-align: middle;"></i>
+                        <span id="online-count-text">0</span>
+                    </span>
                     <button id="theme-btn" class="theme-btn admin-edit-only" title="Cài đặt giao diện">
                         <i class="fa-solid fa-palette"></i>
                     </button>
@@ -463,7 +468,7 @@
         </div>
     </div>
 
-    <script src="app.js?v=3.0"></script>
+    <script src="app.js?v=3.1"></script>
 
 </body>
 </html>

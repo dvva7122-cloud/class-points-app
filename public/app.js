@@ -4922,6 +4922,10 @@ function connectSSE() {
         await refreshAppDataSafely();
       } else if (data.type === 'SETTINGS_CHANGED') {
         await loadSettings();
+      } else if (data.type === 'ONLINE_COUNT') {
+        // Cập nhật badge số người online (badge chỉ hiển thị khi admin bật chỉnh sửa)
+        const countEl = document.getElementById('online-count-text');
+        if (countEl) countEl.textContent = data.count;
       }
     } catch (_) {}
   };
