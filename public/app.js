@@ -1990,13 +1990,40 @@ function renderAnnouncements(cls) {
       card.appendChild(contentEl);
 
       // Image
-      if (ann.imageUrl) {
-        const img = document.createElement('img');
-        img.className = 'announcement-image';
-        img.src = ann.imageUrl;
-        img.alt = 'Ảnh thông báo';
-        img.onclick = () => window.open(ann.imageUrl, '_blank');
-        card.appendChild(img);
+      if (ann.imageUrl || ann.hasImage) {
+        if (ann.imageUrl) {
+          // Đã có ảnh trong bộ nhớ cục bộ → hiện ngay
+          const img = document.createElement('img');
+          img.className = 'announcement-image';
+          img.src = ann.imageUrl;
+          img.alt = 'Ảnh thông báo';
+          img.onclick = () => window.open(ann.imageUrl, '_blank');
+          card.appendChild(img);
+        } else {
+          // ⚡ Lazy load ảnh thông báo khi vào màn hình
+          const imgWrapper = document.createElement('div');
+          imgWrapper.style.cssText = 'min-height:80px;display:flex;align-items:center;justify-content:center;background:#f1f5f9;border-radius:8px;margin-top:8px;';
+          imgWrapper.innerHTML = '<i class="fa-solid fa-image" style="font-size:1.5rem;color:#94a3b8"></i>';
+
+          const observer = new IntersectionObserver((entries, obs) => {
+            entries.forEach(async entry => {
+              if (!entry.isIntersecting) return;
+              obs.disconnect();
+              try {
+                const data = await api('GET', `/api/classes/${cls.id}/announcements/${ann.id}/image`);
+                ann.imageUrl = data.imageUrl;
+                const img = document.createElement('img');
+                img.className = 'announcement-image';
+                img.src = data.imageUrl;
+                img.alt = 'Ảnh thông báo';
+                img.onclick = () => window.open(data.imageUrl, '_blank');
+                imgWrapper.replaceWith(img);
+              } catch (_) {}
+            });
+          }, { threshold: 0.1 });
+          observer.observe(imgWrapper);
+          card.appendChild(imgWrapper);
+        }
       }
 
       list.appendChild(card);
@@ -2132,10 +2159,41 @@ function renderEvents(cls) {
     cls.events.forEach(evt => {
       const card = createEl('div', { className: 'event-card' });
       const img = createEl('img', { className: 'event-img' });
-      img.src = evt.imageUrl;
-      
-            // Click để mở trình chỉnh sửa
       img.style.cursor = 'pointer';
+
+      // ⚡ Lazy load: ảnh chỉ được tải khi hiển thị (tiết kiệm băng thông)
+      if (evt.imageUrl && evt.imageUrl.startsWith('data:image/')) {
+        // Đã có ảnh trong bộ nhớ cục bộ (annotation chưa lưu) → dùng luôn
+        img.src = evt.imageUrl;
+      } else {
+        // Dùng IntersectionObserver để tải ảnh khi card vào màn hình
+        img.src = '';
+        img.dataset.eventId = evt.id;
+        img.dataset.classId = cls.id;
+        img.dataset.lazy = '1';
+        img.style.background = '#f1f5f9';
+        img.style.minHeight = '120px';
+        // Hiện placeholder spinner
+        const placeholder = createEl('div', { className: 'event-img-placeholder' });
+        placeholder.innerHTML = '<i class="fa-solid fa-image" style="font-size:2rem;color:#94a3b8"></i><br><span style="font-size:0.75rem;color:#94a3b8">Đang tải...</span>';
+        card.appendChild(placeholder);
+
+        const observer = new IntersectionObserver((entries, obs) => {
+          entries.forEach(async entry => {
+            if (!entry.isIntersecting) return;
+            obs.disconnect();
+            try {
+              const data = await api('GET', `/api/classes/${cls.id}/events/${evt.id}/image`);
+              evt.imageUrl = data.imageUrl; // cache vào memory
+              img.src = data.imageUrl;
+              placeholder.remove();
+            } catch (_) {
+              placeholder.innerHTML = '<i class="fa-solid fa-image-slash" style="font-size:1.5rem;color:#ef4444"></i><br><span style="font-size:0.75rem;color:#ef4444">Lỗi tải ảnh</span>';
+            }
+          });
+        }, { threshold: 0.1 });
+        observer.observe(card);
+      }
       
       // Overlay hint "✏️ Chỉnh sửa"
       const overlay = createEl('div', { className: 'event-card-hover-overlay' });
@@ -3497,15 +3555,15 @@ function updateAdminUI() {
 
 // ─── Data loading ─────────────────────────────────────────────────────────
 async function loadAllData() {
-  // Giu lai cac imageUrl da duoc ve tay (DataURL) khoi bi ghi de boi SSE reload
-  const localAnnotations = {};
+  // Giữ lại các imageUrl đã được tải về bộ nhớ (lazy-loaded) khỏi bị xóa khi SSE reload
+  const localImageCache = {}; // { classId: { eventId: dataUrl } }
   if (appData && appData.length > 0) {
     appData.forEach(cls => {
       if (cls.events && cls.events.length > 0) {
         cls.events.forEach(evt => {
           if (evt.imageUrl && evt.imageUrl.startsWith('data:image/')) {
-            if (!localAnnotations[cls.id]) localAnnotations[cls.id] = {};
-            localAnnotations[cls.id][evt.id] = evt.imageUrl;
+            if (!localImageCache[cls.id]) localImageCache[cls.id] = {};
+            localImageCache[cls.id][evt.id] = evt.imageUrl;
           }
         });
       }
@@ -3514,13 +3572,13 @@ async function loadAllData() {
 
   appData = await api('GET', '/api/classes');
 
-  // Phuc hoi lai cac annotation vao data moi
-  if (Object.keys(localAnnotations).length > 0) {
+  // Phục hồi lại các ảnh đã lazy-load vào data mới (tránh tải lại không cần thiết)
+  if (Object.keys(localImageCache).length > 0) {
     appData.forEach(cls => {
-      if (localAnnotations[cls.id] && cls.events) {
+      if (localImageCache[cls.id] && cls.events) {
         cls.events.forEach(evt => {
-          if (localAnnotations[cls.id][evt.id]) {
-            evt.imageUrl = localAnnotations[cls.id][evt.id];
+          if (localImageCache[cls.id][evt.id]) {
+            evt.imageUrl = localImageCache[cls.id][evt.id];
           }
         });
       }

@@ -297,19 +297,66 @@ app.patch('/api/settings', requireAdmin, async (req, res) => {
 // ═══════════════════════════════════════════════════════════════════════════
 
 // GET /api/classes  (public)
+// ⚡ Loại bỏ imageUrl khỏi events & announcements để giảm băng thông
+// Ảnh sẽ được tải riêng qua /api/classes/:classId/events/:eventId/image
 app.get('/api/classes', async (req, res) => {
   try {
     const classesColl = db.getClassesCollection();
-    // Sort by order first, then created_at
     const classes = await classesColl.find({}).sort({ order: 1, created_at: 1 }).toArray();
     
-    // Convert _id objects to match our frontend logic if needed (but frontend uses `id`)
     const result = classes.map(c => {
       delete c._id;
+      // Strip imageUrl từ events (chỉ giữ id, created_at, hasImage flag)
+      if (Array.isArray(c.events)) {
+        c.events = c.events.map(e => ({
+          id: e.id,
+          created_at: e.created_at,
+          hasImage: !!(e.imageUrl)
+        }));
+      }
+      // Strip imageUrl từ announcements (chỉ giữ metadata text)
+      if (Array.isArray(c.announcements)) {
+        c.announcements = c.announcements.map(a => ({
+          id: a.id,
+          content: a.content,
+          createdAt: a.createdAt,
+          hasImage: !!(a.imageUrl)
+        }));
+      }
       return c;
     });
 
     res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: 'Lỗi server' });
+  }
+});
+
+// GET /api/classes/:classId/events/:eventId/image  (public) - Tải ảnh sự kiện riêng lẻ
+app.get('/api/classes/:classId/events/:eventId/image', async (req, res) => {
+  const { classId, eventId } = req.params;
+  try {
+    const classesColl = db.getClassesCollection();
+    const cls = await classesColl.findOne({ id: classId }, { projection: { events: 1 } });
+    if (!cls) return res.status(404).json({ error: 'Không tìm thấy lớp.' });
+    const evt = (cls.events || []).find(e => e.id === eventId);
+    if (!evt || !evt.imageUrl) return res.status(404).json({ error: 'Không tìm thấy ảnh.' });
+    res.json({ imageUrl: evt.imageUrl });
+  } catch (err) {
+    res.status(500).json({ error: 'Lỗi server' });
+  }
+});
+
+// GET /api/classes/:classId/announcements/:annId/image  (public) - Tải ảnh thông báo riêng lẻ
+app.get('/api/classes/:classId/announcements/:annId/image', async (req, res) => {
+  const { classId, annId } = req.params;
+  try {
+    const classesColl = db.getClassesCollection();
+    const cls = await classesColl.findOne({ id: classId }, { projection: { announcements: 1 } });
+    if (!cls) return res.status(404).json({ error: 'Không tìm thấy lớp.' });
+    const ann = (cls.announcements || []).find(a => a.id === annId);
+    if (!ann || !ann.imageUrl) return res.status(404).json({ error: 'Không tìm thấy ảnh.' });
+    res.json({ imageUrl: ann.imageUrl });
   } catch (err) {
     res.status(500).json({ error: 'Lỗi server' });
   }
